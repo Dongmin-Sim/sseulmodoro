@@ -57,7 +57,13 @@
   - 제목은 50자 이내, 명령형으로 작성
   - 관련 이슈가 있으면 footer에 Closes #이슈번호
 - 브랜치: main + feature/\* 2단계. main에서 분기, 완료 후 main에 PR.
+  - 개발 PoC 단계에서는 dev 브랜치 없이 2단계로 운영
+  - 기능 개발: feature/TASK-001-기능명, ex) feature/TASK-001-pomodoro-timer
+  - 버그 수정: fix/ISSUE-001-버그명, ex) fix/ISSUE-001-gacha-point-bug
 - 직접 main 커밋 금지. PR로만 머지.
+  - main ← 프로덕션. 직접 커밋 금지. PR로만 머지.
+  - feature/xxx ← 기능 개발. main에서 분기 → 완료 후 main에 PR.
+  - fix/xxx ← 버그 수정. main에서 분기 → 완료 후 main에 PR.
 
 ## Claude Code 작업 흐름
 
@@ -66,7 +72,7 @@
 - 커밋 전 lint/type check 통과.
 - 작업 완료 후 main에 PR 생성. 제목: [TASK-XXX] 기능 설명
 - PR 본문에 변경 사항 요약 + 테스트 확인 포함.
-- PR 생성만 하고 머지는 동민이 확인 후 직접.
+- PR 생성만 하고 머지는 사용자가 확인 후 직접.
 - 프론트엔드 UI, API Route, 보일러플레이트: Claude Code 담당
 - PostgreSQL 함수, ETL 스크립트, dbt 모델 설계: 사용자 담당 → 스캐폴딩만 생성
 
