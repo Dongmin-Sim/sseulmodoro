@@ -11,6 +11,12 @@
 - 서비스 DB: Supabase (PostgreSQL + Auth)
 - 호스팅: Vercel
 
+## UI 전략
+
+- shadcn/ui 컴포넌트 사용 (디자인 일관성 확보, 최소 노력)
+- UI 구현은 Claude Code에 위임. "shadcn/ui 컴포넌트로 만들어줘"로 요청.
+- 디자인 검토 시 gstack /design-review 활용
+
 ## 폴더 구조
 
 ```
