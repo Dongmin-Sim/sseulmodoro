@@ -76,11 +76,12 @@
 - 프론트엔드 UI, API Route, 보일러플레이트: Claude Code 담당
 - PostgreSQL 함수, ETL 스크립트, dbt 모델 설계: 사용자 담당 → 스캐폴딩만 생성
 
-## 피드백 루프
+## 테스트 전략
 
+- API Route 테스트: Vitest로 트랜잭션/정합성 검증 (UI 테스트는 생략)
+- API Route 작성 시 반드시 테스트 함께 작성
 - TypeScript 변경 후 `npm run build`로 type check
-- API Route 변경 후 rpc 함수 동작 확인
-- Supabase 마이그레이션 후 로컬 테스트
+- Supabase 마이그레이션 후 동작 확인
 
 ## 환경변수
 
