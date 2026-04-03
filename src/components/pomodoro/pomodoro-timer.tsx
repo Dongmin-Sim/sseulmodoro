@@ -15,6 +15,7 @@ import { useTimer } from "./use-timer";
 import { TimerDisplay } from "./timer-display";
 import { TimerControls } from "./timer-controls";
 import { DurationSelector } from "./duration-selector";
+import { startSession } from "@/lib/api/sessions";
 
 function sendNotification(title: string, body: string) {
   if (typeof window === "undefined" || !("Notification" in window)) return;
@@ -35,6 +36,8 @@ export function PomodoroTimer() {
   const [durationLabel, setDurationLabel] = useState("25분");
   const [showAbandonDialog, setShowAbandonDialog] = useState(false);
   const [earnedPoints, setEarnedPoints] = useState<number | null>(null);
+  const [sessionId, setSessionId] = useState<number | null>(null);
+  const [isStarting, setIsStarting] = useState(false);
 
   const handleComplete = useCallback(() => {
     setEarnedPoints(10);
@@ -51,19 +54,29 @@ export function PomodoroTimer() {
     setDurationLabel(label);
   };
 
-  const handleStart = () => {
+  const handleStart = async () => {
     setEarnedPoints(null);
+    setIsStarting(true);
 
-    // 시작 전 알림 권한 미리 요청
-    if (
-      typeof window !== "undefined" &&
-      "Notification" in window &&
-      Notification.permission === "default"
-    ) {
-      Notification.requestPermission();
+    try {
+      const session = await startSession(durationMinutes);
+      setSessionId(session.sessionId);
+
+      // 시작 전 알림 권한 미리 요청
+      if (
+        typeof window !== "undefined" &&
+        "Notification" in window &&
+        Notification.permission === "default"
+      ) {
+        Notification.requestPermission();
+      }
+
+      timer.start();
+    } catch (error) {
+      console.error("Failed to start session:", error);
+    } finally {
+      setIsStarting(false);
     }
-
-    timer.start();
   };
 
   const handleAbandonRequest = () => {
@@ -116,6 +129,7 @@ export function PomodoroTimer() {
           onResume={timer.resume}
           onAbandon={handleAbandonRequest}
           onReset={handleReset}
+          disabled={isStarting}
         />
       </CardContent>
 
