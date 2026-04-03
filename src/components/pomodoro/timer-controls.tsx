@@ -22,7 +22,7 @@ export function TimerControls({
 }: TimerControlsProps) {
   if (status === "idle") {
     return (
-      <Button size="lg" className="w-40" onClick={onStart}>
+      <Button size="lg" className="w-40 h-11" onClick={onStart}>
         시작
       </Button>
     );
@@ -31,10 +31,10 @@ export function TimerControls({
   if (status === "running") {
     return (
       <div className="flex gap-3">
-        <Button size="lg" variant="secondary" className="w-28" onClick={onPause}>
+        <Button size="lg" variant="secondary" className="w-28 h-11" onClick={onPause}>
           일시정지
         </Button>
-        <Button size="lg" variant="destructive" className="w-28" onClick={onAbandon}>
+        <Button size="lg" variant="destructive" className="w-28 h-11" onClick={onAbandon}>
           포기
         </Button>
       </div>
@@ -44,10 +44,10 @@ export function TimerControls({
   if (status === "paused") {
     return (
       <div className="flex gap-3">
-        <Button size="lg" className="w-28" onClick={onResume}>
+        <Button size="lg" className="w-28 h-11" onClick={onResume}>
           이어하기
         </Button>
-        <Button size="lg" variant="destructive" className="w-28" onClick={onAbandon}>
+        <Button size="lg" variant="destructive" className="w-28 h-11" onClick={onAbandon}>
           포기
         </Button>
       </div>
@@ -56,7 +56,7 @@ export function TimerControls({
 
   // completed
   return (
-    <Button size="lg" className="w-40" onClick={onReset}>
+    <Button size="lg" className="w-40 h-11" onClick={onReset}>
       다시 시작
     </Button>
   );
