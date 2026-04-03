@@ -24,7 +24,7 @@ export async function POST(
     p_user_id: TEMP_USER_ID,
   });
 
-  if (error) {
+  if (error || !data) {
     console.error("start_next_pomodoro rpc error:", error);
     return NextResponse.json<ApiError>(
       { error: "Failed to start next pomodoro" },

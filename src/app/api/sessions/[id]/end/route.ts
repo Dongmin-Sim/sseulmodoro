@@ -24,7 +24,7 @@ export async function POST(
     p_user_id: TEMP_USER_ID,
   });
 
-  if (error) {
+  if (error || !data) {
     console.error("end_session rpc error:", error);
     return NextResponse.json<ApiError>(
       { error: "Failed to end session" },
