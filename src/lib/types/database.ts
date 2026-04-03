@@ -230,7 +230,19 @@ export interface Database {
         };
       };
     };
-    Functions: Record<string, never>;
+    Functions: {
+      start_session: {
+        Args: {
+          p_user_id: string;
+          p_focus_minutes: number;
+          p_short_break_minutes: number;
+          p_long_break_minutes: number;
+          p_target_count: number;
+          p_character_instance_id?: number | null;
+        };
+        Returns: Json;
+      };
+    };
     Enums: Record<string, never>;
   };
 }
