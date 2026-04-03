@@ -10,6 +10,7 @@ interface TimerControlsProps {
   onResume: () => void;
   onAbandon: () => void;
   onReset: () => void;
+  disabled?: boolean;
 }
 
 export function TimerControls({
@@ -19,11 +20,12 @@ export function TimerControls({
   onResume,
   onAbandon,
   onReset,
+  disabled,
 }: TimerControlsProps) {
   if (status === "idle") {
     return (
-      <Button size="lg" className="w-40 h-11" onClick={onStart}>
-        시작
+      <Button size="lg" className="w-40 h-11" onClick={onStart} disabled={disabled}>
+        {disabled ? "준비 중..." : "시작"}
       </Button>
     );
   }
