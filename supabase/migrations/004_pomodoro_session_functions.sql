@@ -208,7 +208,7 @@ BEGIN
       'pomodoro_reward',
       v_points_earned,
       v_new_balance,
-      p_session_id::TEXT,
+      p_session_id,
       'pomodoro_session',
       v_now
     );

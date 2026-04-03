@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "gen:types": "npx supabase gen types typescript --local > src/lib/types/database.ts",
-    "db:reset": "npx supabase db reset && npm run gen:types"
+    "db:reset": "npx supabase db reset && npm run gen:types",
+    "dev:rerun": "npm run db:reset && npm run dev"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",

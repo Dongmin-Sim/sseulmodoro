@@ -15,7 +15,8 @@ import { useTimer } from "./use-timer";
 import { TimerDisplay } from "./timer-display";
 import { TimerControls } from "./timer-controls";
 import { DurationSelector } from "./duration-selector";
-import { startSession } from "@/lib/api/sessions";
+import { startSession, endSession } from "@/lib/api/sessions";
+import { completePomodoro, stopPomodoro } from "@/lib/api/pomodoros";
 
 function sendNotification(title: string, body: string) {
   if (typeof window === "undefined" || !("Notification" in window)) return;
@@ -34,15 +35,30 @@ function sendNotification(title: string, body: string) {
 export function PomodoroTimer() {
   const [durationMinutes, setDurationMinutes] = useState(25);
   const [durationLabel, setDurationLabel] = useState("25분");
-  const [showAbandonDialog, setShowAbandonDialog] = useState(false);
+  const [showStopDialog, setShowStopDialog] = useState(false);
   const [earnedPoints, setEarnedPoints] = useState<number | null>(null);
   const [sessionId, setSessionId] = useState<number | null>(null);
+  const [pomodoroId, setPomodoroId] = useState<number | null>(null);
   const [isStarting, setIsStarting] = useState(false);
 
-  const handleComplete = useCallback(() => {
-    setEarnedPoints(10);
-    sendNotification("포모도로 완료!", `${durationLabel} 집중 완료! +10 포인트`);
-  }, [durationLabel]);
+  const handleComplete = useCallback(async () => {
+    if (!pomodoroId || !sessionId) return;
+
+    try {
+      await completePomodoro(pomodoroId);
+      // TODO: 멀티 포모도로 UI 구현 시, 여기서 endSession을 자동 호출하지 않고
+      // 사용자가 "다음 포모도로" 또는 "세션 종료"를 선택하도록 변경
+      const result = await endSession(sessionId);
+      setEarnedPoints(result.pointsEarned);
+      sendNotification(
+        "포모도로 완료!",
+        `${durationLabel} 집중 완료! +${result.pointsEarned} 포인트`,
+      );
+    } catch (error) {
+      console.error("Failed to complete pomodoro:", error);
+      sendNotification("포모도로 완료!", `${durationLabel} 집중 완료!`);
+    }
+  }, [pomodoroId, sessionId, durationLabel]);
 
   const timer = useTimer({
     durationMinutes,
@@ -59,8 +75,10 @@ export function PomodoroTimer() {
     setIsStarting(true);
 
     try {
-      const session = await startSession(durationMinutes);
+      // Dev 테스트 옵션(10초, 30초)은 소수점 분이므로 올림하여 API 전달
+      const session = await startSession(Math.ceil(durationMinutes));
       setSessionId(session.sessionId);
+      setPomodoroId(session.pomodoroId);
 
       // 시작 전 알림 권한 미리 요청
       if (
@@ -79,13 +97,25 @@ export function PomodoroTimer() {
     }
   };
 
-  const handleAbandonRequest = () => {
-    setShowAbandonDialog(true);
+  const handleStopRequest = () => {
+    setShowStopDialog(true);
   };
 
-  const handleAbandonConfirm = () => {
-    setShowAbandonDialog(false);
+  // TODO: 멀티 포모도로 UI 구현 시, 중지 후 endSession 자동 호출을 제거하고
+  // "다음 포모도로" 또는 "세션 종료" 선택지를 제공하도록 변경
+  const handleStopConfirm = async () => {
+    setShowStopDialog(false);
     setEarnedPoints(null);
+
+    if (pomodoroId && sessionId) {
+      try {
+        await stopPomodoro(pomodoroId);
+        await endSession(sessionId);
+      } catch (error) {
+        console.error("Failed to stop pomodoro:", error);
+      }
+    }
+
     timer.reset();
   };
 
@@ -127,29 +157,29 @@ export function PomodoroTimer() {
           onStart={handleStart}
           onPause={timer.pause}
           onResume={timer.resume}
-          onAbandon={handleAbandonRequest}
+          onStop={handleStopRequest}
           onReset={handleReset}
           disabled={isStarting}
         />
       </CardContent>
 
-      <Dialog open={showAbandonDialog} onOpenChange={setShowAbandonDialog}>
+      <Dialog open={showStopDialog} onOpenChange={setShowStopDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>포모도로를 포기할까요?</DialogTitle>
+            <DialogTitle>포모도로를 중지할까요?</DialogTitle>
             <DialogDescription>
-              포기하면 이번 세션의 포인트를 받을 수 없습니다.
+              중지하면 이번 포모도로는 완료로 인정되지 않습니다.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button
               variant="secondary"
-              onClick={() => setShowAbandonDialog(false)}
+              onClick={() => setShowStopDialog(false)}
             >
               계속하기
             </Button>
-            <Button variant="destructive" onClick={handleAbandonConfirm}>
-              포기
+            <Button variant="destructive" onClick={handleStopConfirm}>
+              중지
             </Button>
           </DialogFooter>
         </DialogContent>
