@@ -11,13 +11,26 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useTimer } from "./use-timer";
 import { TimerDisplay } from "./timer-display";
 import { TimerControls } from "./timer-controls";
 import { SessionSettings } from "./session-settings";
 import { SESSION_DEFAULTS } from "@/lib/constants";
-import { startSession, endSession } from "@/lib/api/sessions";
+import {
+  startSession,
+  endSession,
+  startNextPomodoro,
+} from "@/lib/api/sessions";
 import { completePomodoro, stopPomodoro } from "@/lib/api/pomodoros";
+
+type SessionPhase =
+  | "idle"
+  | "focusing"
+  | "pomodoro_done"
+  | "breaking"
+  | "break_done"
+  | "session_completed";
 
 function sendNotification(title: string, body: string) {
   if (typeof window === "undefined" || !("Notification" in window)) return;
@@ -33,7 +46,56 @@ function sendNotification(title: string, body: string) {
   }
 }
 
+function CycleProgress({
+  completed,
+  target,
+  showCurrent,
+}: {
+  completed: number;
+  target: number;
+  showCurrent?: boolean;
+}) {
+  return (
+    <div className="flex gap-1 items-center">
+      {Array.from({ length: target }, (_, i) => {
+        const isCompleted = i < completed;
+        const isCurrent = showCurrent && i === completed;
+        return (
+          <div key={i} className="flex items-center gap-1">
+            <span
+              className={cn(
+                "text-lg",
+                isCompleted && "opacity-100",
+                isCurrent && "opacity-100",
+                !isCompleted && !isCurrent && "opacity-30",
+              )}
+            >
+              🍅
+            </span>
+            {i < target - 1 && (
+              <span
+                className={cn(
+                  "text-xs",
+                  i < completed ? "opacity-60" : "opacity-30",
+                )}
+              >
+                ·
+              </span>
+            )}
+          </div>
+        );
+      })}
+      {target > 1 && (
+        <span className={cn("text-sm", completed >= target ? "opacity-100" : "opacity-30")}>
+          ☕
+        </span>
+      )}
+    </div>
+  );
+}
+
 export function PomodoroTimer() {
+  // 세션 설정
   const [focusMinutes, setFocusMinutes] = useState(25);
   const [focusLabel, setFocusLabel] = useState("25분");
   const [shortBreakMinutes, setShortBreakMinutes] = useState<number>(
@@ -45,39 +107,63 @@ export function PomodoroTimer() {
   const [targetCount, setTargetCount] = useState<number>(
     SESSION_DEFAULTS.targetCount,
   );
-  const [showStopDialog, setShowStopDialog] = useState(false);
-  const [earnedPoints, setEarnedPoints] = useState<number | null>(null);
+
+  // 세션 상태
+  const [sessionPhase, setSessionPhase] = useState<SessionPhase>("idle");
+  const [completedCount, setCompletedCount] = useState(0);
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [pomodoroId, setPomodoroId] = useState<number | null>(null);
-  const [isStarting, setIsStarting] = useState(false);
+  const [earnedPoints, setEarnedPoints] = useState<number | null>(null);
+
+  // UI 상태
+  const [showStopDialog, setShowStopDialog] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
-  const [isCompleting, setIsCompleting] = useState(false);
 
-  const handleComplete = useCallback(async () => {
-    if (!pomodoroId || !sessionId || isCompleting) return;
-    setIsCompleting(true);
+  const handleTimerComplete = useCallback(async () => {
+    if (sessionPhase === "focusing") {
+      if (!pomodoroId || !sessionId) return;
+      try {
+        const result = await completePomodoro(pomodoroId);
+        setCompletedCount(result.completedCount);
 
-    try {
-      await completePomodoro(pomodoroId);
-      // TODO: 멀티 포모도로 UI 구현 시, 여기서 endSession을 자동 호출하지 않고
-      // 사용자가 "다음 포모도로" 또는 "세션 종료"를 선택하도록 변경
-      const result = await endSession(sessionId);
-      setEarnedPoints(result.pointsEarned);
-      sendNotification(
-        "포모도로 완료!",
-        `${focusLabel} 집중 완료! +${result.pointsEarned} 포인트`,
-      );
-    } catch (error) {
-      console.error("Failed to complete pomodoro:", error);
-      sendNotification("포모도로 완료!", `${focusLabel} 집중 완료!`);
-    } finally {
-      setIsCompleting(false);
+        // 모든 사이클 완료 후에도 휴식 제안 (마지막은 긴 휴식)
+        setSessionPhase("pomodoro_done");
+        sendNotification(
+          "포모도로 완료!",
+          `${result.completedCount}/${result.targetCount} 완료. 휴식할까요?`,
+        );
+      } catch (error) {
+        console.error("Failed to complete pomodoro:", error);
+        setSessionPhase("session_completed");
+      }
+    } else if (sessionPhase === "breaking") {
+      if (completedCount >= targetCount) {
+        // 마지막 긴 휴식 완료 → 세션 자동 종료
+        if (!sessionId) return;
+        try {
+          const endResult = await endSession(sessionId);
+          setEarnedPoints(endResult.pointsEarned);
+          setSessionPhase("session_completed");
+          sendNotification(
+            "세션 완료!",
+            `${completedCount}회 집중 완료! +${endResult.pointsEarned} 포인트`,
+          );
+        } catch (error) {
+          console.error("Failed to end session:", error);
+          setSessionPhase("session_completed");
+        }
+      } else {
+        // 중간 짧은 휴식 완료 → 다음 집중 제안
+        setSessionPhase("break_done");
+        sendNotification("휴식 끝!", "다음 집중을 시작할까요?");
+      }
     }
-  }, [pomodoroId, sessionId, focusLabel, isCompleting]);
+  }, [sessionPhase, pomodoroId, sessionId, completedCount, targetCount]);
 
   const timer = useTimer({
     durationMinutes: focusMinutes,
-    onComplete: handleComplete,
+    onComplete: handleTimerComplete,
   });
 
   const handleFocusChange = (minutes: number, label: string) => {
@@ -87,20 +173,21 @@ export function PomodoroTimer() {
 
   const handleStart = async () => {
     setEarnedPoints(null);
-    setIsStarting(true);
+    setCompletedCount(0);
+    setIsLoading(true);
 
     try {
-      // Dev 테스트 옵션(10초, 30초)은 소수점 분이므로 올림하여 API 전달
+      // Dev 테스트 옵션(3초 등)은 소수점 분이므로 올림하여 API 전달
+      // 클라이언트 타이머는 실제 소수점 값으로 동작
       const session = await startSession({
         focusMinutes: Math.ceil(focusMinutes),
-        shortBreakMinutes,
-        longBreakMinutes,
+        shortBreakMinutes: Math.ceil(shortBreakMinutes),
+        longBreakMinutes: Math.ceil(longBreakMinutes),
         targetCount,
       });
       setSessionId(session.sessionId);
       setPomodoroId(session.pomodoroId);
 
-      // 시작 전 알림 권한 미리 요청
       if (
         typeof window !== "undefined" &&
         "Notification" in window &&
@@ -110,10 +197,70 @@ export function PomodoroTimer() {
       }
 
       timer.start();
+      setSessionPhase("focusing");
     } catch (error) {
       console.error("Failed to start session:", error);
     } finally {
-      setIsStarting(false);
+      setIsLoading(false);
+    }
+  };
+
+  const isLastBreakLong = completedCount >= targetCount;
+  const currentBreakMinutes = isLastBreakLong
+    ? longBreakMinutes
+    : shortBreakMinutes;
+
+  const handleStartBreak = () => {
+    timer.resetWithDuration(currentBreakMinutes);
+    timer.start();
+    setSessionPhase("breaking");
+  };
+
+  const handleSkipBreak = async () => {
+    timer.resetWithDuration(focusMinutes);
+    if (isLastBreakLong) {
+      // 긴 휴식 건너뛰기 → 바로 세션 종료
+      if (!sessionId) return;
+      try {
+        const endResult = await endSession(sessionId);
+        setEarnedPoints(endResult.pointsEarned);
+        setSessionPhase("session_completed");
+      } catch (error) {
+        console.error("Failed to end session:", error);
+        setSessionPhase("session_completed");
+      }
+    } else {
+      setSessionPhase("break_done");
+    }
+  };
+
+  const handleStartNextFocus = async () => {
+    if (!sessionId) return;
+    setIsLoading(true);
+    try {
+      const result = await startNextPomodoro(sessionId);
+      setPomodoroId(result.pomodoroId);
+      timer.resetWithDuration(focusMinutes);
+      timer.start();
+      setSessionPhase("focusing");
+    } catch (error) {
+      console.error("Failed to start next pomodoro:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEndSessionEarly = async () => {
+    if (!sessionId) return;
+    setIsLoading(true);
+    try {
+      const endResult = await endSession(sessionId);
+      setEarnedPoints(endResult.pointsEarned);
+      setSessionPhase("session_completed");
+    } catch (error) {
+      console.error("Failed to end session:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -121,94 +268,191 @@ export function PomodoroTimer() {
     setShowStopDialog(true);
   };
 
-  // TODO: 멀티 포모도로 UI 구현 시, 중지 후 endSession 자동 호출을 제거하고
-  // "다음 포모도로" 또는 "세션 종료" 선택지를 제공하도록 변경
   const handleStopConfirm = async () => {
     if (isStopping) return;
     setIsStopping(true);
     setShowStopDialog(false);
-    setEarnedPoints(null);
-
-    if (pomodoroId && sessionId) {
+    timer.resetWithDuration(focusMinutes);
+    if (sessionId) {
       try {
-        await stopPomodoro(pomodoroId);
-        await endSession(sessionId);
+        if (sessionPhase === "focusing" && pomodoroId) {
+          await stopPomodoro(pomodoroId);
+        }
+        const endResult = await endSession(sessionId);
+        setEarnedPoints(endResult.pointsEarned);
+        setSessionPhase("session_completed");
       } catch (error) {
-        console.error("Failed to stop pomodoro:", error);
+        console.error("Failed to stop:", error);
+        setSessionPhase("session_completed");
       }
     }
-
-    timer.reset();
     setIsStopping(false);
   };
 
-  const handleReset = () => {
+  const handleResetSession = () => {
+    timer.resetWithDuration(focusMinutes);
+    setSessionPhase("idle");
+    setCompletedCount(0);
+    setSessionId(null);
+    setPomodoroId(null);
     setEarnedPoints(null);
-    timer.reset();
   };
 
-  const isIdle = timer.status === "idle";
+  const isTimerPhase = sessionPhase === "focusing" || sessionPhase === "breaking";
+  const isBreak = sessionPhase === "breaking";
 
   return (
     <Card className="w-full max-w-sm mx-auto">
       <CardContent className="flex flex-col items-center gap-6 pt-6">
-        {isIdle && (
-          <SessionSettings
-            focusMinutes={focusMinutes}
-            shortBreakMinutes={shortBreakMinutes}
-            longBreakMinutes={longBreakMinutes}
-            targetCount={targetCount}
-            onFocusChange={handleFocusChange}
-            onShortBreakChange={setShortBreakMinutes}
-            onLongBreakChange={setLongBreakMinutes}
-            onTargetCountChange={setTargetCount}
-          />
+        {/* idle: 세션 설정 */}
+        {sessionPhase === "idle" && (
+          <>
+            <SessionSettings
+              focusMinutes={focusMinutes}
+              shortBreakMinutes={shortBreakMinutes}
+              longBreakMinutes={longBreakMinutes}
+              targetCount={targetCount}
+              onFocusChange={handleFocusChange}
+              onShortBreakChange={setShortBreakMinutes}
+              onLongBreakChange={setLongBreakMinutes}
+              onTargetCountChange={setTargetCount}
+            />
+            <Button
+              size="lg"
+              className="w-40 h-11"
+              onClick={handleStart}
+              disabled={isLoading}
+            >
+              {isLoading ? "준비 중..." : "시작"}
+            </Button>
+          </>
         )}
 
-        {!isIdle && (
+        {/* focusing / breaking: 타이머 */}
+        {isTimerPhase && (
           <>
+            <CycleProgress completed={completedCount} target={targetCount} showCurrent />
             <TimerDisplay
               display={timer.display}
               progress={timer.progress}
               status={timer.status}
+              label={
+                isBreak
+                  ? `☕ ${isLastBreakLong ? "긴" : "짧은"} 휴식`
+                  : `🍅 ${completedCount + 1} / ${targetCount} 집중 중`
+              }
+              progressColor={isBreak ? "text-blue-500" : undefined}
             />
-
-            {timer.status !== "completed" && (
-              <p className="text-sm text-muted-foreground">
-                {focusLabel} 집중 · {shortBreakMinutes}분 휴식
-              </p>
+            <TimerControls
+              status={timer.status}
+              onStart={timer.start}
+              onPause={timer.pause}
+              onResume={timer.resume}
+              onStop={handleStopRequest}
+              onReset={handleResetSession}
+              disabled={false}
+            />
+            {isBreak && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSkipBreak}
+              >
+                건너뛰기
+              </Button>
             )}
           </>
         )}
 
-        {earnedPoints !== null && timer.status === "completed" && (
-          <div className="text-center">
-            <p className="text-2xl font-bold text-green-500">
-              +{earnedPoints} 포인트
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {focusLabel} 집중 완료
-            </p>
-          </div>
+        {/* pomodoro_done: 중간 완료 → 휴식/종료 선택 */}
+        {sessionPhase === "pomodoro_done" && (
+          <>
+            <CycleProgress completed={completedCount} target={targetCount} />
+            <div className="text-center">
+              <p className="text-lg font-semibold">
+                🍅 {completedCount} / {targetCount} 완료!
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {currentBreakMinutes}분 {isLastBreakLong ? "긴 " : ""}휴식할까요?
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <Button size="lg" className="h-11" onClick={handleStartBreak}>
+                휴식 시작
+              </Button>
+              <Button
+                size="lg"
+                variant="secondary"
+                className="h-11"
+                onClick={handleEndSessionEarly}
+                disabled={isLoading}
+              >
+                세션 종료
+              </Button>
+            </div>
+          </>
         )}
 
-        <TimerControls
-          status={timer.status}
-          onStart={handleStart}
-          onPause={timer.pause}
-          onResume={timer.resume}
-          onStop={handleStopRequest}
-          onReset={handleReset}
-          disabled={isStarting}
-        />
+        {/* break_done: 휴식 끝 → 다음 집중/종료 선택 */}
+        {sessionPhase === "break_done" && (
+          <>
+            <CycleProgress completed={completedCount} target={targetCount} />
+            <div className="text-center">
+              <p className="text-lg font-semibold">☕ 휴식 끝!</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                다음: {completedCount + 1}회차 집중 {focusLabel}
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                size="lg"
+                className="h-11"
+                onClick={handleStartNextFocus}
+                disabled={isLoading}
+              >
+                {isLoading ? "준비 중..." : "집중 시작"}
+              </Button>
+              <Button
+                size="lg"
+                variant="secondary"
+                className="h-11"
+                onClick={handleEndSessionEarly}
+                disabled={isLoading}
+              >
+                세션 종료
+              </Button>
+            </div>
+          </>
+        )}
+
+        {/* session_completed: 세션 완료 */}
+        {sessionPhase === "session_completed" && (
+          <>
+            {earnedPoints !== null && (
+              <div className="text-center">
+                <p className="text-2xl font-bold text-green-500">
+                  +{earnedPoints} 포인트
+                </p>
+              </div>
+            )}
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">
+                {completedCount} / {targetCount} 사이클 완료
+              </p>
+            </div>
+            <Button size="lg" className="w-40 h-11" onClick={handleResetSession}>
+              다시 시작
+            </Button>
+          </>
+        )}
       </CardContent>
 
       <Dialog open={showStopDialog} onOpenChange={setShowStopDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>포모도로를 중지할까요?</DialogTitle>
+            <DialogTitle>세션을 중지할까요?</DialogTitle>
             <DialogDescription>
-              중지하면 이번 포모도로는 완료로 인정되지 않습니다.
+              중지하면 현재 진행 중인 포모도로는 완료로 인정되지 않습니다.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
