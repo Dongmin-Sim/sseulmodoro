@@ -16,6 +16,7 @@ export function useTimer({ durationMinutes, onComplete }: UseTimerOptions) {
   const pausedRemainingRef = useRef<number>(durationMinutes * 60 * 1000);
   const rafRef = useRef<number | null>(null);
   const completedRef = useRef(false);
+  const activeDurationRef = useRef(durationMinutes);
   // onComplete를 ref로 관리하여 RAF 루프에서 항상 최신 콜백 참조
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
@@ -68,15 +69,28 @@ export function useTimer({ durationMinutes, onComplete }: UseTimerOptions) {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     startTimeRef.current = null;
     pausedRemainingRef.current = durationMinutes * 60 * 1000;
+    activeDurationRef.current = durationMinutes;
     completedRef.current = false;
     setRemainingMs(durationMinutes * 60 * 1000);
     setStatus("idle");
   }, [durationMinutes]);
 
+  const resetWithDuration = useCallback((newMinutes: number) => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    startTimeRef.current = null;
+    const ms = newMinutes * 60 * 1000;
+    pausedRemainingRef.current = ms;
+    activeDurationRef.current = newMinutes;
+    completedRef.current = false;
+    setRemainingMs(ms);
+    setStatus("idle");
+  }, []);
+
   // durationMinutes 변경 시 idle 상태면 리셋
   useEffect(() => {
     if (status === "idle") {
       pausedRemainingRef.current = durationMinutes * 60 * 1000;
+      activeDurationRef.current = durationMinutes;
       setRemainingMs(durationMinutes * 60 * 1000);
     }
   }, [durationMinutes, status]);
@@ -92,7 +106,7 @@ export function useTimer({ durationMinutes, onComplete }: UseTimerOptions) {
   const seconds = Math.floor((remainingMs % 60000) / 1000);
   const display = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
   const progress =
-    1 - remainingMs / (durationMinutes * 60 * 1000);
+    1 - remainingMs / (activeDurationRef.current * 60 * 1000);
 
   return {
     status,
@@ -103,5 +117,6 @@ export function useTimer({ durationMinutes, onComplete }: UseTimerOptions) {
     pause,
     resume,
     reset,
+    resetWithDuration,
   };
 }

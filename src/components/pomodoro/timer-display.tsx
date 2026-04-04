@@ -7,12 +7,14 @@ interface TimerDisplayProps {
   display: string;
   progress: number;
   status: TimerStatus;
+  label?: string;
+  progressColor?: string;
 }
 
 const CIRCLE_RADIUS = 120;
 const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
 
-export function TimerDisplay({ display, progress, status }: TimerDisplayProps) {
+export function TimerDisplay({ display, progress, status, label, progressColor }: TimerDisplayProps) {
   const strokeDashoffset = CIRCLE_CIRCUMFERENCE * (1 - progress);
 
   return (
@@ -47,7 +49,7 @@ export function TimerDisplay({ display, progress, status }: TimerDisplayProps) {
           className={cn(
             status !== "running" &&
               "transition-[stroke-dashoffset] duration-500 ease-linear",
-            status === "running" && "text-primary",
+            status === "running" && (progressColor || "text-primary"),
             status === "paused" && "text-muted-foreground",
             status === "completed" && "text-green-500"
           )}
@@ -63,10 +65,14 @@ export function TimerDisplay({ display, progress, status }: TimerDisplayProps) {
           {display}
         </span>
         <span className="text-sm text-muted-foreground">
-          {status === "idle" && "준비"}
-          {status === "running" && "집중 중"}
-          {status === "paused" && "일시정지"}
-          {status === "completed" && "완료!"}
+          {label || (
+            <>
+              {status === "idle" && "준비"}
+              {status === "running" && "집중 중"}
+              {status === "paused" && "일시정지"}
+              {status === "completed" && "완료!"}
+            </>
+          )}
         </span>
       </div>
     </div>
