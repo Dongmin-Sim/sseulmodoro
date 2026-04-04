@@ -4,10 +4,7 @@
  */
 export const TEMP_USER_ID = "00000000-0000-0000-0000-000000000001";
 
-/**
- * 세션 기본값 (설정 UI 미구현 상태)
- * TODO: 세션 설정 UI(TASK-009) 구현 후 사용자 입력값으로 대체
- */
+/** 세션 기본값 (설정 UI 초기값 + API 미전달 시 fallback) */
 export const SESSION_DEFAULTS = {
   targetCount: 4,
   shortBreakMinutes: 5,

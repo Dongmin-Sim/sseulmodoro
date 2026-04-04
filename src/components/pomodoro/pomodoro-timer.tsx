@@ -14,7 +14,8 @@ import { Button } from "@/components/ui/button";
 import { useTimer } from "./use-timer";
 import { TimerDisplay } from "./timer-display";
 import { TimerControls } from "./timer-controls";
-import { DurationSelector } from "./duration-selector";
+import { SessionSettings } from "./session-settings";
+import { SESSION_DEFAULTS } from "@/lib/constants";
 import { startSession, endSession } from "@/lib/api/sessions";
 import { completePomodoro, stopPomodoro } from "@/lib/api/pomodoros";
 
@@ -33,8 +34,17 @@ function sendNotification(title: string, body: string) {
 }
 
 export function PomodoroTimer() {
-  const [durationMinutes, setDurationMinutes] = useState(25);
-  const [durationLabel, setDurationLabel] = useState("25분");
+  const [focusMinutes, setFocusMinutes] = useState(25);
+  const [focusLabel, setFocusLabel] = useState("25분");
+  const [shortBreakMinutes, setShortBreakMinutes] = useState<number>(
+    SESSION_DEFAULTS.shortBreakMinutes,
+  );
+  const [longBreakMinutes, setLongBreakMinutes] = useState<number>(
+    SESSION_DEFAULTS.longBreakMinutes,
+  );
+  const [targetCount, setTargetCount] = useState<number>(
+    SESSION_DEFAULTS.targetCount,
+  );
   const [showStopDialog, setShowStopDialog] = useState(false);
   const [earnedPoints, setEarnedPoints] = useState<number | null>(null);
   const [sessionId, setSessionId] = useState<number | null>(null);
@@ -52,22 +62,22 @@ export function PomodoroTimer() {
       setEarnedPoints(result.pointsEarned);
       sendNotification(
         "포모도로 완료!",
-        `${durationLabel} 집중 완료! +${result.pointsEarned} 포인트`,
+        `${focusLabel} 집중 완료! +${result.pointsEarned} 포인트`,
       );
     } catch (error) {
       console.error("Failed to complete pomodoro:", error);
-      sendNotification("포모도로 완료!", `${durationLabel} 집중 완료!`);
+      sendNotification("포모도로 완료!", `${focusLabel} 집중 완료!`);
     }
-  }, [pomodoroId, sessionId, durationLabel]);
+  }, [pomodoroId, sessionId, focusLabel]);
 
   const timer = useTimer({
-    durationMinutes,
+    durationMinutes: focusMinutes,
     onComplete: handleComplete,
   });
 
-  const handleDurationSelect = (minutes: number, label: string) => {
-    setDurationMinutes(minutes);
-    setDurationLabel(label);
+  const handleFocusChange = (minutes: number, label: string) => {
+    setFocusMinutes(minutes);
+    setFocusLabel(label);
   };
 
   const handleStart = async () => {
@@ -76,7 +86,12 @@ export function PomodoroTimer() {
 
     try {
       // Dev 테스트 옵션(10초, 30초)은 소수점 분이므로 올림하여 API 전달
-      const session = await startSession(Math.ceil(durationMinutes));
+      const session = await startSession({
+        focusMinutes: Math.ceil(focusMinutes),
+        shortBreakMinutes,
+        longBreakMinutes,
+        targetCount,
+      });
       setSessionId(session.sessionId);
       setPomodoroId(session.pomodoroId);
 
@@ -124,22 +139,39 @@ export function PomodoroTimer() {
     timer.reset();
   };
 
-  const isTimerActive = timer.status === "running" || timer.status === "paused";
+  const isIdle = timer.status === "idle";
 
   return (
     <Card className="w-full max-w-sm mx-auto">
       <CardContent className="flex flex-col items-center gap-6 pt-6">
-        <DurationSelector
-          selected={durationMinutes}
-          onSelect={handleDurationSelect}
-          disabled={isTimerActive}
-        />
+        {isIdle && (
+          <SessionSettings
+            focusMinutes={focusMinutes}
+            shortBreakMinutes={shortBreakMinutes}
+            longBreakMinutes={longBreakMinutes}
+            targetCount={targetCount}
+            onFocusChange={handleFocusChange}
+            onShortBreakChange={setShortBreakMinutes}
+            onLongBreakChange={setLongBreakMinutes}
+            onTargetCountChange={setTargetCount}
+          />
+        )}
 
-        <TimerDisplay
-          display={timer.display}
-          progress={timer.progress}
-          status={timer.status}
-        />
+        {!isIdle && (
+          <>
+            <TimerDisplay
+              display={timer.display}
+              progress={timer.progress}
+              status={timer.status}
+            />
+
+            {timer.status !== "completed" && (
+              <p className="text-sm text-muted-foreground">
+                {focusLabel} 집중 · {shortBreakMinutes}분 휴식
+              </p>
+            )}
+          </>
+        )}
 
         {earnedPoints !== null && timer.status === "completed" && (
           <div className="text-center">
@@ -147,7 +179,7 @@ export function PomodoroTimer() {
               +{earnedPoints} 포인트
             </p>
             <p className="text-sm text-muted-foreground">
-              {durationLabel} 집중 완료
+              {focusLabel} 집중 완료
             </p>
           </div>
         )}
