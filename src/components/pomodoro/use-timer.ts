@@ -16,6 +16,9 @@ export function useTimer({ durationMinutes, onComplete }: UseTimerOptions) {
   const pausedRemainingRef = useRef<number>(durationMinutes * 60 * 1000);
   const rafRef = useRef<number | null>(null);
   const completedRef = useRef(false);
+  // onComplete를 ref로 관리하여 RAF 루프에서 항상 최신 콜백 참조
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   const tick = useCallback(() => {
     if (!startTimeRef.current) return;
@@ -27,12 +30,12 @@ export function useTimer({ durationMinutes, onComplete }: UseTimerOptions) {
     if (remaining <= 0 && !completedRef.current) {
       completedRef.current = true;
       setStatus("completed");
-      onComplete();
+      onCompleteRef.current();
       return;
     }
 
     rafRef.current = requestAnimationFrame(tick);
-  }, [onComplete]);
+  }, []);
 
   const start = useCallback(() => {
     completedRef.current = false;

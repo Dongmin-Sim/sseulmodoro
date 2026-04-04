@@ -19,9 +19,9 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!body.focusMinutes || body.focusMinutes < 1 || body.focusMinutes > 120) {
+  if (!body.focusMinutes || body.focusMinutes <= 0 || body.focusMinutes > 120) {
     return NextResponse.json<ApiError>(
-      { error: "focusMinutes must be between 1 and 120" },
+      { error: "focusMinutes must be greater than 0 and at most 120" },
       { status: 400 },
     );
   }

@@ -63,7 +63,17 @@ BEGIN
       'session_id', v_session_id,
       'pomodoro_id', v_pomodoro_id,
       'focus_minutes', p_focus_minutes,
-      'p_character_instance_id', p_character_instance_id
+      'character_instance_id', p_character_instance_id
+    )
+  );
+
+  INSERT INTO public.activity_log (
+    user_id, event_category, event_type, metadata
+  ) VALUES (
+    p_user_id, 'pomodoro', 'pomodoro_started',
+    jsonb_build_object(
+      'session_id', v_session_id,
+      'pomodoro_id', v_pomodoro_id
     )
   );
 
