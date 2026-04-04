@@ -31,20 +31,20 @@ export async function POST(request: Request) {
 
   if (
     body.shortBreakMinutes !== undefined &&
-    (body.shortBreakMinutes < 1 || body.shortBreakMinutes > 30)
+    (body.shortBreakMinutes <= 0 || body.shortBreakMinutes > 30)
   ) {
     return NextResponse.json<ApiError>(
-      { error: "shortBreakMinutes must be between 1 and 30" },
+      { error: "shortBreakMinutes must be greater than 0 and at most 30" },
       { status: 400 },
     );
   }
 
   if (
     body.longBreakMinutes !== undefined &&
-    (body.longBreakMinutes < 1 || body.longBreakMinutes > 60)
+    (body.longBreakMinutes <= 0 || body.longBreakMinutes > 60)
   ) {
     return NextResponse.json<ApiError>(
-      { error: "longBreakMinutes must be between 1 and 60" },
+      { error: "longBreakMinutes must be greater than 0 and at most 60" },
       { status: 400 },
     );
   }
@@ -52,11 +52,11 @@ export async function POST(request: Request) {
   if (
     body.targetCount !== undefined &&
     (!Number.isInteger(body.targetCount) ||
-      body.targetCount < 1 ||
+      body.targetCount < 2 ||
       body.targetCount > 8)
   ) {
     return NextResponse.json<ApiError>(
-      { error: "targetCount must be an integer between 1 and 8" },
+      { error: "targetCount must be an integer between 2 and 8" },
       { status: 400 },
     );
   }
