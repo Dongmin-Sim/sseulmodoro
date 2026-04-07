@@ -29,12 +29,16 @@
 3. API 클라이언트 래퍼 작성 (`src/lib/api/`)
 4. 페이지/컴포넌트 구현
 5. BE API가 아직 없으면 타입 기반으로 UI 먼저 구현 (연동은 BE 머지 후)
-6. 커밋 → PR → 노션 태스크 업데이트
+6. 커밋
+7. **PR 생성 전 `/design-review` 실행** — 비주얼 QA (간격/색상/일관성 검수, 발견된 문제 수정)
+8. PR → 노션 태스크 업데이트
 
 ## 디자인 시스템
 
+**`DESIGN.md`가 디자인 소스 오브 트루스.** 색상, 타이포, 간격, 컴포넌트 패턴은 DESIGN.md를 따른다.
+
 - **컴포넌트**: shadcn/ui 사용 (Button, Card, Dialog, Input, Label, Badge 등)
-- **스타일**: Tailwind CSS. 인라인 `className` 사용
+- **스타일**: Tailwind CSS. 인라인 `className` 사용. 하드코딩 색상 금지 — 디자인 토큰 사용
 - **조건부 스타일**: `cn()` 유틸리티 (`src/lib/utils.ts`)
 - **레이아웃**: `max-w-sm mx-auto` 모바일 퍼스트
 - **간격**: CardContent에 `gap-6 pt-6`, 버튼 그룹에 `gap-3`
