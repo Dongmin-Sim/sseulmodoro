@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
-import { TEMP_USER_ID } from "@/lib/constants";
+import { getAuthUser } from "@/lib/supabase/auth";
 import type { StartNextPomodoroResponse, ApiError } from "@/lib/types/api";
 
 export async function POST(
@@ -17,11 +17,17 @@ export async function POST(
     );
   }
 
+  if (!(await getAuthUser())) {
+    return NextResponse.json<ApiError>(
+      { error: "Unauthorized" },
+      { status: 401 },
+    );
+  }
+
   const supabase = await createServerClient();
 
   const { data, error } = await supabase.rpc("start_next_pomodoro", {
     p_session_id: sessionId,
-    p_user_id: TEMP_USER_ID,
   });
 
   if (error || !data) {

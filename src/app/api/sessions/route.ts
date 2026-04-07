@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
-import { TEMP_USER_ID, SESSION_DEFAULTS } from "@/lib/constants";
+import { getAuthUser } from "@/lib/supabase/auth";
+import { SESSION_DEFAULTS } from "@/lib/constants";
 import type { StartSessionResponse, ApiError } from "@/lib/types/api";
 
 interface StartSessionRequest {
@@ -19,6 +20,13 @@ export async function POST(request: Request) {
     return NextResponse.json<ApiError>(
       { error: "Invalid request body" },
       { status: 400 },
+    );
+  }
+
+  if (!(await getAuthUser())) {
+    return NextResponse.json<ApiError>(
+      { error: "Unauthorized" },
+      { status: 401 },
     );
   }
 
@@ -64,7 +72,6 @@ export async function POST(request: Request) {
   const supabase = await createServerClient();
 
   const { data, error } = await supabase.rpc("start_session", {
-    p_user_id: TEMP_USER_ID,
     p_focus_minutes: body.focusMinutes,
     p_short_break_minutes:
       body.shortBreakMinutes ?? SESSION_DEFAULTS.shortBreakMinutes,
@@ -73,7 +80,7 @@ export async function POST(request: Request) {
     p_target_count: body.targetCount ?? SESSION_DEFAULTS.targetCount,
   });
 
-  if (error) {
+  if (error || !data) {
     console.error("start_session rpc error:", error);
     return NextResponse.json<ApiError>(
       { error: "Failed to start session" },

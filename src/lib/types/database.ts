@@ -328,27 +328,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      complete_pomodoro: {
-        Args: {
-          p_pomodoro_id: number
-          p_user_id: string
-        }
-        Returns: Json
-      }
-      end_session: {
-        Args: {
-          p_session_id: number
-          p_user_id: string
-        }
-        Returns: Json
-      }
-      start_next_pomodoro: {
-        Args: {
-          p_session_id: number
-          p_user_id: string
-        }
-        Returns: Json
-      }
+      complete_pomodoro: { Args: { p_pomodoro_id: number }; Returns: Json }
+      end_session: { Args: { p_session_id: number }; Returns: Json }
+      start_next_pomodoro: { Args: { p_session_id: number }; Returns: Json }
       start_session: {
         Args: {
           p_character_instance_id?: number
@@ -356,17 +338,10 @@ export type Database = {
           p_long_break_minutes: number
           p_short_break_minutes: number
           p_target_count: number
-          p_user_id: string
         }
         Returns: Json
       }
-      stop_pomodoro: {
-        Args: {
-          p_pomodoro_id: number
-          p_user_id: string
-        }
-        Returns: Json
-      }
+      stop_pomodoro: { Args: { p_pomodoro_id: number }; Returns: Json }
     }
     Enums: {
       [_ in never]: never

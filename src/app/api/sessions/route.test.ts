@@ -1,12 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mockRpc = vi.fn();
+const mockGetAuthUser = vi.fn();
 
-vi.mock("@/lib/supabase/server", () => {
-  return {
-    createServerClient: () => Promise.resolve({ rpc: mockRpc }),
-  };
-});
+vi.mock("@/lib/supabase/server", () => ({
+  createServerClient: () => Promise.resolve({ rpc: mockRpc }),
+}));
+
+vi.mock("@/lib/supabase/auth", () => ({
+  getAuthUser: () => mockGetAuthUser(),
+}));
 
 const { POST } = await import("./route");
 
@@ -21,6 +24,19 @@ function createRequest(body: unknown) {
 describe("POST /api/sessions", () => {
   beforeEach(() => {
     mockRpc.mockReset();
+    mockGetAuthUser.mockReset();
+    mockGetAuthUser.mockResolvedValue({
+      id: "test-user-id",
+      email: "test@test.com",
+    });
+  });
+
+  it("미인증 시 401", async () => {
+    mockGetAuthUser.mockResolvedValue(null);
+    const res = await POST(createRequest({ focusMinutes: 25 }));
+    expect(res.status).toBe(401);
+    const json = await res.json();
+    expect(json.error).toBe("Unauthorized");
   });
 
   it("성공 시 201 + sessionId, pomodoroId 반환", async () => {

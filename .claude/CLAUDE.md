@@ -79,6 +79,21 @@ feature/* → PR → dev 머지 → Vercel Preview (통합 확인)
 - **사용자 담당**: PostgreSQL 함수, ETL 스크립트, dbt 모델 설계
   - Claude Code는 스캐폴딩(시그니처 + TODO 주석)만 생성
 
+### 병렬 세션 운영
+
+BE/FE 세션을 분리하여 병렬 개발한다. 각 세션은 독립된 Claude Code 인스턴스에서 운영.
+
+- **BE 세션** (`/be-session`): API Route, Supabase, 인증, 인프라
+- **FE 세션** (`/fe-session`): 페이지 UI, 컴포넌트, 사용자 인터랙션
+
+세션 분리 규칙:
+
+- 노션 태스크 DB의 `세션` 속성으로 BE/FE 구분
+- `src/lib/types/api.ts`가 공유 인터페이스 (API 계약)
+  - BE가 타입 먼저 정의 → 커밋 → FE가 pull 후 사용
+- 파일 영역 겹침 금지 — 각 세션 지침 참조
+- 물리적 분리: `git worktree`로 디렉토리 분리 (충돌 방지)
+
 ## 코드 규칙
 
 ### 커밋 컨벤션
@@ -117,6 +132,27 @@ feature/* → PR → dev 머지 → Vercel Preview (통합 확인)
 
 - PostgreSQL 함수/ETL/dbt 모델 직접 구현 금지 — 스캐폴딩만 생성
 - .env.local 커밋 금지
+
+## 공식 문서 참조
+
+구현 시 최신 API 사용법을 확인하기 위한 공식 문서 링크.
+
+- **Next.js 16**: https://nextjs.org/docs
+  - App Router: https://nextjs.org/docs/app
+  - Middleware: https://nextjs.org/docs/app/building-your-application/routing/middleware
+  - Route Handlers: https://nextjs.org/docs/app/building-your-application/routing/route-handlers
+- **Supabase Auth (Next.js + SSR)**: https://supabase.com/docs/guides/auth/server-side/nextjs
+  - @supabase/ssr: https://supabase.com/docs/guides/auth/server-side/creating-a-client
+  - Email Auth: https://supabase.com/docs/guides/auth/passwords
+  - RLS: https://supabase.com/docs/guides/database/postgres/row-level-security
+- **React 19**: https://react.dev/reference/react
+
+| 패키지 | 버전 |
+|--------|------|
+| next | 16.2.1 |
+| react | 19.2.4 |
+| @supabase/ssr | ^0.10.0 |
+| @supabase/supabase-js | ^2.101.1 |
 
 ## 환경변수
 
