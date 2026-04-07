@@ -1,0 +1,32 @@
+-- =============================================================
+-- complete_pomodoro에 p_note 파라미터 추가
+-- =============================================================
+-- 포모도로 완료 시 한 줄 기록(note)을 함께 저장할 수 있도록
+-- 기존 함수 시그니처를 변경한다.
+--
+-- 변경 사항:
+--   - p_note TEXT DEFAULT NULL 파라미터 추가
+--   - pomodoros.note = p_note UPDATE 추가
+--   - DEFAULT NULL이므로 기존 호출(note 없이)과 하위 호환 유지
+--
+-- 호출 예시:
+--   SELECT public.complete_pomodoro(1, '오늘 집중 잘 됐다');
+--   SELECT public.complete_pomodoro(1);  -- note 없이 (기존 호환)
+
+-- 기존 함수 DROP (시그니처 변경)
+DROP FUNCTION IF EXISTS public.complete_pomodoro(INTEGER);
+
+-- TODO: 사용자 직접 구현
+-- 시그니처:
+--   complete_pomodoro(p_pomodoro_id INTEGER, p_note TEXT DEFAULT NULL)
+--   RETURNS JSON
+--   LANGUAGE plpgsql
+--   SECURITY DEFINER
+--
+-- 구현 요구사항:
+--   1) auth.uid() 검증
+--   2) UPDATE pomodoros SET status='completed', completed_at=v_now, note=p_note
+--      WHERE id=p_pomodoro_id AND user_id=v_user_id AND status='in_progress'
+--   3) UPDATE pomodoro_sessions SET completed_count = completed_count + 1
+--   4) INSERT INTO activity_log (pomodoro_completed 이벤트)
+--   5) RETURN json_build_object('pomodoro_id', ..., 'session_id', ..., 'completed_count', ..., 'target_count', ...)
