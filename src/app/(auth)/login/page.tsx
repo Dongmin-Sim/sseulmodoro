@@ -43,7 +43,7 @@ export default function LoginPage() {
   };
 
   return (
-    <Card className="w-full max-w-sm">
+    <Card className="w-full max-w-sm rounded-2xl" style={{ boxShadow: "0 4px 6px rgba(45,42,38,0.07), 0 2px 4px rgba(45,42,38,0.04)" }}>
       <CardContent className="pt-8 pb-6 px-6">
         <form onSubmit={handleSubmit} className="flex flex-col items-center gap-6">
           {/* 캐릭터 */}
