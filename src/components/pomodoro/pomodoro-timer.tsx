@@ -50,9 +50,12 @@ export function PomodoroTimer() {
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [pomodoroId, setPomodoroId] = useState<number | null>(null);
   const [isStarting, setIsStarting] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
 
   const handleComplete = useCallback(async () => {
-    if (!pomodoroId || !sessionId) return;
+    if (!pomodoroId || !sessionId || isCompleting) return;
+    setIsCompleting(true);
 
     try {
       await completePomodoro(pomodoroId);
@@ -67,8 +70,10 @@ export function PomodoroTimer() {
     } catch (error) {
       console.error("Failed to complete pomodoro:", error);
       sendNotification("포모도로 완료!", `${focusLabel} 집중 완료!`);
+    } finally {
+      setIsCompleting(false);
     }
-  }, [pomodoroId, sessionId, focusLabel]);
+  }, [pomodoroId, sessionId, focusLabel, isCompleting]);
 
   const timer = useTimer({
     durationMinutes: focusMinutes,
@@ -119,6 +124,8 @@ export function PomodoroTimer() {
   // TODO: 멀티 포모도로 UI 구현 시, 중지 후 endSession 자동 호출을 제거하고
   // "다음 포모도로" 또는 "세션 종료" 선택지를 제공하도록 변경
   const handleStopConfirm = async () => {
+    if (isStopping) return;
+    setIsStopping(true);
     setShowStopDialog(false);
     setEarnedPoints(null);
 
@@ -132,6 +139,7 @@ export function PomodoroTimer() {
     }
 
     timer.reset();
+    setIsStopping(false);
   };
 
   const handleReset = () => {
@@ -210,8 +218,12 @@ export function PomodoroTimer() {
             >
               계속하기
             </Button>
-            <Button variant="destructive" onClick={handleStopConfirm}>
-              중지
+            <Button
+              variant="destructive"
+              onClick={handleStopConfirm}
+              disabled={isStopping}
+            >
+              {isStopping ? "중지 중..." : "중지"}
             </Button>
           </DialogFooter>
         </DialogContent>
