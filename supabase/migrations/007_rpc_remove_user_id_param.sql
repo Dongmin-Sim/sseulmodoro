@@ -91,7 +91,8 @@ $$;
 -- 2. complete_pomodoro
 -- =============================================================
 CREATE OR REPLACE FUNCTION public.complete_pomodoro(
-  p_pomodoro_id  INTEGER
+  p_pomodoro_id  INTEGER,
+  p_note         TEXT DEFAULT NULL
 )
 RETURNS JSON
 LANGUAGE plpgsql
@@ -109,7 +110,7 @@ BEGIN
   END IF;
 
   UPDATE public.pomodoros
-  SET status = 'completed', completed_at = v_now
+  SET status = 'completed', completed_at = v_now, note = p_note
   WHERE id      = p_pomodoro_id
     AND user_id = v_user_id
     AND status  = 'in_progress'
