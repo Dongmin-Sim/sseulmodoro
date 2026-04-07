@@ -147,11 +147,23 @@ describe("POST /api/sessions", () => {
     expect(res.status).toBe(400);
   });
 
-  it("shortBreakMinutes 0 이하 시 400", async () => {
+  it("shortBreakMinutes 0 시 400", async () => {
     const res = await POST(
       createRequest({ focusMinutes: 25, shortBreakMinutes: 0 }),
     );
     expect(res.status).toBe(400);
+  });
+
+  it("shortBreakMinutes 소수점 허용", async () => {
+    mockRpc.mockResolvedValue({
+      data: { session_id: 1, pomodoro_id: 1 },
+      error: null,
+    });
+
+    const res = await POST(
+      createRequest({ focusMinutes: 25, shortBreakMinutes: 0.05 }),
+    );
+    expect(res.status).toBe(201);
   });
 
   it("longBreakMinutes 범위 초과 시 400", async () => {
@@ -164,6 +176,13 @@ describe("POST /api/sessions", () => {
   it("targetCount 범위 초과 시 400", async () => {
     const res = await POST(
       createRequest({ focusMinutes: 25, targetCount: 9 }),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("targetCount 최소값 미만 시 400", async () => {
+    const res = await POST(
+      createRequest({ focusMinutes: 25, targetCount: 1 }),
     );
     expect(res.status).toBe(400);
   });

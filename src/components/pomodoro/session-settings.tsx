@@ -2,13 +2,13 @@
 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { IS_DEV, DEV_DURATION_OPTIONS } from "@/lib/dev/constants";
+import { IS_DEV, DEV_DURATION_OPTIONS, DEV_BREAK_OPTION } from "@/lib/dev/constants";
 import { DevBadge } from "@/lib/dev/dev-only";
 
 const FOCUS_OPTIONS = [15, 20, 25, 30, 45, 60] as const;
 const SHORT_BREAK_OPTIONS = [5, 10] as const;
 const LONG_BREAK_OPTIONS = [15, 20, 30] as const;
-const CYCLE_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
+const CYCLE_OPTIONS = [2, 3, 4, 5, 6, 7, 8] as const;
 
 interface SessionSettingsProps {
   focusMinutes: number;
@@ -54,9 +54,11 @@ export function SessionSettings({
   onLongBreakChange,
   onTargetCountChange,
 }: SessionSettingsProps) {
+  // 짧은 휴식: 사이클 사이 (targetCount - 1)회, 긴 휴식: 세션 종료 직전 1회
   const totalMinutes =
     focusMinutes * targetCount +
-    shortBreakMinutes * Math.max(0, targetCount - 1);
+    shortBreakMinutes * (targetCount - 1) +
+    longBreakMinutes;
 
   return (
     <div className="flex flex-col gap-4 w-full">
@@ -91,6 +93,20 @@ export function SessionSettings({
       </OptionRow>
 
       <OptionRow label="짧은 휴식">
+        {IS_DEV && (
+          <Badge
+            variant={shortBreakMinutes === DEV_BREAK_OPTION.minutes ? "default" : "outline"}
+            className={cn(
+              "cursor-pointer px-3 py-1 text-sm border-dashed border-orange-400",
+              shortBreakMinutes === DEV_BREAK_OPTION.minutes
+                ? "bg-orange-500 text-white"
+                : "text-orange-600",
+            )}
+            onClick={() => onShortBreakChange(DEV_BREAK_OPTION.minutes)}
+          >
+            {DEV_BREAK_OPTION.label}
+          </Badge>
+        )}
         {SHORT_BREAK_OPTIONS.map((min) => (
           <Badge
             key={min}
@@ -104,6 +120,20 @@ export function SessionSettings({
       </OptionRow>
 
       <OptionRow label="긴 휴식">
+        {IS_DEV && (
+          <Badge
+            variant={longBreakMinutes === DEV_BREAK_OPTION.minutes ? "default" : "outline"}
+            className={cn(
+              "cursor-pointer px-3 py-1 text-sm border-dashed border-orange-400",
+              longBreakMinutes === DEV_BREAK_OPTION.minutes
+                ? "bg-orange-500 text-white"
+                : "text-orange-600",
+            )}
+            onClick={() => onLongBreakChange(DEV_BREAK_OPTION.minutes)}
+          >
+            {DEV_BREAK_OPTION.label}
+          </Badge>
+        )}
         {LONG_BREAK_OPTIONS.map((min) => (
           <Badge
             key={min}
