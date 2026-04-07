@@ -46,41 +46,51 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --color-focus: var(--focus);
+  --color-break: var(--break);
+  --color-success: var(--success);
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  /* 쓸모도로 Design System — DESIGN.md 참조 */
+  --background: #FAF7F2;
+  --foreground: #2D2A26;
+  --card: #FFFFFF;
+  --card-foreground: #2D2A26;
+  --popover: #FFFFFF;
+  --popover-foreground: #2D2A26;
+  --primary: #D4956A;
+  --primary-foreground: #FFFFFF;
+  --secondary: #FAF7F2;
+  --secondary-foreground: #2D2A26;
+  --muted: #FAF7F2;
+  --muted-foreground: #9C9590;
+  --accent: #D4956A;
+  --accent-foreground: #FFFFFF;
+  --destructive: #D4806A;
+  --border: #EDE8E1;
+  --input: #EDE8E1;
+  --ring: #D4956A;
+  --chart-1: #D4956A;
+  --chart-2: #C4725C;
+  --chart-3: #7BA68E;
+  --chart-4: #A8C7A0;
+  --chart-5: #9C9590;
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+
+  /* 쓸모도로 확장 토큰 */
+  --focus: #C4725C;
+  --break: #7BA68E;
+  --success: #A8C7A0;
+
+  --sidebar: #FAF7F2;
+  --sidebar-foreground: #2D2A26;
+  --sidebar-primary: #D4956A;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #FAF7F2;
+  --sidebar-accent-foreground: #2D2A26;
+  --sidebar-border: #EDE8E1;
+  --sidebar-ring: #D4956A;
 }
 
 .dark {
