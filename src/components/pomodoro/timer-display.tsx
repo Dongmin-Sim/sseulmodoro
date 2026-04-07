@@ -51,7 +51,7 @@ export function TimerDisplay({ display, progress, status, label, progressColor }
               "transition-[stroke-dashoffset] duration-500 ease-linear",
             status === "running" && (progressColor || "text-primary"),
             status === "paused" && "text-muted-foreground",
-            status === "completed" && "text-green-500"
+            status === "completed" && "text-success"
           )}
         />
       </svg>
@@ -59,7 +59,7 @@ export function TimerDisplay({ display, progress, status, label, progressColor }
         <span
           className={cn(
             "font-mono text-5xl font-bold tracking-wider",
-            status === "completed" && "text-green-500"
+            status === "completed" && "text-success"
           )}
         >
           {display}
