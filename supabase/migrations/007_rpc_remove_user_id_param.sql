@@ -115,11 +115,22 @@ BEGIN
     AND status  = 'in_progress'
   RETURNING session_id INTO v_session_id;
 
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Pomodoro not found or already completed'
+      USING ERRCODE = 'P0002';
+  END IF;
+
   UPDATE public.pomodoro_sessions
   SET completed_count = completed_count + 1
   WHERE id = v_session_id
+    AND completed_count < target_count
   RETURNING completed_count, target_count
     INTO v_completed_count, v_target_count;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'All pomodoros already completed for this session'
+      USING ERRCODE = 'P0002';
+  END IF;
 
   INSERT INTO public.activity_log (
     user_id, event_category, event_type, metadata, created_at
@@ -171,6 +182,11 @@ BEGIN
   RETURNING session_id
     INTO v_session_id;
 
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Pomodoro not found or already stopped'
+      USING ERRCODE = 'P0002';
+  END IF;
+
   INSERT INTO public.activity_log (
     user_id, event_category, event_type, metadata, created_at
   ) VALUES (
@@ -219,10 +235,20 @@ BEGIN
     AND status  = 'in_progress'
   RETURNING completed_count INTO v_completed_count;
 
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Session not found or already ended'
+      USING ERRCODE = 'P0002';
+  END IF;
+
   SELECT (value::INTEGER)
     INTO v_point_value
   FROM public.app_config
   WHERE key = 'pomodoro_point_value';
+
+  IF v_point_value IS NULL THEN
+    RAISE EXCEPTION 'pomodoro_point_value config missing'
+      USING ERRCODE = 'P0002';
+  END IF;
 
   v_points_earned := v_completed_count * v_point_value;
 
@@ -280,21 +306,29 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  v_user_id     UUID := auth.uid();
-  v_pomodoro_id INTEGER;
-  v_status      VARCHAR(20);
-  v_now         TIMESTAMPTZ := NOW();
+  v_user_id          UUID := auth.uid();
+  v_pomodoro_id      INTEGER;
+  v_status           VARCHAR(20);
+  v_completed_count  INTEGER;
+  v_target_count     INTEGER;
+  v_now              TIMESTAMPTZ := NOW();
 BEGIN
   IF v_user_id IS NULL THEN
     RAISE EXCEPTION 'unauthorized' USING ERRCODE = '42501';
   END IF;
 
-  SELECT status INTO v_status
+  SELECT status, completed_count, target_count
+    INTO v_status, v_completed_count, v_target_count
   FROM public.pomodoro_sessions
   WHERE id = p_session_id AND user_id = v_user_id;
 
   IF v_status IS NULL OR v_status != 'in_progress' THEN
     RAISE EXCEPTION 'Session not found or not in progress';
+  END IF;
+
+  IF v_completed_count >= v_target_count THEN
+    RAISE EXCEPTION 'All pomodoros already completed for this session'
+      USING ERRCODE = 'P0002';
   END IF;
 
   INSERT INTO public.pomodoros (

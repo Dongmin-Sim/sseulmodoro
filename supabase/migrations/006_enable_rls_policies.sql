@@ -9,6 +9,8 @@ ALTER TABLE public.pomodoros            ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.character_instances  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.character_types      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.point_transaction    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.activity_log         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.app_config           ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================
 -- 2. POLICY 스캐폴딩
@@ -43,3 +45,11 @@ CREATE POLICY "character_types_select_all" ON public.character_types
 -- point_transaction: 본인 거래만 조회
 CREATE POLICY "points_select_own" ON public.point_transaction
   FOR SELECT TO authenticated USING (user_id = auth.uid());
+
+-- activity_log: 본인 로그만 조회 (INSERT는 SECURITY DEFINER rpc가 처리)
+CREATE POLICY "activity_log_select_own" ON public.activity_log
+  FOR SELECT TO authenticated USING (user_id = auth.uid());
+
+-- app_config: 전체 조회만 허용 (수정 불가 — policy 없음 = 거부)
+CREATE POLICY "app_config_select_all" ON public.app_config
+  FOR SELECT TO authenticated USING (true);

@@ -79,6 +79,21 @@ feature/* → PR → dev 머지 → Vercel Preview (통합 확인)
 - **사용자 담당**: PostgreSQL 함수, ETL 스크립트, dbt 모델 설계
   - Claude Code는 스캐폴딩(시그니처 + TODO 주석)만 생성
 
+### 병렬 세션 운영
+
+BE/FE 세션을 분리하여 병렬 개발한다. 각 세션은 독립된 Claude Code 인스턴스에서 운영.
+
+- **BE 세션** (`/be-session`): API Route, Supabase, 인증, 인프라
+- **FE 세션** (`/fe-session`): 페이지 UI, 컴포넌트, 사용자 인터랙션
+
+세션 분리 규칙:
+
+- 노션 태스크 DB의 `세션` 속성으로 BE/FE 구분
+- `src/lib/types/api.ts`가 공유 인터페이스 (API 계약)
+  - BE가 타입 먼저 정의 → 커밋 → FE가 pull 후 사용
+- 파일 영역 겹침 금지 — 각 세션 지침 참조
+- 물리적 분리: `git worktree`로 디렉토리 분리 (충돌 방지)
+
 ## 코드 규칙
 
 ### 커밋 컨벤션

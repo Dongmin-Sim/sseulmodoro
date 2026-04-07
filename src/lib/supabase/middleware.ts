@@ -43,14 +43,22 @@ export async function updateSession(request: NextRequest) {
   if (!isAuthenticated && !PUBLIC_PATHS.includes(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    return NextResponse.redirect(url);
+    const redirectResponse = NextResponse.redirect(url);
+    response.cookies.getAll().forEach((cookie) =>
+      redirectResponse.cookies.set(cookie.name, cookie.value),
+    );
+    return redirectResponse;
   }
 
   // 인증됨 + 공개 경로 → / 리다이렉트
   if (isAuthenticated && PUBLIC_PATHS.includes(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
-    return NextResponse.redirect(url);
+    const redirectResponse = NextResponse.redirect(url);
+    response.cookies.getAll().forEach((cookie) =>
+      redirectResponse.cookies.set(cookie.name, cookie.value),
+    );
+    return redirectResponse;
   }
 
   return response;

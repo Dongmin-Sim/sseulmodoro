@@ -23,6 +23,13 @@ export async function POST(request: Request) {
     );
   }
 
+  if (!(await getAuthUser())) {
+    return NextResponse.json<ApiError>(
+      { error: "Unauthorized" },
+      { status: 401 },
+    );
+  }
+
   if (!body.focusMinutes || body.focusMinutes <= 0 || body.focusMinutes > 120) {
     return NextResponse.json<ApiError>(
       { error: "focusMinutes must be greater than 0 and at most 120" },
@@ -62,13 +69,6 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!(await getAuthUser())) {
-    return NextResponse.json<ApiError>(
-      { error: "Unauthorized" },
-      { status: 401 },
-    );
-  }
-
   const supabase = await createServerClient();
 
   const { data, error } = await supabase.rpc("start_session", {
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
     p_target_count: body.targetCount ?? SESSION_DEFAULTS.targetCount,
   });
 
-  if (error) {
+  if (error || !data) {
     console.error("start_session rpc error:", error);
     return NextResponse.json<ApiError>(
       { error: "Failed to start session" },
