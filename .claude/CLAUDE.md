@@ -118,6 +118,27 @@ feature/* → PR → dev 머지 → Vercel Preview (통합 확인)
 - PostgreSQL 함수/ETL/dbt 모델 직접 구현 금지 — 스캐폴딩만 생성
 - .env.local 커밋 금지
 
+## 공식 문서 참조
+
+구현 시 최신 API 사용법을 확인하기 위한 공식 문서 링크.
+
+- **Next.js 16**: https://nextjs.org/docs
+  - App Router: https://nextjs.org/docs/app
+  - Middleware: https://nextjs.org/docs/app/building-your-application/routing/middleware
+  - Route Handlers: https://nextjs.org/docs/app/building-your-application/routing/route-handlers
+- **Supabase Auth (Next.js + SSR)**: https://supabase.com/docs/guides/auth/server-side/nextjs
+  - @supabase/ssr: https://supabase.com/docs/guides/auth/server-side/creating-a-client
+  - Email Auth: https://supabase.com/docs/guides/auth/passwords
+  - RLS: https://supabase.com/docs/guides/database/postgres/row-level-security
+- **React 19**: https://react.dev/reference/react
+
+| 패키지 | 버전 |
+|--------|------|
+| next | 16.2.1 |
+| react | 19.2.4 |
+| @supabase/ssr | ^0.10.0 |
+| @supabase/supabase-js | ^2.101.1 |
+
 ## 환경변수
 
 `.env.local.example` 참조
