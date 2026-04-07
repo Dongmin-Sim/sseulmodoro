@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+const PUBLIC_PATHS = ["/login", "/signup"];
+
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -28,7 +30,28 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  await supabase.auth.getClaims();
+  const { data } = await supabase.auth.getClaims();
+  const isAuthenticated = !!data?.claims;
+  const pathname = request.nextUrl.pathname;
+
+  // API 경로는 리다이렉트 안 함 (401은 각 API Route에서 처리)
+  if (pathname.startsWith("/api/")) {
+    return response;
+  }
+
+  // 미인증 + 보호 경로 → /login 리다이렉트
+  if (!isAuthenticated && !PUBLIC_PATHS.includes(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
+
+  // 인증됨 + 공개 경로 → / 리다이렉트
+  if (isAuthenticated && PUBLIC_PATHS.includes(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/";
+    return NextResponse.redirect(url);
+  }
 
   return response;
 }
