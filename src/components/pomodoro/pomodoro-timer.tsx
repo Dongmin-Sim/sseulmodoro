@@ -341,7 +341,7 @@ export function PomodoroTimer() {
                   ? `☕ ${isLastBreakLong ? "긴" : "짧은"} 휴식`
                   : `🍅 ${completedCount + 1} / ${targetCount} 집중 중`
               }
-              progressColor={isBreak ? "text-blue-500" : undefined}
+              progressColor={isBreak ? "text-break" : "text-focus"}
             />
             <TimerControls
               status={timer.status}
@@ -430,7 +430,7 @@ export function PomodoroTimer() {
           <>
             {earnedPoints !== null && (
               <div className="text-center">
-                <p className="text-2xl font-bold text-green-500">
+                <p className="text-2xl font-bold text-success">
                   +{earnedPoints} 포인트
                 </p>
               </div>
