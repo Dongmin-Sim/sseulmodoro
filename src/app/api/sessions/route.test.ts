@@ -90,4 +90,88 @@ describe("POST /api/sessions", () => {
     const json = await res.json();
     expect(json.error).toBe("Invalid request body");
   });
+
+  it("커스텀 세션 설정 전달 시 rpc에 올바르게 전달", async () => {
+    mockRpc.mockResolvedValue({
+      data: { session_id: 1, pomodoro_id: 1 },
+      error: null,
+    });
+
+    const res = await POST(
+      createRequest({
+        focusMinutes: 30,
+        shortBreakMinutes: 10,
+        longBreakMinutes: 20,
+        targetCount: 6,
+      }),
+    );
+    expect(res.status).toBe(201);
+
+    expect(mockRpc).toHaveBeenCalledWith(
+      "start_session",
+      expect.objectContaining({
+        p_focus_minutes: 30,
+        p_short_break_minutes: 10,
+        p_long_break_minutes: 20,
+        p_target_count: 6,
+      }),
+    );
+  });
+
+  it("부분 설정 시 SESSION_DEFAULTS로 fallback", async () => {
+    mockRpc.mockResolvedValue({
+      data: { session_id: 1, pomodoro_id: 1 },
+      error: null,
+    });
+
+    const res = await POST(
+      createRequest({ focusMinutes: 25, targetCount: 2 }),
+    );
+    expect(res.status).toBe(201);
+
+    expect(mockRpc).toHaveBeenCalledWith(
+      "start_session",
+      expect.objectContaining({
+        p_focus_minutes: 25,
+        p_short_break_minutes: 5,
+        p_long_break_minutes: 15,
+        p_target_count: 2,
+      }),
+    );
+  });
+
+  it("shortBreakMinutes 범위 초과 시 400", async () => {
+    const res = await POST(
+      createRequest({ focusMinutes: 25, shortBreakMinutes: 31 }),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("shortBreakMinutes 0 이하 시 400", async () => {
+    const res = await POST(
+      createRequest({ focusMinutes: 25, shortBreakMinutes: 0 }),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("longBreakMinutes 범위 초과 시 400", async () => {
+    const res = await POST(
+      createRequest({ focusMinutes: 25, longBreakMinutes: 61 }),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("targetCount 범위 초과 시 400", async () => {
+    const res = await POST(
+      createRequest({ focusMinutes: 25, targetCount: 9 }),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("targetCount 비정수 시 400", async () => {
+    const res = await POST(
+      createRequest({ focusMinutes: 25, targetCount: 2.5 }),
+    );
+    expect(res.status).toBe(400);
+  });
 });

@@ -4,13 +4,20 @@ import type {
   StartNextPomodoroResponse,
 } from "@/lib/types/api";
 
+export interface StartSessionParams {
+  focusMinutes: number;
+  shortBreakMinutes?: number;
+  longBreakMinutes?: number;
+  targetCount?: number;
+}
+
 export async function startSession(
-  focusMinutes: number,
+  params: StartSessionParams,
 ): Promise<StartSessionResponse> {
   const res = await fetch("/api/sessions", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ focusMinutes }),
+    body: JSON.stringify(params),
   });
 
   if (!res.ok) {
