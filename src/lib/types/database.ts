@@ -328,7 +328,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      complete_pomodoro: { Args: { p_pomodoro_id: number }; Returns: Json }
+      complete_pomodoro: {
+        Args: { p_note?: string; p_pomodoro_id: number }
+        Returns: Json
+      }
       end_session: { Args: { p_session_id: number }; Returns: Json }
       start_next_pomodoro: { Args: { p_session_id: number }; Returns: Json }
       start_session: {

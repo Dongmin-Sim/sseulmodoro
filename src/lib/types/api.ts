@@ -4,6 +4,11 @@ export interface StartSessionResponse {
   pomodoroId: number;
 }
 
+/** POST /api/pomodoros/:id/complete 요청 */
+export interface CompletePomodoroRequest {
+  note?: string | null;
+}
+
 /** POST /api/pomodoros/:id/complete 성공 응답 */
 export interface CompletePomodoroResponse {
   pomodoroId: number;
