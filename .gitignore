@@ -46,6 +46,9 @@ __pycache__/
 venv/
 .venv/
 
+# supabase local
+supabase/snippets/
+
 # claude code
 .claude/settings.local.json
 .claude/skills/*
