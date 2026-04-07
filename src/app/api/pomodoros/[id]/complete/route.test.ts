@@ -68,7 +68,7 @@ describe("POST /api/pomodoros/:id/complete", () => {
 
     expect(mockRpc).toHaveBeenCalledWith("complete_pomodoro", {
       p_pomodoro_id: 1,
-      p_note: null,
+      p_note: undefined,
     });
   });
 
@@ -117,7 +117,7 @@ describe("POST /api/pomodoros/:id/complete", () => {
     });
   });
 
-  it("note 미전송 시 p_note = null", async () => {
+  it("note 미전송 시 p_note = undefined", async () => {
     mockRpc.mockResolvedValue({
       data: {
         pomodoro_id: 1,
@@ -133,11 +133,11 @@ describe("POST /api/pomodoros/:id/complete", () => {
 
     expect(mockRpc).toHaveBeenCalledWith("complete_pomodoro", {
       p_pomodoro_id: 1,
-      p_note: null,
+      p_note: undefined,
     });
   });
 
-  it("note null 전송 시 p_note = null", async () => {
+  it("note null 전송 시 p_note = undefined", async () => {
     mockRpc.mockResolvedValue({
       data: {
         pomodoro_id: 1,
@@ -153,11 +153,11 @@ describe("POST /api/pomodoros/:id/complete", () => {
 
     expect(mockRpc).toHaveBeenCalledWith("complete_pomodoro", {
       p_pomodoro_id: 1,
-      p_note: null,
+      p_note: undefined,
     });
   });
 
-  it("body 없이 호출 시 기존 호환 (p_note = null)", async () => {
+  it("body 없이 호출 시 기존 호환 (p_note = undefined)", async () => {
     mockRpc.mockResolvedValue({
       data: {
         pomodoro_id: 1,
@@ -173,11 +173,11 @@ describe("POST /api/pomodoros/:id/complete", () => {
 
     expect(mockRpc).toHaveBeenCalledWith("complete_pomodoro", {
       p_pomodoro_id: 1,
-      p_note: null,
+      p_note: undefined,
     });
   });
 
-  it("공백만 입력 시 p_note = null", async () => {
+  it("공백만 입력 시 p_note = undefined", async () => {
     mockRpc.mockResolvedValue({
       data: {
         pomodoro_id: 1,
@@ -193,7 +193,7 @@ describe("POST /api/pomodoros/:id/complete", () => {
 
     expect(mockRpc).toHaveBeenCalledWith("complete_pomodoro", {
       p_pomodoro_id: 1,
-      p_note: null,
+      p_note: undefined,
     });
   });
 

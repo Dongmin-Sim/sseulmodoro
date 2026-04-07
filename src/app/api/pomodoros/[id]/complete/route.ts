@@ -69,7 +69,7 @@ export async function POST(
 
   const { data, error } = await supabase.rpc("complete_pomodoro", {
     p_pomodoro_id: pomodoroId,
-    p_note: note,
+    p_note: note ?? undefined,
   });
 
   if (error || !data) {
