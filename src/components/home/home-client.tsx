@@ -59,7 +59,6 @@ export function HomeClient({ data }: HomeClientProps) {
       <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-7 pb-5">
         {isSessionActive ? (
           <PomodoroTimer
-            autoStart
             onReset={() => setIsSessionActive(false)}
           />
         ) : (

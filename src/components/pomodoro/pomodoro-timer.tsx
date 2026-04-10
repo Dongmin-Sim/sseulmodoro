@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
@@ -95,11 +95,10 @@ function CycleProgress({
 }
 
 type PomodoroTimerProps = {
-  autoStart?: boolean;
   onReset?: () => void;
 };
 
-export function PomodoroTimer({ autoStart, onReset }: PomodoroTimerProps = {}) {
+export function PomodoroTimer({ onReset }: PomodoroTimerProps = {}) {
   // 세션 설정
   const [focusMinutes, setFocusMinutes] = useState(25);
   const [focusLabel, setFocusLabel] = useState("25분");
@@ -209,15 +208,6 @@ export function PomodoroTimer({ autoStart, onReset }: PomodoroTimerProps = {}) {
       setIsLoading(false);
     }
   };
-
-  const autoStarted = useRef(false);
-  useEffect(() => {
-    if (autoStart && !autoStarted.current) {
-      autoStarted.current = true;
-      handleStart();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoStart]);
 
   const isLastBreakLong = completedCount >= targetCount;
   const currentBreakMinutes = isLastBreakLong
