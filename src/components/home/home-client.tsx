@@ -29,13 +29,20 @@ export function HomeClient({ data }: HomeClientProps) {
   const [logoutError, setLogoutError] = useState<string | null>(null);
 
   async function handleLogout() {
+    if (isSessionActive) {
+      const confirmed = window.confirm(
+        "집중 세션이 진행 중입니다. 로그아웃하면 현재 세션 데이터가 저장되지 않습니다. 계속하시겠습니까?",
+      );
+      if (!confirmed) return;
+    }
     setIsLoggingOut(true);
     setLogoutError(null);
     try {
       await logout();
-      router.push("/login");
+      router.replace("/login");
     } catch {
       setLogoutError("로그아웃에 실패했습니다. 다시 시도해주세요.");
+    } finally {
       setIsLoggingOut(false);
     }
   }
@@ -77,13 +84,19 @@ export function HomeClient({ data }: HomeClientProps) {
             className="text-xs text-muted-foreground"
             onClick={handleLogout}
             disabled={isLoggingOut}
+            aria-busy={isLoggingOut}
+            aria-label={isLoggingOut ? "로그아웃 처리 중" : "로그아웃"}
           >
             {isLoggingOut ? "로그아웃 중..." : "로그아웃"}
           </Button>
         </div>
       </header>
       {logoutError && (
-        <p className="relative z-10 px-7 pb-1 text-xs text-destructive">
+        <p
+          role="alert"
+          aria-live="assertive"
+          className="relative z-10 px-7 pb-1 text-xs text-destructive"
+        >
           {logoutError}
         </p>
       )}
