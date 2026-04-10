@@ -12,7 +12,8 @@ import { createClient } from "@/lib/supabase/client";
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirectTo") || "/";
+  const raw = searchParams.get("redirectTo") ?? "/";
+  const redirectTo = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +38,8 @@ export function LoginForm() {
 
       router.push(redirectTo);
       router.refresh();
-    } catch {
+    } catch (e) {
+      console.error("[LoginForm] unexpected error", e);
       setError("로그인 중 오류가 발생했습니다.");
     } finally {
       setIsLoading(false);

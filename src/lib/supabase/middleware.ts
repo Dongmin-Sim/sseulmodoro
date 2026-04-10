@@ -43,6 +43,7 @@ export async function updateSession(request: NextRequest) {
   if (!isAuthenticated && !PUBLIC_PATHS.includes(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    // pathname만 사용 — href/search 포함 시 Host 헤더 스푸핑으로 open redirect 가능
     if (pathname !== "/") {
       url.searchParams.set("redirectTo", pathname);
     }
