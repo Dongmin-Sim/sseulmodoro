@@ -39,10 +39,14 @@ export async function updateSession(request: NextRequest) {
     return response;
   }
 
-  // 미인증 + 보호 경로 → /login 리다이렉트
+  // 미인증 + 보호 경로 → /login 리다이렉트 (원래 경로를 redirectTo로 전달)
   if (!isAuthenticated && !PUBLIC_PATHS.includes(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    // pathname만 사용 — href/search 포함 시 Host 헤더 스푸핑으로 open redirect 가능
+    if (pathname !== "/") {
+      url.searchParams.set("redirectTo", pathname);
+    }
     const redirectResponse = NextResponse.redirect(url);
     response.cookies.getAll().forEach((cookie) =>
       redirectResponse.cookies.set(cookie.name, cookie.value),
