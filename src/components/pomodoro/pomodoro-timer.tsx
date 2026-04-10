@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
@@ -94,7 +94,12 @@ function CycleProgress({
   );
 }
 
-export function PomodoroTimer() {
+type PomodoroTimerProps = {
+  autoStart?: boolean;
+  onReset?: () => void;
+};
+
+export function PomodoroTimer({ autoStart, onReset }: PomodoroTimerProps = {}) {
   // 세션 설정
   const [focusMinutes, setFocusMinutes] = useState(25);
   const [focusLabel, setFocusLabel] = useState("25분");
@@ -205,6 +210,15 @@ export function PomodoroTimer() {
     }
   };
 
+  const autoStarted = useRef(false);
+  useEffect(() => {
+    if (autoStart && !autoStarted.current) {
+      autoStarted.current = true;
+      handleStart();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart]);
+
   const isLastBreakLong = completedCount >= targetCount;
   const currentBreakMinutes = isLastBreakLong
     ? longBreakMinutes
@@ -296,6 +310,7 @@ export function PomodoroTimer() {
     setSessionId(null);
     setPomodoroId(null);
     setEarnedPoints(null);
+    onReset?.();
   };
 
   const isTimerPhase = sessionPhase === "focusing" || sessionPhase === "breaking";
