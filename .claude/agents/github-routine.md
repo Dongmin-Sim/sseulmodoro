@@ -1,7 +1,7 @@
 ---
 name: github-routine
 description: GitHub PR 상태 확인, 머지 여부 조회, 브랜치 정리 등 GitHub 관련 루틴 작업.
-model: sonnet
+model: haiku
 tools: Bash
 color: green
 ---

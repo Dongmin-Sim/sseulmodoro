@@ -1,7 +1,7 @@
 ---
 name: notion-routine
 description: 노션 태스크/이슈 DB 조회, 상태 업데이트, PR 링크 기록 등 노션 관련 루틴 작업. 세션 시작/종료 시 자동 위임.
-model: sonnet
+model: haiku
 tools: mcp__claude_ai_Notion__notion-search, mcp__claude_ai_Notion__notion-fetch, mcp__claude_ai_Notion__notion-update-page, mcp__claude_ai_Notion__notion-create-pages, mcp__claude_ai_Notion__notion-update-data-source
 color: blue
 ---
