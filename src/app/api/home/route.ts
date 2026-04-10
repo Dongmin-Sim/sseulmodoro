@@ -11,22 +11,13 @@ export async function GET() {
 
   const supabase = await createServerClient();
 
-  const [profileResult, sessionResult] = await Promise.all([
+  const [profileResult, mainCharacterResult] = await Promise.all([
     supabase.from("profiles").select("balance").eq("id", user.id).single(),
     supabase
-      .from("pomodoro_sessions")
-      .select(
-        `character_instances (
-          id,
-          level,
-          character_types ( name, rarity )
-        )`,
-      )
+      .from("character_instances")
+      .select(`id, level, character_types ( name, rarity )`)
       .eq("user_id", user.id)
-      .eq("status", "completed")
-      .not("character_instance_id", "is", null)
-      .order("ended_at", { ascending: false })
-      .limit(1)
+      .eq("is_main", true)
       .maybeSingle(),
   ]);
 
@@ -38,8 +29,8 @@ export async function GET() {
     );
   }
 
-  if (sessionResult.error) {
-    console.error("home session query error:", sessionResult.error);
+  if (mainCharacterResult.error) {
+    console.error("home main character query error:", mainCharacterResult.error);
     return NextResponse.json<ApiError>(
       { error: "Failed to fetch home data" },
       { status: 500 },
@@ -50,7 +41,7 @@ export async function GET() {
 
   let mainCharacter: HomeDataResponse["mainCharacter"] = null;
 
-  const ci = sessionResult.data?.character_instances as unknown as {
+  const ci = mainCharacterResult.data as unknown as {
     id: number;
     level: number;
     character_types: { name: string; rarity: string } | null;

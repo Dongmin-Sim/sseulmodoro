@@ -90,6 +90,7 @@ export type Database = {
           created_at: string
           exp: number
           id: number
+          is_main: boolean
           level: number
           user_id: string
         }
@@ -98,6 +99,7 @@ export type Database = {
           created_at?: string
           exp?: number
           id?: number
+          is_main?: boolean
           level?: number
           user_id: string
         }
@@ -106,6 +108,7 @@ export type Database = {
           created_at?: string
           exp?: number
           id?: number
+          is_main?: boolean
           level?: number
           user_id?: string
         }
