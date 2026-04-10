@@ -62,42 +62,36 @@ BEGIN
   INSERT INTO public.profiles (id, name, balance)
   VALUES (NEW.id, COALESCE(NEW.raw_user_meta_data->>'name', ''), 0);
 
-  -- TODO(user): 2) 기본 캐릭터 부여 + 대표 캐릭터 설정
+  -- 2) 기본 캐릭터 부여 + 대표 캐릭터 설정
   -- common 레어리티 캐릭터 중 id 오름차순 첫 번째 선택
-  --
-  -- SELECT id INTO v_default_type_id
-  -- FROM public.character_types
-  -- WHERE rarity = 'common'
-  -- ORDER BY id
-  -- LIMIT 1;
-  --
-  -- IF v_default_type_id IS NOT NULL THEN
-  --   INSERT INTO public.character_instances (user_id, character_type_id, level, exp, is_main)
-  --   VALUES (NEW.id, v_default_type_id, 1, 0, true)   -- is_main=true: 대표 캐릭터
-  --   RETURNING id INTO v_instance_id;
-  -- END IF;
+  SELECT id INTO v_default_type_id
+  FROM public.character_types
+  WHERE rarity = 'common'
+  ORDER BY id
+  LIMIT 1;
 
-  -- TODO(user): 3) 환영 포인트 지급 (선택)
-  -- app_config에서 onboarding_welcome_points 조회 → 0 초과 시에만 지급
-  --
-  -- SELECT (value::text)::integer INTO v_welcome_points
-  -- FROM public.app_config WHERE key = 'onboarding_welcome_points';
-  --
-  -- IF v_welcome_points IS NOT NULL AND v_welcome_points > 0 THEN
-  --   -- profiles.balance 상대 UPDATE (race condition 방지)
-  --   UPDATE public.profiles
-  --   SET balance = balance + v_welcome_points
-  --   WHERE id = NEW.id;
-  --
-  --   -- point_transaction INSERT (running_balance 기록 필수)
-  --   INSERT INTO public.point_transaction (user_id, tx_type, amount, running_balance, ref_type)
-  --   VALUES (NEW.id, 'earned', v_welcome_points, v_welcome_points, 'onboarding');
-  --
-  --   -- activity_log INSERT (append-only)
-  --   INSERT INTO public.activity_log (user_id, event_category, event_type, metadata)
-  --   VALUES (NEW.id, 'onboarding', 'welcome_bonus',
-  --     jsonb_build_object('points', v_welcome_points));
-  -- END IF;
+  IF v_default_type_id IS NOT NULL THEN
+    INSERT INTO public.character_instances (user_id, character_type_id, level, exp, is_main)
+    VALUES (NEW.id, v_default_type_id, 1, 0, true)
+    RETURNING id INTO v_instance_id;
+  END IF;
+
+  -- 3) 환영 포인트 지급 (app_config.onboarding_welcome_points > 0 인 경우만)
+  SELECT (value::text)::integer INTO v_welcome_points
+  FROM public.app_config WHERE key = 'onboarding_welcome_points';
+
+  IF v_welcome_points IS NOT NULL AND v_welcome_points > 0 THEN
+    UPDATE public.profiles
+    SET balance = balance + v_welcome_points
+    WHERE id = NEW.id;
+
+    INSERT INTO public.point_transaction (user_id, tx_type, amount, running_balance, ref_type)
+    VALUES (NEW.id, 'earned', v_welcome_points, v_welcome_points, 'onboarding');
+
+    INSERT INTO public.activity_log (user_id, event_category, event_type, metadata)
+    VALUES (NEW.id, 'onboarding', 'welcome_bonus',
+      jsonb_build_object('points', v_welcome_points));
+  END IF;
 
   RETURN NEW;
 END;
