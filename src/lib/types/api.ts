@@ -50,6 +50,17 @@ export interface GachaResponse {
   isNew: boolean;
 }
 
+/** GET /api/home 성공 응답 */
+export interface HomeDataResponse {
+  balance: number;
+  mainCharacter: {
+    instanceId: number;
+    name: string;
+    level: number;
+    rarity: string;
+  } | null;
+}
+
 /** API 공통 에러 응답 */
 export interface ApiError {
   error: string;
