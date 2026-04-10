@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { CharacterBlob } from "@/components/home/character-blob";
 import { BottomNav } from "@/components/home/bottom-nav";
 import { PomodoroTimer } from "@/components/pomodoro/pomodoro-timer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { logout } from "@/lib/api/logout";
 import type { HomeDataResponse } from "@/lib/types/api";
 
 const RARITY_LABEL: Record<string, string> = {
@@ -21,7 +23,22 @@ type HomeClientProps = {
 };
 
 export function HomeClient({ data }: HomeClientProps) {
+  const router = useRouter();
   const [isSessionActive, setIsSessionActive] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
+
+  async function handleLogout() {
+    setIsLoggingOut(true);
+    setLogoutError(null);
+    try {
+      await logout();
+      router.push("/login");
+    } catch {
+      setLogoutError("로그아웃에 실패했습니다. 다시 시도해주세요.");
+      setIsLoggingOut(false);
+    }
+  }
 
   const character = data?.mainCharacter ?? null;
   const balance = data?.balance ?? 0;
@@ -46,14 +63,30 @@ export function HomeClient({ data }: HomeClientProps) {
         <span className="text-sm font-medium tracking-wide text-muted-foreground">
           쓸모도로
         </span>
-        <div
-          className="flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5 text-sm font-semibold"
-          style={{ backdropFilter: "blur(4px)" }}
-        >
-          <span className="text-primary">✦</span>
-          <span>{balance.toLocaleString()}</span>
+        <div className="flex items-center gap-2">
+          <div
+            className="flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5 text-sm font-semibold"
+            style={{ backdropFilter: "blur(4px)" }}
+          >
+            <span className="text-primary">✦</span>
+            <span>{balance.toLocaleString()}</span>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs text-muted-foreground"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+          >
+            {isLoggingOut ? "로그아웃 중..." : "로그아웃"}
+          </Button>
         </div>
       </header>
+      {logoutError && (
+        <p className="relative z-10 px-7 pb-1 text-xs text-destructive">
+          {logoutError}
+        </p>
+      )}
 
       {/* Main content */}
       <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-7 pb-5">
