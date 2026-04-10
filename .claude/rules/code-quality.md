@@ -25,3 +25,8 @@
 - 형식: `type(scope): 내용` (feat/fix/refactor/style/chore/docs/test)
 - 제목은 50자 이내, 명령형으로 작성
 - 관련 이슈가 있으면 footer에 `Closes #이슈번호`
+
+## PR 제목 컨벤션
+
+- 형식: `[TASK-XXX] 태스크명` 또는 `[ISSUE-XXX] 이슈명`
+- 예시: `[TASK-021] 캐릭터 뽑기 DB/API 구현`
