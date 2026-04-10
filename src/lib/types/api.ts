@@ -61,6 +61,11 @@ export interface HomeDataResponse {
   } | null;
 }
 
+/** POST /api/auth/logout 성공 응답 */
+export interface LogoutResponse {
+  success: true;
+}
+
 /** API 공통 에러 응답 */
 export interface ApiError {
   error: string;
