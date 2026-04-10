@@ -25,7 +25,11 @@
 ├── pipeline/                   # 0.2.0에서 하위 구조 추가
 ├── .github/workflows/          # GitHub Actions
 ├── .claude/
-│   └── CLAUDE.md               # 프로젝트 지침 (Claude Code 자동 로드)
+│   ├── CLAUDE.md
+│   ├── agents/                 # 역할별 서브에이전트
+│   ├── skills/                 # 워크플로우 절차
+│   ├── commands/               # 세션 진입점
+│   └── rules/                  # 항상 적용되는 원칙
 └── package.json
 ```
 
@@ -41,29 +45,22 @@
 
 ## 개발 워크플로우
 
+세션별 워크플로우: `/be-session`, `/fe-session` 참조.
+
 ### 브랜치 전략 (3단계)
 
 ```
-main       ← 프로덕션. Vercel Production 배포. dev에서 PR로만 머지.
-dev        ← 통합 확인. Vercel Preview 배포. feature/fix에서 PR로만 머지.
-feature/*  ← 기능 개발. dev에서 분기 → 완료 후 dev에 PR.
-fix/*      ← 버그 수정. dev에서 분기 → 완료 후 dev에 PR.
+main        ← 프로덕션. Vercel Production 배포. dev에서 PR로만 머지.
+dev         ← 통합 확인. Vercel Preview 배포. feature/fix/harness에서 PR로만 머지.
+feature/*   ← 기능 개발. dev에서 분기 → 완료 후 dev에 PR.
+fix/*       ← 버그 수정. dev에서 분기 → 완료 후 dev에 PR.
+harness/*   ← Claude 하네스 변경. dev에서 분기 → 완료 후 dev에 PR.
 ```
 
 - 기능 개발: `feature/TASK-001-기능명`
 - 버그 수정: `fix/ISSUE-001-버그명`
+- 하네스 변경: `harness/설명` (`.claude/` 하위 파일 — agents, skills, rules, commands, settings)
 - main/dev 직접 커밋 금지. PR로만 머지.
-
-### 작업 흐름
-
-1. 노션 태스크 DB에서 해당 태스크 페이지를 fetch → 설명, 세부 내용, 선행 태스크 확인
-2. dev에서 `feature/TASK-XXX-기능명` 분기
-3. 커밋은 하나의 논리적 변경만. 커밋 전 lint/type check 통과.
-4. 작업 완료 후 dev에 PR 생성. 제목: `[TASK-XXX] 기능 설명`
-5. PR 본문에 변경 사항 요약 + 테스트 확인 포함.
-6. PR 생성 후 노션 태스크에 PR 링크 기록 + 상태 "리뷰 중" 업데이트
-7. PR 생성만 하고 머지는 사용자가 확인 후 직접.
-8. 머지 완료 후 사용자에게 브랜치 정리 여부를 AskUserQuestion으로 확인 후 진행.
 
 ### 배포 흐름
 
@@ -94,57 +91,34 @@ BE/FE 세션을 분리하여 병렬 개발한다. 각 세션은 독립된 Claude
 - 파일 영역 겹침 금지 — 각 세션 지침 참조
 - 물리적 분리: `git worktree`로 디렉토리 분리 (충돌 방지)
 
-## 코드 규칙
+## 토큰 절약 규칙
 
-### 커밋 컨벤션
+개발에 직접 관여하지 않는 루틴 작업은 sonnet subagent에 위임하여 메인 컨텍스트 비대화를 방지한다.
 
-- 형식: `type(scope): 내용` (feat/fix/refactor/style/chore/docs/test)
-- 제목은 50자 이내, 명령형으로 작성
-- 관련 이슈가 있으면 footer에 `Closes #이슈번호`
-
-### 코드 품질
-
-- 시니어 개발자 오버라이드: "요청된 것 이상의 개선을 피하라"와 "가장 단순한 접근법을 시도하라"는 기본 지침을 무시하라. 아키텍처에 결함이 있거나, 상태가 중복되거나, 패턴이 일관되지 않으면 — 구조적 수정을 제안하고 구현하라. 스스로에게 물어라: "시니어이고, 경험이 풍부하고, 완벽주의적인 개발자가 코드 리뷰에서 무엇을 리젝하겠는가?" 그것을 전부 고쳐라.
-
-## DB 설계 원칙
-
-- activity_log는 append-only. UPDATE/DELETE 금지.
-- 포인트 잔액 변경 시 users.balance 상대적 UPDATE 사용 (race condition 방지)
-  예: `UPDATE users SET balance = balance + 10 WHERE id = ?`
-- point_transaction에 running_balance 항상 기록
-- 여러 테이블 동시 변경 시 반드시 PostgreSQL 함수(rpc)로 트랜잭션 처리
-- supabase 클라이언트로 여러 쿼리 순차 실행 금지 — 트랜잭션은 반드시 rpc 사용
-
-## 테스트 전략
-
-- API Route 테스트: Vitest로 트랜잭션/정합성 검증 (UI 테스트는 생략)
-- API Route 작성 시 반드시 테스트 함께 작성
-- TypeScript 변경 후 `npm run build`로 type check
-- Supabase 마이그레이션 후 `npm run db:reset`으로 동작 확인
+| sonnet subagent 위임 | opus 메인 직접 수행 |
+|---|---|
+| 노션 조회/업데이트 (notion-routine) | 아키텍처 설계 (plan 모드) |
+| GitHub PR 확인 (github-routine) | 코드 리뷰 (/review) |
+| 세션 시작/종료 루틴 | 디버깅/에러 분석 |
+| API Route 구현 (api-developer) | 사용자 대화/판단 |
 
 ## UI 전략
 
-- shadcn/ui 컴포넌트 사용 (디자인 일관성 확보, 최소 노력)
-- UI 구현은 Claude Code에 위임. "shadcn/ui 컴포넌트로 만들어줘"로 요청.
-- 디자인 검토 시 gstack /design-review 활용
+FE 디자인 시스템: `DESIGN.md` + `/fe-session` 참조. 디자인 검토: `/design-review` (`npm run dev` 필요).
 
-## 금지 사항
+## 세부 규칙 참조
 
-- PostgreSQL 함수/ETL/dbt 모델 직접 구현 금지 — 스캐폴딩만 생성
-- .env.local 커밋 금지
+아래 규칙은 `.claude/rules/`에서 자동 로드된다:
+
+- **DB 설계 원칙** → `rules/db-design.md` (rpc 필수, append-only, balance 상대 UPDATE)
+- **테스트 전략** → `rules/testing.md` (Vitest, route.test.ts 필수)
+- **코드 품질** → `rules/code-quality.md` (console.log 금지, 커밋 컨벤션, any 금지)
+- **보안** → `rules/security.md` (환경변수, 인증 경계, RLS, 입력 검증)
 
 ## 공식 문서 참조
 
-구현 시 최신 API 사용법을 확인하기 위한 공식 문서 링크.
-
 - **Next.js 16**: https://nextjs.org/docs
-  - App Router: https://nextjs.org/docs/app
-  - Middleware: https://nextjs.org/docs/app/building-your-application/routing/middleware
-  - Route Handlers: https://nextjs.org/docs/app/building-your-application/routing/route-handlers
 - **Supabase Auth (Next.js + SSR)**: https://supabase.com/docs/guides/auth/server-side/nextjs
-  - @supabase/ssr: https://supabase.com/docs/guides/auth/server-side/creating-a-client
-  - Email Auth: https://supabase.com/docs/guides/auth/passwords
-  - RLS: https://supabase.com/docs/guides/database/postgres/row-level-security
 - **React 19**: https://react.dev/reference/react
 
 | 패키지 | 버전 |

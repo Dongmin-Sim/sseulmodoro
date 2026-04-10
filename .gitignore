@@ -51,6 +51,4 @@ supabase/snippets/
 
 # claude code
 .claude/settings.local.json
-.claude/skills/*
-!.claude/skills/supabase.md
 .gstack/

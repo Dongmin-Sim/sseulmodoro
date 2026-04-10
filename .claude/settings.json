@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -c \"\nimport json, sys, subprocess, re, os\ndata = json.load(sys.stdin)\nfile = data.get('tool_input', {}).get('file_path', '')\nif file and re.search(r'\\\\.(ts|tsx)$', file) and os.path.exists(file):\n    result = subprocess.run(['grep', '-n', 'console\\\\.log', file], capture_output=True, text=True)\n    if result.stdout:\n        print(f'[Hook] console.log detected in {os.path.basename(file)} — remove before commit', file=sys.stderr)\n        for line in result.stdout.strip().split('\\\\n')[:3]:\n            print(f'  {line}', file=sys.stderr)\n\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
