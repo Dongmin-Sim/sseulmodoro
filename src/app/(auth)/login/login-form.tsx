@@ -123,7 +123,7 @@ export function LoginForm() {
           {/* 회원가입 링크 */}
           <Link
             href="/signup"
-            className="text-sm font-medium text-primary hover:underline"
+            className="text-sm font-medium text-primary hover:underline py-3 inline-block"
           >
             계정이 없으신가요? 회원가입
           </Link>
