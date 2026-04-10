@@ -102,6 +102,10 @@ BEGIN
   -- 3) 잔액 검증
   SELECT balance INTO v_balance FROM public.profiles WHERE id = v_user_id;
 
+  IF v_balance IS NULL THEN
+    RAISE EXCEPTION 'profile_not_found' USING ERRCODE = 'P0002';
+  END IF;
+
   IF v_balance < v_cost THEN
     RAISE EXCEPTION 'insufficient_balance' USING ERRCODE = 'P0001';
   END IF;
@@ -110,6 +114,7 @@ BEGIN
   WITH weights AS (
     SELECT key AS rarity, value::numeric AS w
     FROM jsonb_each_text(v_weights)
+    WHERE value::numeric > 0
   )
   SELECT rarity INTO v_rarity
   FROM weights

@@ -4,7 +4,8 @@ import { getAuthUser } from "@/lib/supabase/auth";
 import type { GachaResponse, ApiError } from "@/lib/types/api";
 
 export async function POST() {
-  if (!(await getAuthUser())) {
+  const user = await getAuthUser();
+  if (!user) {
     return NextResponse.json<ApiError>({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -33,27 +34,34 @@ export async function POST() {
     );
   }
 
-  const result = data as {
-    instance_id: number;
-    type_id: number;
-    name: string;
-    rarity: string;
-    level: number;
-    new_balance: number;
-    is_new: boolean;
-  };
+  const raw = data as Record<string, unknown>;
+  if (
+    typeof raw.instance_id !== "number" ||
+    typeof raw.type_id !== "number" ||
+    typeof raw.name !== "string" ||
+    typeof raw.rarity !== "string" ||
+    typeof raw.level !== "number" ||
+    typeof raw.new_balance !== "number" ||
+    typeof raw.is_new !== "boolean"
+  ) {
+    console.error("gacha rpc returned unexpected shape:", data);
+    return NextResponse.json<ApiError>(
+      { error: "Failed to draw character" },
+      { status: 500 },
+    );
+  }
 
   return NextResponse.json<GachaResponse>(
     {
       characterInstance: {
-        instanceId: result.instance_id,
-        typeId: result.type_id,
-        name: result.name,
-        rarity: result.rarity,
-        level: result.level,
+        instanceId: raw.instance_id,
+        typeId: raw.type_id,
+        name: raw.name,
+        rarity: raw.rarity,
+        level: raw.level,
       },
-      newBalance: result.new_balance,
-      isNew: result.is_new,
+      newBalance: raw.new_balance,
+      isNew: raw.is_new,
     },
     { status: 201 },
   );

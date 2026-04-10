@@ -90,4 +90,23 @@ describe("POST /api/gacha", () => {
     const json = await res.json();
     expect(json.error).toBe("Failed to draw character");
   });
+
+  it("config missing 에러 시 500", async () => {
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: { message: "gacha_cost config missing", code: "P0002" },
+    });
+    const res = await POST();
+    expect(res.status).toBe(500);
+    const json = await res.json();
+    expect(json.error).toBe("Failed to draw character");
+  });
+
+  it("rpc가 잘못된 shape 반환 시 500", async () => {
+    mockRpc.mockResolvedValue({ data: { unexpected: "shape" }, error: null });
+    const res = await POST();
+    expect(res.status).toBe(500);
+    const json = await res.json();
+    expect(json.error).toBe("Failed to draw character");
+  });
 });
