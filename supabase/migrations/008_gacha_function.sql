@@ -70,6 +70,7 @@ DECLARE
   v_user_id     UUID    := auth.uid();
   v_cost        INTEGER;
   v_weights     JSONB;
+  v_balance     INTEGER;
   v_rarity      TEXT;
   v_type_id     INTEGER;
   v_type_name   TEXT;
@@ -82,83 +83,85 @@ BEGIN
     RAISE EXCEPTION 'unauthorized' USING ERRCODE = '42501';
   END IF;
 
-  -- TODO: 1) app_config에서 gacha_cost 조회 및 NULL 체크
-  --   SELECT (value::text)::integer INTO v_cost
-  --   FROM public.app_config WHERE key = 'gacha_cost';
-  --   IF v_cost IS NULL THEN
-  --     RAISE EXCEPTION 'gacha_cost config missing' USING ERRCODE = 'P0002';
-  --   END IF;
+  -- 1) app_config에서 gacha_cost 조회
+  SELECT (value::text)::integer INTO v_cost
+  FROM public.app_config WHERE key = 'gacha_cost';
 
-  -- TODO: 2) app_config에서 gacha_rarity_weights 조회 및 NULL 체크
-  --   SELECT value INTO v_weights
-  --   FROM public.app_config WHERE key = 'gacha_rarity_weights';
-  --   IF v_weights IS NULL THEN
-  --     RAISE EXCEPTION 'gacha_rarity_weights config missing' USING ERRCODE = 'P0002';
-  --   END IF;
+  IF v_cost IS NULL THEN
+    RAISE EXCEPTION 'gacha_cost config missing' USING ERRCODE = 'P0002';
+  END IF;
 
-  -- TODO: 3) profiles.balance 잔액 검증
-  --   DECLARE v_balance INTEGER;
-  --   SELECT balance INTO v_balance FROM public.profiles WHERE id = v_user_id;
-  --   IF v_balance < v_cost THEN
-  --     RAISE EXCEPTION 'insufficient_balance' USING ERRCODE = 'P0001';
-  --   END IF;
+  -- 2) app_config에서 gacha_rarity_weights 조회
+  SELECT value INTO v_weights
+  FROM public.app_config WHERE key = 'gacha_rarity_weights';
 
-  -- TODO: 4) 레어리티 추첨 — jsonb_each_text(v_weights)로 가중치 합산 후 random() * total 기반 선택
-  --   힌트: WITH weights AS (SELECT key AS rarity, value::numeric AS w FROM jsonb_each_text(v_weights))
-  --         , total AS (SELECT sum(w) AS t FROM weights)
-  --         SELECT rarity INTO v_rarity
-  --         FROM weights, total
-  --         ORDER BY random() ^ (1.0 / w) DESC
-  --         LIMIT 1;
+  IF v_weights IS NULL THEN
+    RAISE EXCEPTION 'gacha_rarity_weights config missing' USING ERRCODE = 'P0002';
+  END IF;
 
-  -- TODO: 5) 해당 레어리티에서 랜덤 character_type 선택
-  --   SELECT id, name INTO v_type_id, v_type_name
-  --   FROM public.character_types
-  --   WHERE rarity = v_rarity
-  --   ORDER BY random()
-  --   LIMIT 1;
-  --   IF NOT FOUND THEN
-  --     RAISE EXCEPTION 'no character_type for rarity %', v_rarity USING ERRCODE = 'P0002';
-  --   END IF;
+  -- 3) 잔액 검증
+  SELECT balance INTO v_balance FROM public.profiles WHERE id = v_user_id;
 
-  -- TODO: 6) 기존 보유 여부 체크 → v_is_new
-  --   SELECT NOT EXISTS (
-  --     SELECT 1 FROM public.character_instances
-  --     WHERE user_id = v_user_id AND character_type_id = v_type_id
-  --   ) INTO v_is_new;
+  IF v_balance < v_cost THEN
+    RAISE EXCEPTION 'insufficient_balance' USING ERRCODE = 'P0001';
+  END IF;
 
-  -- TODO: 7) character_instances INSERT → v_instance_id
-  --   INSERT INTO public.character_instances (user_id, character_type_id, level, exp)
-  --   VALUES (v_user_id, v_type_id, 1, 0)
-  --   RETURNING id INTO v_instance_id;
+  -- 4) 레어리티 추첨 — 가중치 기반 랜덤 (Efraimidis-Spirakis)
+  WITH weights AS (
+    SELECT key AS rarity, value::numeric AS w
+    FROM jsonb_each_text(v_weights)
+  )
+  SELECT rarity INTO v_rarity
+  FROM weights
+  ORDER BY random() ^ (1.0 / w) DESC
+  LIMIT 1;
 
-  -- TODO: 8) profiles.balance 상대적 UPDATE → v_new_balance RETURNING
-  --   UPDATE public.profiles
-  --   SET balance = balance - v_cost
-  --   WHERE id = v_user_id
-  --   RETURNING balance INTO v_new_balance;
+  -- 5) 해당 레어리티에서 랜덤 character_type 선택
+  SELECT id, name INTO v_type_id, v_type_name
+  FROM public.character_types
+  WHERE rarity = v_rarity
+  ORDER BY random()
+  LIMIT 1;
 
-  -- TODO: 9) point_transaction INSERT (tx_type='spent', running_balance 필수)
-  --   INSERT INTO public.point_transaction (user_id, tx_type, amount, running_balance, ref_type, ref_id)
-  --   VALUES (v_user_id, 'spent', -v_cost, v_new_balance, 'gacha', v_instance_id);
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'no character_type for rarity %', v_rarity USING ERRCODE = 'P0002';
+  END IF;
 
-  -- TODO: 10) activity_log INSERT (append-only)
-  --   INSERT INTO public.activity_log (user_id, event_category, event_type, metadata)
-  --   VALUES (v_user_id, 'gacha', 'draw',
-  --     jsonb_build_object('type_id', v_type_id, 'rarity', v_rarity, 'is_new', v_is_new));
+  -- 6) 기존 보유 여부 체크 → v_is_new
+  SELECT NOT EXISTS (
+    SELECT 1 FROM public.character_instances
+    WHERE user_id = v_user_id AND character_type_id = v_type_id
+  ) INTO v_is_new;
 
-  -- TODO: 위 TODO 구현 완료 후 아래 RETURN 주석 해제
-  -- RETURN json_build_object(
-  --   'instance_id', v_instance_id,
-  --   'type_id',     v_type_id,
-  --   'name',        v_type_name,
-  --   'rarity',      v_rarity,
-  --   'level',       1,
-  --   'new_balance', v_new_balance,
-  --   'is_new',      v_is_new
-  -- );
+  -- 7) character_instances INSERT
+  INSERT INTO public.character_instances (user_id, character_type_id, level, exp)
+  VALUES (v_user_id, v_type_id, 1, 0)
+  RETURNING id INTO v_instance_id;
 
-  RETURN NULL; -- 스캐폴딩: 함수 본문 구현 전 placeholder
+  -- 8) profiles.balance 상대적 UPDATE (race condition 방지)
+  UPDATE public.profiles
+  SET balance = balance - v_cost
+  WHERE id = v_user_id
+  RETURNING balance INTO v_new_balance;
+
+  -- 9) point_transaction INSERT (tx_type='spent', running_balance 필수)
+  INSERT INTO public.point_transaction (user_id, tx_type, amount, running_balance, ref_type, ref_id)
+  VALUES (v_user_id, 'spent', -v_cost, v_new_balance, 'gacha', v_instance_id);
+
+  -- 10) activity_log INSERT (append-only)
+  INSERT INTO public.activity_log (user_id, event_category, event_type, metadata)
+  VALUES (v_user_id, 'gacha', 'draw',
+    jsonb_build_object('type_id', v_type_id, 'rarity', v_rarity, 'is_new', v_is_new));
+
+  RETURN json_build_object(
+    'instance_id', v_instance_id,
+    'type_id',     v_type_id,
+    'name',        v_type_name,
+    'rarity',      v_rarity,
+    'level',       1,
+    'new_balance', v_new_balance,
+    'is_new',      v_is_new
+  );
 END;
 $$;
 
