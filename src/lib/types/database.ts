@@ -328,6 +328,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      gacha: { Args: Record<PropertyKey, never>; Returns: Json }
       complete_pomodoro: {
         Args: { p_note?: string; p_pomodoro_id: number }
         Returns: Json

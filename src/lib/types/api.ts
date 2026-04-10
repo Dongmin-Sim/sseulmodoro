@@ -37,6 +37,19 @@ export interface StartNextPomodoroResponse {
   sessionId: number;
 }
 
+/** POST /api/gacha 성공 응답 */
+export interface GachaResponse {
+  characterInstance: {
+    instanceId: number;
+    typeId: number;
+    name: string;
+    rarity: string;
+    level: number;
+  };
+  newBalance: number;
+  isNew: boolean;
+}
+
 /** API 공통 에러 응답 */
 export interface ApiError {
   error: string;
