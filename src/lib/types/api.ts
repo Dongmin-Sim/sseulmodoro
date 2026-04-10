@@ -63,7 +63,7 @@ export interface HomeDataResponse {
 
 /** POST /api/auth/logout 성공 응답 */
 export interface LogoutResponse {
-  success: boolean;
+  success: true;
 }
 
 /** API 공통 에러 응답 */

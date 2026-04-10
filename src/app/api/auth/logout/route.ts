@@ -7,6 +7,10 @@ export async function POST() {
   const { error } = await supabase.auth.signOut();
 
   if (error) {
+    // 세션이 이미 만료된 경우 — 이미 로그아웃 상태이므로 성공으로 처리
+    if (error.message?.includes("Auth session missing")) {
+      return NextResponse.json<LogoutResponse>({ success: true }, { status: 200 });
+    }
     console.error("logout error:", error);
     return NextResponse.json<ApiError>(
       { error: "Failed to logout" },

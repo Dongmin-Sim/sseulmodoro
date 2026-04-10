@@ -32,8 +32,8 @@ describe("POST /api/auth/logout", () => {
     expect(json.error).toBe("Failed to logout");
   });
 
-  it("미인증 상태에서도 200 + success: true", async () => {
-    mockSignOut.mockResolvedValue({ error: null });
+  it("세션 만료 에러 시에도 200 + success: true", async () => {
+    mockSignOut.mockResolvedValue({ error: { message: "Auth session missing!", status: 400 } });
     const res = await POST();
     expect(res.status).toBe(200);
     const json = await res.json();
