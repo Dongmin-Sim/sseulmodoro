@@ -94,11 +94,7 @@ function CycleProgress({
   );
 }
 
-type PomodoroTimerProps = {
-  onReset?: () => void;
-};
-
-export function PomodoroTimer({ onReset }: PomodoroTimerProps = {}) {
+export function PomodoroTimer() {
   // 세션 설정
   const [focusMinutes, setFocusMinutes] = useState(25);
   const [focusLabel, setFocusLabel] = useState("25분");
@@ -300,7 +296,6 @@ export function PomodoroTimer({ onReset }: PomodoroTimerProps = {}) {
     setSessionId(null);
     setPomodoroId(null);
     setEarnedPoints(null);
-    onReset?.();
   };
 
   const isTimerPhase = sessionPhase === "focusing" || sessionPhase === "breaking";
