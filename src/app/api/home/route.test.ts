@@ -73,6 +73,18 @@ describe("GET /api/home", () => {
     expect(json).toEqual({ balance: 200, mainCharacter: null });
   });
 
+  it("character_instances 있으나 character_types null 시 200 + mainCharacter null", async () => {
+    mockProfileSingle.mockResolvedValue({ data: { balance: 100 }, error: null });
+    mockSessionMaybeSingle.mockResolvedValue({
+      data: { character_instances: { id: 5, level: 1, character_types: null } },
+      error: null,
+    });
+    const res = await GET();
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json).toEqual({ balance: 100, mainCharacter: null });
+  });
+
   it("성공 시 200 + 응답 shape 검증", async () => {
     mockProfileSingle.mockResolvedValue({ data: { balance: 350 }, error: null });
     mockSessionMaybeSingle.mockResolvedValue({
