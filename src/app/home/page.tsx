@@ -5,7 +5,8 @@ export default async function Home() {
   let data;
   try {
     data = await getHomeData();
-  } catch {
+  } catch (e) {
+    console.error("[home/page] getHomeData failed:", e);
     data = null;
   }
 
