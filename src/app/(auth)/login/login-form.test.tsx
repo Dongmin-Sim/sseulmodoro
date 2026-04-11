@@ -44,14 +44,14 @@ describe("LoginForm", () => {
     );
   });
 
-  it("로그인 성공 + redirectTo 없음 → / 로 이동", async () => {
+  it("로그인 성공 + redirectTo 없음 → /home 으로 이동", async () => {
     mockGet.mockReturnValue(null);
     mockSignIn.mockResolvedValue({ error: null });
 
     render(<LoginForm />);
     fireEvent.submit(screen.getByRole("button", { name: /로그인/ }));
 
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/"));
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/home"));
   });
 
   it("로그인 실패 → 에러 메시지 표시, push 미호출", async () => {
@@ -75,23 +75,23 @@ describe("LoginForm", () => {
     expect(mockPush).not.toHaveBeenCalled();
   });
 
-  it("외부 URL redirectTo → / 로 폴백 (open redirect 방어)", async () => {
+  it("외부 URL redirectTo → /home 으로 폴백 (open redirect 방어)", async () => {
     mockGet.mockReturnValue("https://evil.com");
     mockSignIn.mockResolvedValue({ error: null });
 
     render(<LoginForm />);
     fireEvent.submit(screen.getByRole("button", { name: /로그인/ }));
 
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/"));
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/home"));
   });
 
-  it("protocol-relative redirectTo → / 로 폴백 (open redirect 방어)", async () => {
+  it("protocol-relative redirectTo → /home 으로 폴백 (open redirect 방어)", async () => {
     mockGet.mockReturnValue("//evil.com");
     mockSignIn.mockResolvedValue({ error: null });
 
     render(<LoginForm />);
     fireEvent.submit(screen.getByRole("button", { name: /로그인/ }));
 
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/"));
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith("/home"));
   });
 });
