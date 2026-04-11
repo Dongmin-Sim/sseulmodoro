@@ -55,7 +55,7 @@ describe("GET /api/home", () => {
     expect(json.error).toBe("Failed to fetch home data");
   });
 
-  it("sessions 쿼리 에러 시 500", async () => {
+  it("character_instances 쿼리 에러 시 500", async () => {
     mockProfileSingle.mockResolvedValue({ data: { balance: 100 }, error: null });
     mockMainCharacterMaybeSingle.mockResolvedValue({ data: null, error: { message: "db error" } });
     const res = await GET();
