@@ -31,7 +31,7 @@ export function TopNav() {
       <PageContainer className="flex h-14 items-center">
         <Link
           href="/"
-          className="text-sm font-bold tracking-wide text-foreground"
+          className="flex items-center min-h-[44px] text-sm font-bold tracking-wide text-foreground"
         >
           쓸모도로
         </Link>
@@ -48,7 +48,7 @@ export function TopNav() {
           <Button
             variant="ghost"
             size="sm"
-            className="text-xs text-muted-foreground"
+            className="min-h-[44px] min-w-[44px] text-xs text-muted-foreground"
             onClick={handleLogout}
             disabled={isLoggingOut}
             aria-busy={isLoggingOut}

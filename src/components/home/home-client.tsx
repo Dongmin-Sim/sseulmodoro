@@ -124,7 +124,7 @@ export function HomeClient({ data }: HomeClientProps) {
                     <span className="text-xl font-bold leading-none text-primary">
                       {WEEKLY_PLACEHOLDER.pomodoroCount}
                     </span>
-                    <span className="text-center text-[11px] font-medium text-muted-foreground">
+                    <span className="text-center text-xs font-medium text-muted-foreground">
                       완료한 포모도로
                     </span>
                   </div>
@@ -132,7 +132,7 @@ export function HomeClient({ data }: HomeClientProps) {
                     <span className="text-xl font-bold leading-none text-foreground">
                       {WEEKLY_PLACEHOLDER.focusTime}
                     </span>
-                    <span className="text-center text-[11px] font-medium text-muted-foreground">
+                    <span className="text-center text-xs font-medium text-muted-foreground">
                       총 집중 시간
                     </span>
                   </div>
@@ -140,7 +140,7 @@ export function HomeClient({ data }: HomeClientProps) {
                     <span className="text-xl font-bold leading-none" style={{ color: "#7BA68E" }}>
                       {WEEKLY_PLACEHOLDER.streakDays}
                     </span>
-                    <span className="text-center text-[11px] font-medium text-muted-foreground">
+                    <span className="text-center text-xs font-medium text-muted-foreground">
                       연속 집중일
                     </span>
                   </div>
@@ -148,7 +148,7 @@ export function HomeClient({ data }: HomeClientProps) {
                     <span className="text-xl font-bold leading-none text-foreground">
                       +{WEEKLY_PLACEHOLDER.earnedPoints}
                     </span>
-                    <span className="text-center text-[11px] font-medium text-muted-foreground">
+                    <span className="text-center text-xs font-medium text-muted-foreground">
                       획득 포인트
                     </span>
                   </div>

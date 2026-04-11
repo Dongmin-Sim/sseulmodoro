@@ -27,7 +27,7 @@ export function ContentNav({ items, balance }: ContentNavProps) {
           return item.disabled ? (
             <span
               key={item.href}
-              className="relative px-5 pb-2 pt-2 text-sm font-medium text-muted-foreground opacity-40 cursor-not-allowed select-none"
+              className="relative px-5 py-3 text-sm font-medium text-muted-foreground opacity-40 cursor-not-allowed select-none"
             >
               {item.label}
             </span>
@@ -36,7 +36,7 @@ export function ContentNav({ items, balance }: ContentNavProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "relative px-5 pb-2 pt-2 text-sm transition-colors",
+                "relative px-5 py-3 text-sm transition-colors",
                 isActive
                   ? "font-bold text-foreground"
                   : "font-medium text-muted-foreground hover:text-foreground",
