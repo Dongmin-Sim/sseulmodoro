@@ -302,7 +302,7 @@ export function PomodoroTimer() {
   const isBreak = sessionPhase === "breaking";
 
   return (
-    <Card className="w-full max-w-sm mx-auto">
+    <Card className="w-full">
       <CardContent className="flex flex-col items-center gap-6 pt-6">
         {/* idle: 세션 설정 */}
         {sessionPhase === "idle" && (
