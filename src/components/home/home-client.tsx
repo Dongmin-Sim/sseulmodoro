@@ -34,7 +34,6 @@ const WEEKLY_PLACEHOLDER = {
   bars: [0, 0, 0, 0, 0, 0, 0] as number[],
 };
 const WEEK_DAYS = ["월", "화", "수", "목", "금", "토", "일"] as const;
-const TODAY_INDEX = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
 
 type HomeClientProps = {
   data: HomeDataResponse | null;
@@ -42,6 +41,9 @@ type HomeClientProps = {
 
 export function HomeClient({ data }: HomeClientProps) {
   const [isSessionActive, setIsSessionActive] = useState(false);
+  // 렌더 시점 기준 "오늘" 계산. 모듈 레벨 상수는 탭을 자정 넘어 열어두면 stale.
+  const today = new Date().getDay();
+  const todayIndex = today === 0 ? 6 : today - 1;
 
   const character = data?.mainCharacter ?? null;
   const balance = data?.balance ?? 0;
@@ -165,7 +167,7 @@ export function HomeClient({ data }: HomeClientProps) {
                         style={{
                           height: Math.max(height, 4),
                           background:
-                            i === TODAY_INDEX
+                            i === todayIndex
                               ? "#D4956A"
                               : "rgba(212,149,106,0.2)",
                           opacity: height === 0 ? 0.35 : 1,
@@ -174,8 +176,8 @@ export function HomeClient({ data }: HomeClientProps) {
                       <span
                         className="text-[10px] font-medium"
                         style={{
-                          color: i === TODAY_INDEX ? "#D4956A" : "#9C9590",
-                          fontWeight: i === TODAY_INDEX ? 700 : 500,
+                          color: i === todayIndex ? "#D4956A" : "#9C9590",
+                          fontWeight: i === todayIndex ? 700 : 500,
                         }}
                       >
                         {WEEK_DAYS[i]}

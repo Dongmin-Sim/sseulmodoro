@@ -27,9 +27,13 @@ export function ContentNav({ items, balance }: ContentNavProps) {
           return item.disabled ? (
             <span
               key={item.href}
+              role="link"
+              aria-disabled="true"
+              title="준비 중"
               className="relative px-5 py-3 text-sm font-medium text-muted-foreground opacity-40 cursor-not-allowed select-none"
             >
               {item.label}
+              <span className="sr-only"> (준비 중)</span>
             </span>
           ) : (
             <Link
