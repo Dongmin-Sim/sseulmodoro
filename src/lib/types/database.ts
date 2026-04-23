@@ -90,6 +90,7 @@ export type Database = {
           created_at: string
           exp: number
           id: number
+          is_main: boolean
           level: number
           user_id: string
         }
@@ -98,6 +99,7 @@ export type Database = {
           created_at?: string
           exp?: number
           id?: number
+          is_main?: boolean
           level?: number
           user_id: string
         }
@@ -106,6 +108,7 @@ export type Database = {
           created_at?: string
           exp?: number
           id?: number
+          is_main?: boolean
           level?: number
           user_id?: string
         }
@@ -328,12 +331,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      gacha: { Args: Record<PropertyKey, never>; Returns: Json }
       complete_pomodoro: {
         Args: { p_note?: string; p_pomodoro_id: number }
         Returns: Json
       }
       end_session: { Args: { p_session_id: number }; Returns: Json }
+      gacha: { Args: never; Returns: Json }
       start_next_pomodoro: { Args: { p_session_id: number }; Returns: Json }
       start_session: {
         Args: {

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mockGetAuthUser = vi.fn();
 const mockProfileSingle = vi.fn();
-const mockSessionMaybeSingle = vi.fn();
+const mockMainCharacterMaybeSingle = vi.fn();
 
 vi.mock("@/lib/supabase/auth", () => ({
   getAuthUser: () => mockGetAuthUser(),
@@ -23,7 +23,7 @@ vi.mock("@/lib/supabase/server", () => ({
     Promise.resolve({
       from: (table: string) => {
         if (table === "profiles") return makeChain(mockProfileSingle);
-        if (table === "pomodoro_sessions") return makeChain(mockSessionMaybeSingle);
+        if (table === "character_instances") return makeChain(mockMainCharacterMaybeSingle);
       },
     }),
 }));
@@ -34,7 +34,7 @@ describe("GET /api/home", () => {
   beforeEach(() => {
     mockGetAuthUser.mockReset();
     mockProfileSingle.mockReset();
-    mockSessionMaybeSingle.mockReset();
+    mockMainCharacterMaybeSingle.mockReset();
     mockGetAuthUser.mockResolvedValue({ id: "test-user-id", email: "test@test.com" });
   });
 
@@ -48,35 +48,35 @@ describe("GET /api/home", () => {
 
   it("profiles 쿼리 에러 시 500", async () => {
     mockProfileSingle.mockResolvedValue({ data: null, error: { message: "db error" } });
-    mockSessionMaybeSingle.mockResolvedValue({ data: null, error: null });
+    mockMainCharacterMaybeSingle.mockResolvedValue({ data: null, error: null });
     const res = await GET();
     expect(res.status).toBe(500);
     const json = await res.json();
     expect(json.error).toBe("Failed to fetch home data");
   });
 
-  it("sessions 쿼리 에러 시 500", async () => {
+  it("character_instances 쿼리 에러 시 500", async () => {
     mockProfileSingle.mockResolvedValue({ data: { balance: 100 }, error: null });
-    mockSessionMaybeSingle.mockResolvedValue({ data: null, error: { message: "db error" } });
+    mockMainCharacterMaybeSingle.mockResolvedValue({ data: null, error: { message: "db error" } });
     const res = await GET();
     expect(res.status).toBe(500);
     const json = await res.json();
     expect(json.error).toBe("Failed to fetch home data");
   });
 
-  it("완료된 포모도로 없을 시 200 + mainCharacter null", async () => {
+  it("대표 캐릭터 없을 시 200 + mainCharacter null", async () => {
     mockProfileSingle.mockResolvedValue({ data: { balance: 200 }, error: null });
-    mockSessionMaybeSingle.mockResolvedValue({ data: null, error: null });
+    mockMainCharacterMaybeSingle.mockResolvedValue({ data: null, error: null });
     const res = await GET();
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json).toEqual({ balance: 200, mainCharacter: null });
   });
 
-  it("character_instances 있으나 character_types null 시 200 + mainCharacter null", async () => {
+  it("is_main 캐릭터 있으나 character_types null 시 200 + mainCharacter null", async () => {
     mockProfileSingle.mockResolvedValue({ data: { balance: 100 }, error: null });
-    mockSessionMaybeSingle.mockResolvedValue({
-      data: { character_instances: { id: 5, level: 1, character_types: null } },
+    mockMainCharacterMaybeSingle.mockResolvedValue({
+      data: { id: 5, level: 1, character_types: null },
       error: null,
     });
     const res = await GET();
@@ -87,13 +87,11 @@ describe("GET /api/home", () => {
 
   it("성공 시 200 + 응답 shape 검증", async () => {
     mockProfileSingle.mockResolvedValue({ data: { balance: 350 }, error: null });
-    mockSessionMaybeSingle.mockResolvedValue({
+    mockMainCharacterMaybeSingle.mockResolvedValue({
       data: {
-        character_instances: {
-          id: 5,
-          level: 3,
-          character_types: { name: "공부하는 모또", rarity: "common" },
-        },
+        id: 5,
+        level: 3,
+        character_types: { name: "공부하는 모또", rarity: "common" },
       },
       error: null,
     });
