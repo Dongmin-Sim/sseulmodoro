@@ -54,9 +54,13 @@
 
 ## Layout
 
-- **모바일 퍼스트**: `max-w-sm mx-auto` (max-width: 384px)
+- **웹 우선 반응형**: 단일 레이아웃이 모든 화면 크기에 대응
+- **컨테이너**: `max-w-xl mx-auto` (max-width: 576px), 좌우 패딩 `px-5 sm:px-8`
+- **컨테이너 미만**: 화면이 576px보다 좁으면 컨테이너가 뷰포트 꽉 채움 + 좌우 패딩만 유지
 - **카드 기반**: 주요 콘텐츠는 카드 안에 배치
 - **중앙 정렬**: 타이머, 캐릭터, 완료 화면은 text-center
+- **Top Rail**: 상단 고정 nav (로고 + 로그아웃), Bottom Nav 없음
+- **Content Nav**: 섹션 탭 (홈/도감/상점/기록) + 포인트 잔액 chip, 본문 상단에 위치
 
 ## Border Radius
 
@@ -149,12 +153,22 @@
 ## Page Structure
 
 ```
-src/app/(auth)/login/page.tsx      — 로그인
-src/app/(auth)/signup/page.tsx     — 회원가입
-src/app/(main)/page.tsx            — 홈 (타이머 + 캐릭터)
-src/app/(main)/collection/         — 도감
-src/app/(main)/shop/               — 상점 (띌기)
-src/app/(main)/history/            — 기록 돌아보기
+src/app/(auth)/login/page.tsx      — 로그인 (Top nav 없음, 카드 중앙 정렬)
+src/app/(auth)/signup/page.tsx     — 회원가입 (Top nav 없음, 카드 중앙 정렬)
+src/app/(main)/layout.tsx          — AppShell + TopNav 공통 래퍼
+src/app/(main)/page.tsx            — 홈 (타이머 + 캐릭터 + 금주 현황)
+src/app/(main)/collection/         — 도감 (예정)
+src/app/(main)/shop/               — 상점 (예정)
+src/app/(main)/history/            — 기록 (예정)
+```
+
+### 공통 레이아웃 컴포넌트
+
+```
+src/components/layout/app-shell.tsx    — min-h-screen 래퍼 + radial gradient
+src/components/layout/top-nav.tsx      — 로고 + 로그아웃 (sticky, 576px 컨테이너)
+src/components/layout/page-container.tsx — max-w-xl 중앙 정렬 컨테이너
+src/components/layout/content-nav.tsx  — 섹션 탭 + 포인트 잔액 chip
 ```
 
 ## Preview
