@@ -32,6 +32,8 @@ session-start skill 4단계에서 처리.
 
 ### 기능 개발 (태스크 DB)
 
+워크플로우 시작 시 TaskCreate로 아래 단계를 등록한다. 각 단계 시작 전 `in_progress`, 완료 직후 `completed`.
+
 1. `git checkout -b feature/TASK-XXX-기능명` (dev에서 분기)
 2. notion-routine agent에 위임: "TASK-XXX 상태 → '진행 중', 시작일자 오늘"
 3. **새 API 작업 시 첫 번째 커밋**: `src/lib/types/api.ts`에 요청/응답 타입 정의
@@ -44,6 +46,8 @@ session-start skill 4단계에서 처리.
 9. skill: pr-sync 실행 → 노션 동기화
 
 ### 버그 수정 (이슈 DB)
+
+워크플로우 시작 시 TaskCreate로 아래 단계를 등록한다. 각 단계 시작 전 `in_progress`, 완료 직후 `completed`.
 
 1. `git checkout -b fix/ISSUE-XXX-버그명` (dev에서 분기)
 2. notion-routine agent에 위임: "ISSUE-XXX 상태 → '진행 중'"

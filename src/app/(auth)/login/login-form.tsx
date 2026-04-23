@@ -12,8 +12,8 @@ import { createClient } from "@/lib/supabase/client";
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const raw = searchParams.get("redirectTo") ?? "/";
-  const redirectTo = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/";
+  const raw = searchParams.get("redirectTo") ?? "/home";
+  const redirectTo = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/home";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);

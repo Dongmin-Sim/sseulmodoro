@@ -23,8 +23,14 @@ CREATE TABLE public.character_instances (
   character_type_id INTEGER NOT NULL REFERENCES public.character_types(id),
   level             INTEGER NOT NULL DEFAULT 1,
   exp               INTEGER NOT NULL DEFAULT 0,
+  is_main           BOOLEAN NOT NULL DEFAULT false,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- 유저당 대표 캐릭터(is_main=true)는 반드시 1개
+CREATE UNIQUE INDEX uniq_character_instances_main_per_user
+  ON public.character_instances (user_id)
+  WHERE is_main = true;
 
 -- 4. pomodoro_sessions (사이클 단위)
 CREATE TABLE public.pomodoro_sessions (
