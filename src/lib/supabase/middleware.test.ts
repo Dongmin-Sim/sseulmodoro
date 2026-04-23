@@ -20,14 +20,11 @@ describe("updateSession (auth redirect)", () => {
     mockGetClaims.mockReset();
   });
 
-  it("미인증 + / → /login 리다이렉트 (redirectTo 파라미터 없음)", async () => {
+  it("미인증 + / → 통과 (랜딩 페이지 공개)", async () => {
     mockGetClaims.mockResolvedValue({ data: { claims: null } });
 
     const response = await updateSession(createRequest("/"));
-    expect(response.status).toBe(307);
-    const location = new URL(response.headers.get("location")!);
-    expect(location.pathname).toBe("/login");
-    expect(location.searchParams.has("redirectTo")).toBe(false);
+    expect(response.status).toBe(200);
   });
 
   it("미인증 + 비루트 보호 경로 → /login?redirectTo=경로 리다이렉트", async () => {
@@ -54,23 +51,53 @@ describe("updateSession (auth redirect)", () => {
     expect(response.status).toBe(200);
   });
 
-  it("인증됨 + / → 통과", async () => {
+  it("인증됨 + / → /home 리다이렉트", async () => {
     mockGetClaims.mockResolvedValue({
       data: { claims: { sub: "user-123" } },
     });
 
     const response = await updateSession(createRequest("/"));
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(307);
+    expect(new URL(response.headers.get("location")!).pathname).toBe("/home");
   });
 
-  it("인증됨 + /login → / 리다이렉트", async () => {
+  it("인증됨 + /login → /home 리다이렉트", async () => {
     mockGetClaims.mockResolvedValue({
       data: { claims: { sub: "user-123" } },
     });
 
     const response = await updateSession(createRequest("/login"));
     expect(response.status).toBe(307);
-    expect(new URL(response.headers.get("location")!).pathname).toBe("/");
+    expect(new URL(response.headers.get("location")!).pathname).toBe("/home");
+  });
+
+  it("미인증 + /home → /login?redirectTo=/home 리다이렉트", async () => {
+    mockGetClaims.mockResolvedValue({ data: { claims: null } });
+
+    const response = await updateSession(createRequest("/home"));
+    expect(response.status).toBe(307);
+    const location = new URL(response.headers.get("location")!);
+    expect(location.pathname).toBe("/login");
+    expect(location.searchParams.get("redirectTo")).toBe("/home");
+  });
+
+  it("인증됨 + /home → 통과", async () => {
+    mockGetClaims.mockResolvedValue({
+      data: { claims: { sub: "user-123" } },
+    });
+
+    const response = await updateSession(createRequest("/home"));
+    expect(response.status).toBe(200);
+  });
+
+  it("인증됨 + /signup → /home 리다이렉트", async () => {
+    mockGetClaims.mockResolvedValue({
+      data: { claims: { sub: "user-123" } },
+    });
+
+    const response = await updateSession(createRequest("/signup"));
+    expect(response.status).toBe(307);
+    expect(new URL(response.headers.get("location")!).pathname).toBe("/home");
   });
 
   it("/api/* → 리다이렉트 안 함 (인증 무관)", async () => {

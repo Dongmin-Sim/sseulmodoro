@@ -39,14 +39,26 @@ export async function updateSession(request: NextRequest) {
     return response;
   }
 
+  // 랜딩 페이지(/) — 미인증은 그대로 렌더, 인증됨은 /home으로 리다이렉트
+  if (pathname === "/") {
+    if (isAuthenticated) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/home";
+      const redirectResponse = NextResponse.redirect(url);
+      response.cookies.getAll().forEach((cookie) =>
+        redirectResponse.cookies.set(cookie.name, cookie.value),
+      );
+      return redirectResponse;
+    }
+    return response;
+  }
+
   // 미인증 + 보호 경로 → /login 리다이렉트 (원래 경로를 redirectTo로 전달)
+  // pathname만 사용 — href/search 포함 시 Host 헤더 스푸핑으로 open redirect 가능
   if (!isAuthenticated && !PUBLIC_PATHS.includes(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    // pathname만 사용 — href/search 포함 시 Host 헤더 스푸핑으로 open redirect 가능
-    if (pathname !== "/") {
-      url.searchParams.set("redirectTo", pathname);
-    }
+    url.searchParams.set("redirectTo", pathname);
     const redirectResponse = NextResponse.redirect(url);
     response.cookies.getAll().forEach((cookie) =>
       redirectResponse.cookies.set(cookie.name, cookie.value),
@@ -54,10 +66,10 @@ export async function updateSession(request: NextRequest) {
     return redirectResponse;
   }
 
-  // 인증됨 + 공개 경로 → / 리다이렉트
+  // 인증됨 + 공개 경로(/login, /signup) → /home 리다이렉트
   if (isAuthenticated && PUBLIC_PATHS.includes(pathname)) {
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = "/home";
     const redirectResponse = NextResponse.redirect(url);
     response.cookies.getAll().forEach((cookie) =>
       redirectResponse.cookies.set(cookie.name, cookie.value),
