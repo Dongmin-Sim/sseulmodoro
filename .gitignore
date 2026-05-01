@@ -46,8 +46,14 @@ __pycache__/
 venv/
 .venv/
 
+# certs
+pipeline/certs/
+
 # supabase local
 supabase/snippets/
+
+# IDE
+.vscode/
 
 # claude code
 .claude/settings.local.json
