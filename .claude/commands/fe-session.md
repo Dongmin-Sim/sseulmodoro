@@ -32,9 +32,9 @@ skill: session-start를 실행한다. 세션 타입은 **FE**.
 
 session-start skill 4단계에서 처리.
 
-### 기능 개발 (태스크 DB)
+### 기능 개발 (태스크)
 
-워크플로우 시작 시 TaskCreate로 아래 단계를 등록한다. 각 단계 시작 전 `in_progress`, 완료 직후 `completed`.
+vault `project/tasks/TASK-{N}-*.md` 기반. 워크플로우 시작 시 TaskCreate로 아래 단계를 등록한다. 각 단계 시작 전 `in_progress`, 완료 직후 `completed`.
 
 1. `git checkout -b feature/TASK-{N}-기능명` (dev에서 분기, `TASK-{N}`은 vault 태스크 ID — 비패딩)
 2. `src/lib/types/api.ts`에서 BE가 정의한 타입 확인
@@ -45,23 +45,28 @@ session-start skill 4단계에서 처리.
 7. `/design-review` 실행 — 비주얼 QA ← `npm run dev` 실행 중이어야 함
 8. 발견된 디자인 이슈 수정 후 커밋
 9. **PR 생성 전 `/review` 실행** → code-reviewer(구조) + security-reviewer(보안) agent 위임
-10. PR 생성
+10. PR 생성 — 제목 `[TASK-{N}] 태스크명`
+11. **vault-progress-writer에 위임** — 진척 5필드 갱신:
+    > "TASK-{N}: branch=feature/TASK-{N}-{슬러그}, pr_link={PR URL}, start_date={오늘 YYYY-MM-DD}, status=in-review 로 갱신"
 
-> PR 생성 후 vault 태스크 파일의 상태·PR 링크 갱신은 vault project 세션이 git/PR을 보고 반영한다. 코드 레포 세션은 태스크 파일을 갱신하지 않는다.
+> 태스크 진척 5필드(`status`·`branch`·`pr_link`·`start_date`·`end_date`)는 코드 레포 세션이 vault-progress-writer로 자동 갱신한다. 본문·기획 영역(설명·완료조건·`linked_features` 등)은 vault project 세션 전속.
 
-### 버그 수정 (이슈 DB)
+### 버그 수정 (이슈)
 
-> ⚠️ **이슈/버그 모델 미확정.** vault에는 별도 이슈 DB가 없어 `ISSUE-XXX` 개념의 대응이 정해지지 않았다. vault improvement `2026-05-19-코드레포-이슈버그-모델-vault대응` 처리 후 이 섹션을 확정한다. 그때까지 버그 상태 추적은 사용자와 직접 합의해 진행한다.
+vault `project/issues/ISSUE-{N}-*.md` 기반. 워크플로우 시작 시 TaskCreate로 아래 단계를 등록한다. 각 단계 시작 전 `in_progress`, 완료 직후 `completed`.
 
-워크플로우 시작 시 TaskCreate로 아래 단계를 등록한다. 각 단계 시작 전 `in_progress`, 완료 직후 `completed`.
-
-1. `git checkout -b fix/ISSUE-XXX-버그명` (dev에서 분기)
+1. `git checkout -b fix/ISSUE-{N}-버그명` (dev에서 분기, `ISSUE-{N}`은 vault 이슈 ID — 비패딩)
 2. 이슈 재현 확인 → 원인 분석
 3. 수정 구현
 4. 커밋
 5. `/design-review` 실행 → 디자인 이슈 수정 후 커밋 ← `npm run dev` 실행 중이어야 함
 6. **PR 생성 전 `/review` 실행** → code-reviewer + security-reviewer agent 위임
-7. PR 생성
+7. PR 생성 — 제목 `[ISSUE-{N}] 이슈명`
+8. **vault-progress-writer에 위임** — 진척 5필드 갱신:
+   > "ISSUE-{N}: branch=fix/ISSUE-{N}-{슬러그}, pr_link={PR URL}, start_date={오늘 YYYY-MM-DD}, status=in-review 로 갱신"
+9. **vault-content-drafter에 위임** — 본문 초안 생성:
+   > "ISSUE-{N}, PR #{N}의 본문 초안 생성 → 터미널 출력"
+   > 초안은 vault에 쓰이지 않음. 사용자가 검토 후 vault project 세션에서 직접 입력.
 
 ## 디자인 시스템
 
