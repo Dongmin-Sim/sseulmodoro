@@ -58,8 +58,10 @@ harness/*   ← Claude 하네스 변경. dev에서 분기 → 완료 후 dev에 
 ```
 
 - 기능 개발: `feature/TASK-{N}-기능명` (`TASK-{N}`은 vault 태스크 ID — 비패딩, 예: `feature/TASK-51-etl-load`)
-- 버그 수정: `fix/ISSUE-001-버그명`
+- 버그 수정: `fix/ISSUE-{N}-버그명` (`ISSUE-{N}`은 vault 이슈 ID — 비패딩, 예: `fix/ISSUE-5-logout-warning-restore`)
 - 하네스 변경: `harness/설명` (`.claude/` 하위 파일 — agents, skills, rules, commands, settings)
+
+> 머지된 패딩 잔재 브랜치(`fix/ISSUE-001` 등)는 그대로 두고 신규는 비패딩으로 통일.
 - main/dev 직접 커밋 금지. PR로만 머지.
 
 ### 배포 흐름
@@ -91,14 +93,21 @@ BE/FE 세션을 분리하여 병렬 개발한다. 각 세션은 독립된 Claude
 - 파일 영역 겹침 금지 — 각 세션 지침 참조
 - 물리적 분리: `git worktree`로 디렉토리 분리 (충돌 방지)
 
-## 태스크 출처
+## 작업 출처 (태스크 + 이슈)
 
-프로젝트 태스크(`TASK-{N}`)의 단일 출처는 vault 파일시스템이다.
+프로젝트 작업의 단일 출처는 vault 파일시스템이다 — **두 객체**로 나뉜다:
 
-- 경로: `/Users/coding_min/home/oh-my-local-llm/project/tasks/`
-- 파일: `TASK-{N}-{태스크명}.md` (ID 비패딩). frontmatter에 `session`(BE|FE|DE|chore), `status`(백로그|진행중|완료|보류), `branch`, `pr_link`, `start_date`, `end_date` 등
-- 코드 레포는 태스크 파일을 **읽기 전용**으로 참조 (vault-task-reader 에이전트)
-- 태스크의 상태·PR링크·날짜 갱신은 vault project 세션이 git/PR을 보고 반영 — 코드 레포 세션은 태스크 파일을 쓰지 않는다
+- **태스크 (기능·개선)**: `/Users/coding_min/home/oh-my-local-llm/project/tasks/TASK-{N}-{슬러그}.md`
+- **이슈 (버그 수정)**: `/Users/coding_min/home/oh-my-local-llm/project/issues/ISSUE-{N}-{슬러그}.md`
+
+공통 규칙:
+
+- ID 비패딩 (`TASK-7`, `ISSUE-3`). TASK·ISSUE는 별도 namespace — 번호 겹쳐도 무관
+- status 어휘 영어 통일: `backlog | in-progress | in-review | done | on-hold`
+- frontmatter 진척 5필드(`status`, `branch`, `pr_link`, `start_date`, `end_date`)는 **코드 레포 세션이 vault-progress-writer로 자동 갱신**
+- 본문·기획 영역(설명·완료조건·`severity`·`root_cause`·`linked_features` 등) + 마일스톤·hub.md·decisions·session-log = **vault project 세션 전속**
+- 읽기는 vault-reader 에이전트로 위임 (haiku, 읽기 전용)
+- ISSUE 작업 시 PR 생성 직후 vault-content-drafter가 본문 초안만 터미널에 출력 — vault에는 쓰지 않음
 
 ## 작업 추적 규칙
 
@@ -113,12 +122,13 @@ BE/FE 세션을 분리하여 병렬 개발한다. 각 세션은 독립된 Claude
 
 개발에 직접 관여하지 않는 루틴 작업은 sonnet subagent에 위임하여 메인 컨텍스트 비대화를 방지한다.
 
-| sonnet subagent 위임 | opus 메인 직접 수행 |
+| 서브에이전트 위임 | opus 메인 직접 수행 |
 |---|---|
-| vault 태스크 조회 (vault-task-reader) | 아키텍처 설계 (plan 모드) |
-| GitHub PR 확인 (github-routine) | 코드 리뷰 (/review) |
-| 세션 시작/종료 루틴 | 디버깅/에러 분석 |
-| API Route 구현 (api-developer) | 사용자 대화/판단 |
+| vault 태스크·이슈 조회 (vault-reader, haiku) | 아키텍처 설계 (plan 모드) |
+| vault 진척 5필드 갱신 (vault-progress-writer, haiku) | 코드 리뷰 (/review) |
+| ISSUE 본문 초안 (vault-content-drafter, sonnet) | 디버깅/에러 분석 |
+| GitHub PR 확인 (github-routine, haiku) | 사용자 대화/판단 |
+| API Route 구현 (api-developer, sonnet) | |
 
 ## UI 전략
 
