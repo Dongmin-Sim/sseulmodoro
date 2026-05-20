@@ -57,7 +57,7 @@ fix/*       ← 버그 수정. dev에서 분기 → 완료 후 dev에 PR.
 harness/*   ← Claude 하네스 변경. dev에서 분기 → 완료 후 dev에 PR.
 ```
 
-- 기능 개발: `feature/TASK-001-기능명`
+- 기능 개발: `feature/TASK-{N}-기능명` (`TASK-{N}`은 vault 태스크 ID — 비패딩, 예: `feature/TASK-51-etl-load`)
 - 버그 수정: `fix/ISSUE-001-버그명`
 - 하네스 변경: `harness/설명` (`.claude/` 하위 파일 — agents, skills, rules, commands, settings)
 - main/dev 직접 커밋 금지. PR로만 머지.
@@ -85,11 +85,20 @@ BE/FE 세션을 분리하여 병렬 개발한다. 각 세션은 독립된 Claude
 
 세션 분리 규칙:
 
-- 노션 태스크 DB의 `세션` 속성으로 BE/FE 구분
+- vault 태스크 파일 frontmatter의 `session:` 필드로 BE/FE 구분
 - `src/lib/types/api.ts`가 공유 인터페이스 (API 계약)
   - BE가 타입 먼저 정의 → 커밋 → FE가 pull 후 사용
 - 파일 영역 겹침 금지 — 각 세션 지침 참조
 - 물리적 분리: `git worktree`로 디렉토리 분리 (충돌 방지)
+
+## 태스크 출처
+
+프로젝트 태스크(`TASK-{N}`)의 단일 출처는 vault 파일시스템이다.
+
+- 경로: `/Users/coding_min/home/oh-my-local-llm/project/tasks/`
+- 파일: `TASK-{N}-{태스크명}.md` (ID 비패딩). frontmatter에 `session`(BE|FE|DE|chore), `status`(백로그|진행중|완료|보류), `branch`, `pr_link`, `start_date`, `end_date` 등
+- 코드 레포는 태스크 파일을 **읽기 전용**으로 참조 (vault-task-reader 에이전트)
+- 태스크의 상태·PR링크·날짜 갱신은 vault project 세션이 git/PR을 보고 반영 — 코드 레포 세션은 태스크 파일을 쓰지 않는다
 
 ## 작업 추적 규칙
 
@@ -106,7 +115,7 @@ BE/FE 세션을 분리하여 병렬 개발한다. 각 세션은 독립된 Claude
 
 | sonnet subagent 위임 | opus 메인 직접 수행 |
 |---|---|
-| 노션 조회/업데이트 (notion-routine) | 아키텍처 설계 (plan 모드) |
+| vault 태스크 조회 (vault-task-reader) | 아키텍처 설계 (plan 모드) |
 | GitHub PR 확인 (github-routine) | 코드 리뷰 (/review) |
 | 세션 시작/종료 루틴 | 디버깅/에러 분석 |
 | API Route 구현 (api-developer) | 사용자 대화/판단 |
