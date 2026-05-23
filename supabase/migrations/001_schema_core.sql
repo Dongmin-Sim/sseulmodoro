@@ -1,3 +1,10 @@
+-- =============================================================
+-- 001 schema core — 테이블 / PK·FK / 인덱스
+-- =============================================================
+-- 이전의 누적 DROP→CREATE 마이그레이션(8개)을 ISSUE-5에서 정리하여
+-- 도메인 단위 6개 파일로 재작성한 baseline. RLS·정책은 003, 함수는
+-- 004/005/006에서 정의.
+
 -- 1. profiles (Supabase Auth 연동)
 CREATE TABLE public.profiles (
   id              UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -82,9 +89,8 @@ CREATE TABLE public.point_transaction (
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 8. app_config (서비스 설정)
+-- 8. app_config (서비스 설정 — key/value)
 CREATE TABLE public.app_config (
   key   VARCHAR(100) PRIMARY KEY,
   value JSONB NOT NULL
 );
-

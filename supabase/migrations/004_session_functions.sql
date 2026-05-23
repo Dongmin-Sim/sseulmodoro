@@ -1,18 +1,15 @@
 -- =============================================================
--- rpc 함수에서 p_user_id 파라미터 제거 → auth.uid() 직접 사용
+-- 004 포모도로 세션 함수 — 5개 RPC (트랜잭션)
 -- =============================================================
--- 기존: API Route가 p_user_id를 전달 → 외부 입력, 조작 가능
--- 변경: 함수 내부에서 auth.uid()로 직접 가져옴 → 조작 불가
+-- 모든 함수는 SECURITY DEFINER. 호출자의 user_id는 외부 파라미터가
+-- 아닌 auth.uid()로 직접 조회하여 신뢰 경계를 함수 내부로 끌어옴.
+-- (이전 p_user_id 파라미터는 외부 입력이라 조작 가능 — ISSUE-5 정리 시 제거)
 --
--- SECURITY DEFINER 함수에서도 auth.uid()는 호출자의 JWT 기반으로 동작.
--- 파라미터 시그니처가 변경되므로 기존 함수를 DROP 후 재생성.
-
--- 기존 함수 DROP (시그니처가 바뀌므로 REPLACE만으로는 불가)
-DROP FUNCTION IF EXISTS public.start_session(UUID, INTEGER, INTEGER, INTEGER, INTEGER, INTEGER);
-DROP FUNCTION IF EXISTS public.complete_pomodoro(INTEGER, UUID);
-DROP FUNCTION IF EXISTS public.stop_pomodoro(INTEGER, UUID);
-DROP FUNCTION IF EXISTS public.end_session(INTEGER, UUID);
-DROP FUNCTION IF EXISTS public.start_next_pomodoro(INTEGER, UUID);
+--   start_session         : 세션 + 첫 포모도로 + activity_log 동시 INSERT
+--   complete_pomodoro     : 포모도로 완료 + 세션 completed_count 증가
+--   stop_pomodoro         : 포모도로 중지 (세션은 유지)
+--   end_session           : 세션 종료 + 포인트 지급 + balance 상대 UPDATE
+--   start_next_pomodoro   : 다음 포모도로 시작 (target_count 초과 방지)
 
 
 -- =============================================================

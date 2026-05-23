@@ -1,5 +1,11 @@
--- 회원가입 시 profiles 자동 생성 + 기본 캐릭터(대표) 자동 부여 trigger
--- auth.users INSERT → trigger → profiles INSERT + character_instances INSERT (트랜잭션 보장)
+-- =============================================================
+-- 006 회원가입 트리거 — handle_new_user() + on_auth_user_created
+-- =============================================================
+-- auth.users INSERT 시 트리거 실행:
+--   1) profiles INSERT
+--   2) 기본 캐릭터(common, id 오름차순 첫 번째) 부여 + 대표 캐릭터로 설정
+--   3) onboarding_welcome_points > 0 인 경우 환영 포인트 지급 + 거래·로그 기록
+-- character_types 시드(005)와 app_config 시드(002)가 선행되어야 함.
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER
@@ -16,8 +22,7 @@ BEGIN
   INSERT INTO public.profiles (id, name, balance)
   VALUES (NEW.id, COALESCE(NEW.raw_user_meta_data->>'name', ''), 0);
 
-  -- 2) 기본 캐릭터 부여 + 대표 캐릭터 설정
-  -- common 레어리티 캐릭터 중 id 오름차순 첫 번째 선택
+  -- 2) 기본 캐릭터 부여 + 대표 캐릭터 설정 (common 레어리티, id 오름차순 첫 번째)
   SELECT id INTO v_default_type_id
   FROM public.character_types
   WHERE rarity = 'common'
@@ -30,7 +35,7 @@ BEGIN
     RETURNING id INTO v_instance_id;
   END IF;
 
-  -- 3) 환영 포인트 지급 (app_config.onboarding_welcome_points > 0 인 경우만)
+  -- 3) 환영 포인트 지급 (app_config.onboarding_welcome_points > 0 인 경우)
   SELECT (value::text)::integer INTO v_welcome_points
   FROM public.app_config WHERE key = 'onboarding_welcome_points';
 

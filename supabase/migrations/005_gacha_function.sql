@@ -1,26 +1,12 @@
 -- =============================================================
--- 가차(뽑기) 기능 — app_config 시드 + character_types 시드 + gacha rpc
+-- 005 가차(뽑기) — character_types 시드 + gacha() 함수
 -- =============================================================
-
-
--- =============================================================
--- 1. app_config 시드 — 가차 비용 및 레어리티 가중치
--- =============================================================
-
-INSERT INTO public.app_config (key, value)
-VALUES ('gacha_cost', '50')
-ON CONFLICT (key) DO NOTHING;
-
--- 상대 가중치 (합계 100 불필요). 값 변경은 Supabase 대시보드에서 직접 UPDATE
-INSERT INTO public.app_config (key, value)
-VALUES ('gacha_rarity_weights', '{"common": 70, "rare": 25, "epic": 4, "legendary": 1}')
-ON CONFLICT (key) DO NOTHING;
-
+-- character_types는 가차의 입력 데이터(레어리티별 후보 풀)이므로
+-- 가차 도메인 파일에 함께 둠. 비용·가중치는 002_app_config_seed.
 
 -- =============================================================
--- 2. character_types 시드 — 모또 테마 캐릭터
+-- 1. character_types 시드 — 모또 테마 캐릭터
 -- =============================================================
-
 INSERT INTO public.character_types (name, rarity, description) VALUES
   ('공부하는 모또',     'common',    '열심히 책을 읽고 있는 모또. 집중력이 넘친다.'),
   ('운동하는 모또',     'common',    '땀을 흘리며 달리는 모또. 에너지가 폭발적이다.'),
@@ -33,33 +19,18 @@ ON CONFLICT DO NOTHING;
 
 
 -- =============================================================
--- 3. gacha: 캐릭터 뽑기 — 5개 테이블 트랜잭션
+-- 2. gacha() — 5개 테이블 트랜잭션
 -- =============================================================
---
--- 트랜잭션으로 묶을 내용:
+-- 흐름:
 --   1) app_config에서 gacha_cost, gacha_rarity_weights 조회
---   2) profiles.balance 잔액 검증 (부족 시 insufficient_balance 예외)
---   3) gacha_rarity_weights 기반으로 레어리티 추첨
+--   2) profiles.balance 검증 (부족 시 insufficient_balance 예외)
+--   3) 가중치 기반 레어리티 추첨 (Efraimidis-Spirakis weighted sampling)
 --   4) 해당 레어리티의 character_types 중 랜덤 선택
---   5) 기존 보유 여부 체크 → v_is_new
+--   5) 기존 보유 여부 → v_is_new
 --   6) character_instances INSERT
---   7) profiles.balance 상대적 UPDATE (balance = balance - v_cost)
---   8) point_transaction INSERT (tx_type='spent', running_balance 기록)
---   9) activity_log INSERT (event_category='gacha', event_type='draw')
---
--- 호출 예시:
---   SELECT public.gacha();
---
--- 반환값 예시:
---   {
---     "instance_id": 42,
---     "type_id": 3,
---     "name": "낮잠자는 모또",
---     "rarity": "common",
---     "level": 1,
---     "new_balance": 150,
---     "is_new": true
---   }
+--   7) profiles.balance 상대 UPDATE (race condition 방지)
+--   8) point_transaction INSERT (running_balance 기록)
+--   9) activity_log INSERT (append-only)
 
 CREATE OR REPLACE FUNCTION public.gacha()
 RETURNS JSON
