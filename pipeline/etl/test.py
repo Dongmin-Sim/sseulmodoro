@@ -1,6 +1,7 @@
 import os 
 
 import dotenv
+import psycopg
 import google.cloud.bigquery as bigquery
 
 from pathlib import Path
@@ -72,11 +73,24 @@ def test_create_table(client, table_id):
     )
 
 
-def load_csv_to_gcs():
-    pass
+def connection_test(db_url):
+    with psycopg.connect(db_url) as conn:
+        
+        with conn.cursor() as cur:
+            cur.execute("SELECT version();")
+            version = cur.fetchone()
+            print(f"PostgreSQL version: {version[0]}")
 
-def load_gcs_to_bigquery():
-    pass
+def postgres_connection_test(db_url):    
+    with psycopg.connect(db_url) as conn:
+        
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM activity_log;")
+            rows = cur.fetchall()
+            print(f"Number of rows in activity_log: {len(rows)}")
+            for row in rows:
+                print(row)
+
 
 if __name__ == "__main__":
     bigquery_connection_test()
