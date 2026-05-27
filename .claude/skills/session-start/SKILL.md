@@ -7,7 +7,7 @@ BE/FE 세션 시작 시 공통으로 실행하는 이전 작업 정리 + 작업(
 >   - 기능: `/Users/coding_min/home/oh-my-local-llm/project/tasks/TASK-{N}-*.md`
 >   - 버그: `/Users/coding_min/home/oh-my-local-llm/project/issues/ISSUE-{N}-*.md`
 >
-> 코드 레포는 두 디렉토리를 **읽기**(vault-reader) + **진척 5필드 갱신**(vault-progress-writer)만 가능. 본문·기획은 vault project 세션 전속.
+> 코드 레포 세션은 vault 디렉토리에 **읽기**(vault-reader)만 가능. 진척 5필드를 포함한 모든 쓰기(본문·기획·hub·decisions·session-log)는 vault project 세션 전속.
 
 ## 절차
 
@@ -17,9 +17,9 @@ BE/FE 세션 시작 시 공통으로 실행하는 이전 작업 정리 + 작업(
 git checkout dev && git pull origin dev
 ```
 
-### 2단계: 이전 PR 현황 확인 + 자동 갱신
+### 2단계: 이전 PR 현황 확인 + vault 동기화 알림
 
-직전 세션에서 띄운 PR의 상태를 확인해 머지된 것은 진척을 자동 반영한다.
+직전 세션에서 띄운 PR의 상태를 확인해 vault 갱신이 필요한 항목만 추려 알림으로 출력한다(코드 세션은 vault에 쓰지 않음).
 
 **vault-reader agent에 위임:**
 > "session이 [BE/FE]이고 status가 in-review인 태스크·이슈 중 pr_link가 있는 것의 id(task_id/issue_id)·branch·pr_link 반환."
@@ -29,17 +29,11 @@ git checkout dev && git pull origin dev
 
 PR 상태별 처리:
 
-- **MERGED**: vault-progress-writer에 위임 — `status=done, end_date={머지일 YYYY-MM-DD}` 로 갱신
-- **CLOSED (머지 X)**: AskUserQuestion으로 사용자에게 선택받음:
-  - `in-progress` 유지 (다시 작업)
-  - `on-hold` (보류)
-  - `done` (다른 PR이 대신 처리)
-  - 폐기 (vault 세션에서 처리 — agent 위임 생략)
+- **MERGED**: 알림 출력 — `[VAULT 동기화 필요] {ID} · status=done · end_date={머지일 YYYY-MM-DD} · PR={URL}`
+- **CLOSED (머지 X)**: 알림 출력 — `[VAULT 확인 필요] {ID} · PR closed(머지 X) — vault 세션에서 in-progress/on-hold/done/폐기 중 결정 필요 · PR={URL}`
+- **OPEN**: 알림 불필요 (아직 `in-review` 상태가 맞음)
 
-  → 사용자 선택 후 vault-progress-writer 위임 (폐기 선택은 위임하지 않음)
-- **OPEN**: 그대로 둠 (아직 `in-review`)
-
-갱신 결과를 사용자에게 한 줄로 보고.
+알림은 vault project 세션에서 실제 frontmatter 갱신을 수행할 때 그대로 쓸 수 있도록 한 줄 형식을 유지한다.
 
 ### 3단계: 작업 선택 (태스크 + 이슈)
 
@@ -99,7 +93,7 @@ severity: ...
 ## 에이전트 위임 원칙
 
 - vault 태스크·이슈 조회 → **vault-reader** (haiku, 읽기 전용)
-- vault 진척 5필드 갱신 → **vault-progress-writer** (haiku, frontmatter Edit 한정)
-- ISSUE 본문 초안 생성 → **vault-content-drafter** (sonnet, vault 쓰기 없음)
+- vault 진척·본문 갱신 → 코드 레포 세션은 **수행하지 않음**. 모든 vault 쓰기는 vault project 세션에서 처리 — 코드 세션은 `[VAULT 동기화 필요] ...` 알림만 출력
+- ISSUE 본문 초안 생성 → **vault-content-drafter** (sonnet, vault 쓰기 없음 — 터미널 출력만)
 - GitHub PR 확인 → **github-routine** (haiku, Bash only)
 - 메인 컨텍스트는 사용자 소통과 판단에만 사용

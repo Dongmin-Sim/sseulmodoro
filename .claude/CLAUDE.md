@@ -104,8 +104,9 @@ BE/FE 세션을 분리하여 병렬 개발한다. 각 세션은 독립된 Claude
 
 - ID 비패딩 (`TASK-7`, `ISSUE-3`). TASK·ISSUE는 별도 namespace — 번호 겹쳐도 무관
 - status 어휘 영어 통일: `backlog | in-progress | in-review | done | on-hold`
-- frontmatter 진척 5필드(`status`, `branch`, `pr_link`, `start_date`, `end_date`)는 **코드 레포 세션이 vault-progress-writer로 자동 갱신**
-- 본문·기획 영역(설명·완료조건·`severity`·`root_cause`·`linked_features` 등) + 마일스톤·hub.md·decisions·session-log = **vault project 세션 전속**
+- vault 파일의 모든 쓰기(frontmatter 진척 5필드 + 본문·기획·hub.md·decisions·session-log)는 **vault project 세션 전속**
+  - vault 세션은 sseulmodoro 레포 read 권한이 있으므로 `git log` / `gh pr view`로 머지 상태·PR 링크·머지일을 직접 수집하여 진척 5필드(`status`, `branch`, `pr_link`, `start_date`, `end_date`)를 갱신한다
+  - 코드 레포 세션(여기)은 vault 파일에 쓰지 않는다 — 읽기만 가능
 - 읽기는 vault-reader 에이전트로 위임 (haiku, 읽기 전용)
 - ISSUE 작업 시 PR 생성 직후 vault-content-drafter가 본문 초안만 터미널에 출력 — vault에는 쓰지 않음
 
@@ -125,10 +126,9 @@ BE/FE 세션을 분리하여 병렬 개발한다. 각 세션은 독립된 Claude
 | 서브에이전트 위임 | opus 메인 직접 수행 |
 |---|---|
 | vault 태스크·이슈 조회 (vault-reader, haiku) | 아키텍처 설계 (plan 모드) |
-| vault 진척 5필드 갱신 (vault-progress-writer, haiku) | 코드 리뷰 (/review) |
-| ISSUE 본문 초안 (vault-content-drafter, sonnet) | 디버깅/에러 분석 |
-| GitHub PR 확인 (github-routine, haiku) | 사용자 대화/판단 |
-| API Route 구현 (api-developer, sonnet) | |
+| ISSUE 본문 초안 (vault-content-drafter, sonnet) | 코드 리뷰 (/review) |
+| GitHub PR 확인 (github-routine, haiku) | 디버깅/에러 분석 |
+| API Route 구현 (api-developer, sonnet) | 사용자 대화/판단 |
 
 ## UI 전략
 

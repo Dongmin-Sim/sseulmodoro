@@ -46,10 +46,10 @@ vault `project/tasks/TASK-{N}-*.md` 기반. 워크플로우 시작 시 TaskCreat
 8. 발견된 디자인 이슈 수정 후 커밋
 9. **PR 생성 전 `/review` 실행** → code-reviewer(구조) + security-reviewer(보안) agent 위임
 10. PR 생성 — 제목 `[TASK-{N}] 태스크명`
-11. **vault-progress-writer에 위임** — 진척 5필드 갱신:
-    > "TASK-{N}: branch=feature/TASK-{N}-{슬러그}, pr_link={PR URL}, start_date={오늘 YYYY-MM-DD}, status=in-review 로 갱신"
+11. **vault 동기화 알림 출력** — 다음 한 줄을 사용자에게 보고:
+    > `[VAULT 동기화 필요] TASK-{N} · branch=feature/TASK-{N}-{슬러그} · PR={PR URL} · start_date={오늘 YYYY-MM-DD} · status=in-review`
 
-> 태스크 진척 5필드(`status`·`branch`·`pr_link`·`start_date`·`end_date`)는 코드 레포 세션이 vault-progress-writer로 자동 갱신한다. 본문·기획 영역(설명·완료조건·`linked_features` 등)은 vault project 세션 전속.
+> 코드 레포 세션은 vault 파일에 쓰지 않는다. 진척 5필드 갱신을 포함한 모든 vault 쓰기는 vault project 세션 전속 — 위 알림을 vault 세션에서 처리한다. 본문·기획 영역(설명·완료조건·`linked_features` 등)도 동일.
 
 ### 버그 수정 (이슈)
 
@@ -62,8 +62,8 @@ vault `project/issues/ISSUE-{N}-*.md` 기반. 워크플로우 시작 시 TaskCre
 5. `/design-review` 실행 → 디자인 이슈 수정 후 커밋 ← `npm run dev` 실행 중이어야 함
 6. **PR 생성 전 `/review` 실행** → code-reviewer + security-reviewer agent 위임
 7. PR 생성 — 제목 `[ISSUE-{N}] 이슈명`
-8. **vault-progress-writer에 위임** — 진척 5필드 갱신:
-   > "ISSUE-{N}: branch=fix/ISSUE-{N}-{슬러그}, pr_link={PR URL}, start_date={오늘 YYYY-MM-DD}, status=in-review 로 갱신"
+8. **vault 동기화 알림 출력** — 다음 한 줄을 사용자에게 보고:
+   > `[VAULT 동기화 필요] ISSUE-{N} · branch=fix/ISSUE-{N}-{슬러그} · PR={PR URL} · start_date={오늘 YYYY-MM-DD} · status=in-review`
 9. **vault-content-drafter에 위임** — 본문 초안 생성:
    > "ISSUE-{N}, PR #{N}의 본문 초안 생성 → 터미널 출력"
    > 초안은 vault에 쓰이지 않음. 사용자가 검토 후 vault project 세션에서 직접 입력.
