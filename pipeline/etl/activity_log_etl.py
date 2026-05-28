@@ -1,26 +1,18 @@
-import os   
+import os
 
 import psycopg
-import dotenv
+
 import pandas as pd
-import logging
-from pathlib import Path
 from google.cloud import bigquery
 
-from utils.gcp import get_bigquery_client
 from ddl.activity_log import ACTIVITY_TABLE_DDL, SCHEMA_DDL
+from utils.gcp import get_bigquery_client
+from utils.logger import get_logger
+from utils.env import load_env
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s'
-)
+load_env()
+logger = get_logger(__name__)
 
-logger = logging.getLogger(__name__)
-
-BASE = Path(__file__).resolve().parent.parent   # pipeline/ 경로
-
-dotenv.load_dotenv(BASE / ".env")
-dotenv.load_dotenv(BASE / (".env.production" if os.getenv("ENV") == "production" else ".env.development"))
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 def extract():
