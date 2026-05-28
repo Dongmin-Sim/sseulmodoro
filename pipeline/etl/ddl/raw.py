@@ -1,11 +1,5 @@
-
-
-SCHEMA_DDL = """
-CREATE SCHEMA IF NOT EXISTS `{schema_id}`
-"""
-
-ACTIVITY_TABLE_DDL = """
-CREATE TABLE IF NOT EXISTS `{table_id}`(
+RAW_ACTIVITY_LOG_TABLE_DDL = """
+CREATE TABLE IF NOT EXISTS `{project_id}.raw.activity_log`(
     id             INT64 NOT NULL,
     user_id        STRING,
     event_category STRING NOT NULL,
