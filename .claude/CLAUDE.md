@@ -45,7 +45,7 @@
 
 ## 개발 워크플로우
 
-세션별 워크플로우: `/be-session`, `/fe-session` 참조.
+세션별 워크플로우: `/be-session`, `/fe-session`, `/de-session` 참조.
 
 ### 브랜치 전략 (3단계)
 
@@ -80,14 +80,15 @@ feature/* → PR → dev 머지 → Vercel Preview (통합 확인)
 
 ### 병렬 세션 운영
 
-BE/FE 세션을 분리하여 병렬 개발한다. 각 세션은 독립된 Claude Code 인스턴스에서 운영.
+BE/FE/DE 세션을 분리하여 병렬 개발한다. 각 세션은 독립된 Claude Code 인스턴스에서 운영.
 
 - **BE 세션** (`/be-session`): API Route, Supabase, 인증, 인프라
 - **FE 세션** (`/fe-session`): 페이지 UI, 컴포넌트, 사용자 인터랙션
+- **DE 세션** (`/de-session`): 데이터 파이프라인(`pipeline/`). **작업 방식이 BE/FE와 정반대** — 사용자가 모든 구현·결정을 하고 Claude는 리뷰·질문만 한다 (학습 목적). 상세는 de-session 참조
 
 세션 분리 규칙:
 
-- vault 태스크 파일 frontmatter의 `session:` 필드로 BE/FE 구분
+- vault 태스크 파일 frontmatter의 `session:` 필드로 BE/FE/DE 구분
 - `src/lib/types/api.ts`가 공유 인터페이스 (API 계약)
   - BE가 타입 먼저 정의 → 커밋 → FE가 pull 후 사용
 - 파일 영역 겹침 금지 — 각 세션 지침 참조

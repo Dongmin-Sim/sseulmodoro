@@ -1,7 +1,9 @@
 # session-start
 
-BE/FE 세션 시작 시 공통으로 실행하는 이전 작업 정리 + 작업(태스크·이슈) 선택 절차.
-호출 시 세션 타입(BE/FE)을 명시해야 한다.
+BE/FE/DE 세션 시작 시 공통으로 실행하는 이전 작업 정리 + 작업(태스크·이슈) 선택 절차.
+호출 시 세션 타입(BE/FE/DE)을 명시해야 한다.
+
+> **DE 세션**은 1~3단계(코드 sync, PR 현황, 작업 선택)만 이 절차를 재사용하고, 4단계 "작업 방식 결정"부터는 de-session의 자체 흐름(사용자 구현 → Claude 리뷰)으로 분기한다. 아래 vault-reader 위임의 `[BE/FE]`는 DE 세션이면 `DE`로 치환.
 
 > 작업 단일 출처는 vault 두 디렉토리:
 >   - 기능: `/Users/coding_min/home/oh-my-local-llm/project/tasks/TASK-{N}-*.md`
@@ -49,8 +51,9 @@ PR 상태별 처리:
 > "ISSUE-{N} 파일 전체 읽어 증상, 재현 방법, 원인, severity, root_cause 요약."
 
 이후 be-session/fe-session의 "기능 개발" 또는 "버그 수정" 흐름 진입.
+**DE 세션이면 여기서 de-session의 자체 흐름으로 분기** (아래 4단계는 BE/FE 전용 — Claude 구현 전제).
 
-### 4단계: 작업 리뷰 + 플랜 수립
+### 4단계: 작업 리뷰 + 플랜 수립 (BE/FE 전용)
 
 vault 파일에서 가져온 내용을 바탕으로 Claude가 먼저 요약 정리:
 
