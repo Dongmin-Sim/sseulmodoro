@@ -143,6 +143,8 @@ FE 디자인 시스템: `DESIGN.md` + `/fe-session` 참조. 디자인 검토: `/
 - **테스트 전략** → `rules/testing.md` (Vitest, route.test.ts 필수)
 - **코드 품질** → `rules/code-quality.md` (console.log 금지, 커밋 컨벤션, any 금지)
 - **보안** → `rules/security.md` (환경변수, 인증 경계, RLS, 입력 검증)
+- **이슈 진단** → `rules/issue-diagnosis.md` (vault 이슈=가설, 수정 전 현재 코드로 검증)
+- **작업 워크플로우** → `rules/workflow.md` (plan 게이트·검증 3종·사용자 QA·PR 초안 우선·stacked·커밋 위생)
 
 ## 공식 문서 참조
 
