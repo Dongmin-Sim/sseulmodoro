@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
@@ -19,6 +20,7 @@ import { SessionSettings } from "./session-settings";
 import { SESSION_DEFAULTS } from "@/lib/constants";
 import { DevConsole } from "@/lib/dev/dev-console";
 import { DEV_SPEED_OPTIONS } from "@/lib/dev/constants";
+import { usePomodoroSession } from "./session-context";
 import {
   startSession,
   endSession,
@@ -97,6 +99,9 @@ function CycleProgress({
 }
 
 export function PomodoroTimer() {
+  const router = useRouter();
+  const { exitSession } = usePomodoroSession();
+
   // 세션 설정
   const [focusMinutes, setFocusMinutes] = useState(25);
   const [focusLabel, setFocusLabel] = useState("25분");
@@ -298,6 +303,11 @@ export function PomodoroTimer() {
     setEarnedPoints(null);
   };
 
+  const handleReturnHome = () => {
+    router.refresh(); // 방금 세션의 포인트/캐릭터 등 서버 데이터 갱신
+    exitSession(); // 메인 화면(캐릭터+현황)으로 복귀
+  };
+
   const isTimerPhase = sessionPhase === "focusing" || sessionPhase === "breaking";
   const isBreak = sessionPhase === "breaking";
 
@@ -440,9 +450,19 @@ export function PomodoroTimer() {
                 {completedCount} / {targetCount} 사이클 완료
               </p>
             </div>
-            <Button size="lg" className="w-40 h-11" onClick={handleResetSession}>
-              다시 시작
-            </Button>
+            <div className="flex gap-3">
+              <Button size="lg" className="h-11" onClick={handleReturnHome}>
+                홈으로
+              </Button>
+              <Button
+                size="lg"
+                variant="secondary"
+                className="h-11"
+                onClick={handleResetSession}
+              >
+                다시 시작
+              </Button>
+            </div>
           </>
         )}
       </CardContent>
