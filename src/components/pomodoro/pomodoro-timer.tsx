@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { CycleProgress } from "./cycle-progress";
 import { useTimer } from "./use-timer";
 import { TimerDisplay } from "./timer-display";
 import { TimerControls } from "./timer-controls";
@@ -28,7 +28,7 @@ import {
 } from "@/lib/api/sessions";
 import { completePomodoro, stopPomodoro } from "@/lib/api/pomodoros";
 
-type SessionPhase =
+export type SessionPhase =
   | "idle"
   | "focusing"
   | "pomodoro_done"
@@ -48,54 +48,6 @@ function sendNotification(title: string, body: string) {
       }
     });
   }
-}
-
-function CycleProgress({
-  completed,
-  target,
-  showCurrent,
-}: {
-  completed: number;
-  target: number;
-  showCurrent?: boolean;
-}) {
-  return (
-    <div className="flex gap-1 items-center">
-      {Array.from({ length: target }, (_, i) => {
-        const isCompleted = i < completed;
-        const isCurrent = showCurrent && i === completed;
-        return (
-          <div key={i} className="flex items-center gap-1">
-            <span
-              className={cn(
-                "text-lg",
-                isCompleted && "opacity-100",
-                isCurrent && "opacity-100",
-                !isCompleted && !isCurrent && "opacity-30",
-              )}
-            >
-              🍅
-            </span>
-            {i < target - 1 && (
-              <span
-                className={cn(
-                  "text-xs",
-                  i < completed ? "opacity-60" : "opacity-30",
-                )}
-              >
-                ·
-              </span>
-            )}
-          </div>
-        );
-      })}
-      {target > 1 && (
-        <span className={cn("text-sm", completed >= target ? "opacity-100" : "opacity-30")}>
-          ☕
-        </span>
-      )}
-    </div>
-  );
 }
 
 export function PomodoroTimer() {
@@ -350,7 +302,7 @@ export function PomodoroTimer() {
         {/* focusing / breaking: 타이머 */}
         {isTimerPhase && (
           <>
-            <CycleProgress completed={completedCount} target={targetCount} showCurrent />
+            <CycleProgress phase={sessionPhase} completed={completedCount} target={targetCount} />
             <TimerDisplay
               display={timer.display}
               progress={timer.progress}
@@ -392,7 +344,7 @@ export function PomodoroTimer() {
         {/* pomodoro_done: 중간 완료 → 휴식/종료 선택 */}
         {sessionPhase === "pomodoro_done" && (
           <>
-            <CycleProgress completed={completedCount} target={targetCount} />
+            <CycleProgress phase={sessionPhase} completed={completedCount} target={targetCount} />
             <div className="text-center">
               <p className="text-lg font-semibold">
                 🍅 {completedCount} / {targetCount} 완료!
@@ -421,7 +373,7 @@ export function PomodoroTimer() {
         {/* break_done: 휴식 끝 → 다음 집중/종료 선택 */}
         {sessionPhase === "break_done" && (
           <>
-            <CycleProgress completed={completedCount} target={targetCount} />
+            <CycleProgress phase={sessionPhase} completed={completedCount} target={targetCount} />
             <div className="text-center">
               <p className="text-lg font-semibold">☕ 휴식 끝!</p>
               <p className="text-sm text-muted-foreground mt-1">
