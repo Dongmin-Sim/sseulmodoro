@@ -1,9 +1,6 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { IS_DEV, DEV_DURATION_OPTIONS, DEV_BREAK_OPTION } from "@/lib/dev/constants";
-import { DevBadge } from "@/lib/dev/dev-only";
 
 const FOCUS_OPTIONS = [15, 20, 25, 30, 45, 60] as const;
 const SHORT_BREAK_OPTIONS = [5, 10] as const;
@@ -63,22 +60,6 @@ export function SessionSettings({
   return (
     <div className="flex flex-col gap-4 w-full">
       <OptionRow label="집중 시간">
-        {IS_DEV &&
-          DEV_DURATION_OPTIONS.map((opt) => (
-            <Badge
-              key={opt.label}
-              variant={focusMinutes === opt.minutes ? "default" : "outline"}
-              className={cn(
-                "cursor-pointer px-3 py-1 text-sm border-dashed border-orange-400",
-                focusMinutes === opt.minutes
-                  ? "bg-orange-500 text-white"
-                  : "text-orange-600",
-              )}
-              onClick={() => onFocusChange(opt.minutes, opt.label)}
-            >
-              {opt.label}
-            </Badge>
-          ))}
         {FOCUS_OPTIONS.map((min) => (
           <Badge
             key={min}
@@ -89,24 +70,9 @@ export function SessionSettings({
             {min}분
           </Badge>
         ))}
-        {IS_DEV && <DevBadge />}
       </OptionRow>
 
       <OptionRow label="짧은 휴식">
-        {IS_DEV && (
-          <Badge
-            variant={shortBreakMinutes === DEV_BREAK_OPTION.minutes ? "default" : "outline"}
-            className={cn(
-              "cursor-pointer px-3 py-1 text-sm border-dashed border-orange-400",
-              shortBreakMinutes === DEV_BREAK_OPTION.minutes
-                ? "bg-orange-500 text-white"
-                : "text-orange-600",
-            )}
-            onClick={() => onShortBreakChange(DEV_BREAK_OPTION.minutes)}
-          >
-            {DEV_BREAK_OPTION.label}
-          </Badge>
-        )}
         {SHORT_BREAK_OPTIONS.map((min) => (
           <Badge
             key={min}
@@ -120,20 +86,6 @@ export function SessionSettings({
       </OptionRow>
 
       <OptionRow label="긴 휴식">
-        {IS_DEV && (
-          <Badge
-            variant={longBreakMinutes === DEV_BREAK_OPTION.minutes ? "default" : "outline"}
-            className={cn(
-              "cursor-pointer px-3 py-1 text-sm border-dashed border-orange-400",
-              longBreakMinutes === DEV_BREAK_OPTION.minutes
-                ? "bg-orange-500 text-white"
-                : "text-orange-600",
-            )}
-            onClick={() => onLongBreakChange(DEV_BREAK_OPTION.minutes)}
-          >
-            {DEV_BREAK_OPTION.label}
-          </Badge>
-        )}
         {LONG_BREAK_OPTIONS.map((min) => (
           <Badge
             key={min}
