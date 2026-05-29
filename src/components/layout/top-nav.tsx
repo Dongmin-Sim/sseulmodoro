@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/layout/page-container";
 import { logout } from "@/lib/api/logout";
 
-export function TopNav() {
+export function TopNav({ isAuthenticated }: { isAuthenticated: boolean }) {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
@@ -35,28 +35,30 @@ export function TopNav() {
         >
           쓸모도로
         </Link>
-        <div className="ml-auto flex items-center gap-2">
-          {logoutError && (
-            <p
-              role="alert"
-              aria-live="assertive"
-              className="text-xs text-destructive"
+        {isAuthenticated && (
+          <div className="ml-auto flex items-center gap-2">
+            {logoutError && (
+              <p
+                role="alert"
+                aria-live="assertive"
+                className="text-xs text-destructive"
+              >
+                {logoutError}
+              </p>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="min-h-[44px] min-w-[44px] text-xs text-muted-foreground"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              aria-busy={isLoggingOut}
+              aria-label={isLoggingOut ? "로그아웃 처리 중" : "로그아웃"}
             >
-              {logoutError}
-            </p>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="min-h-[44px] min-w-[44px] text-xs text-muted-foreground"
-            onClick={handleLogout}
-            disabled={isLoggingOut}
-            aria-busy={isLoggingOut}
-            aria-label={isLoggingOut ? "로그아웃 처리 중" : "로그아웃"}
-          >
-            {isLoggingOut ? "로그아웃 중..." : "로그아웃"}
-          </Button>
-        </div>
+              {isLoggingOut ? "로그아웃 중..." : "로그아웃"}
+            </Button>
+          </div>
+        )}
       </PageContainer>
     </header>
   );

@@ -26,9 +26,11 @@ const ActiveUnderline = () => (
 type ContentNavProps = {
   items: ContentNavItem[];
   balance?: number;
+  /** 우측에 표시할 액션 (예: 로그아웃) */
+  action?: React.ReactNode;
 };
 
-export function ContentNav({ items, balance }: ContentNavProps) {
+export function ContentNav({ items, balance, action }: ContentNavProps) {
   const pathname = usePathname();
 
   return (
@@ -81,13 +83,16 @@ export function ContentNav({ items, balance }: ContentNavProps) {
         })}
       </div>
 
-      {/* 포인트 잔액 chip */}
-      {balance !== undefined && (
-        <div className="flex justify-end">
-          <div className="flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold shadow-sm">
-            <span className="text-primary">✦</span>
-            <span>{balance.toLocaleString()}</span>
-          </div>
+      {/* 우측: 액션(로그아웃 등) + 포인트 잔액 chip */}
+      {(action || balance !== undefined) && (
+        <div className="flex items-center justify-end gap-2">
+          {action}
+          {balance !== undefined && (
+            <div className="flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold shadow-sm">
+              <span className="text-primary">✦</span>
+              <span>{balance.toLocaleString()}</span>
+            </div>
+          )}
         </div>
       )}
     </div>
