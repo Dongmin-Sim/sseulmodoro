@@ -125,46 +125,51 @@ export function PomodoroTimer() {
   // UI 상태
   const [showStopDialog, setShowStopDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isStopping, setIsStopping] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const handleTimerComplete = useCallback(async () => {
-    if (sessionPhase === "focusing") {
-      if (!pomodoroId || !sessionId) return;
-      try {
-        const result = await completePomodoro(pomodoroId);
-        setCompletedCount(result.completedCount);
-
-        // 모든 사이클 완료 후에도 휴식 제안 (마지막은 긴 휴식)
-        setSessionPhase("pomodoro_done");
-        sendNotification(
-          "포모도로 완료!",
-          `${result.completedCount}/${result.targetCount} 완료. 휴식할까요?`,
-        );
-      } catch (error) {
-        console.error("Failed to complete pomodoro:", error);
-        setSessionPhase("session_completed");
-      }
-    } else if (sessionPhase === "breaking") {
-      if (completedCount >= targetCount) {
-        // 마지막 긴 휴식 완료 → 세션 자동 종료
-        if (!sessionId) return;
+    setIsTransitioning(true);
+    try {
+      if (sessionPhase === "focusing") {
+        if (!pomodoroId || !sessionId) return;
         try {
-          const endResult = await endSession(sessionId);
-          setEarnedPoints(endResult.pointsEarned);
-          setSessionPhase("session_completed");
+          const result = await completePomodoro(pomodoroId);
+          setCompletedCount(result.completedCount);
+
+          // 모든 사이클 완료 후에도 휴식 제안 (마지막은 긴 휴식)
+          setSessionPhase("pomodoro_done");
           sendNotification(
-            "세션 완료!",
-            `${completedCount}회 집중 완료! +${endResult.pointsEarned} 포인트`,
+            "포모도로 완료!",
+            `${result.completedCount}/${result.targetCount} 완료. 휴식할까요?`,
           );
         } catch (error) {
-          console.error("Failed to end session:", error);
+          console.error("Failed to complete pomodoro:", error);
           setSessionPhase("session_completed");
         }
-      } else {
-        // 중간 짧은 휴식 완료 → 다음 집중 제안
-        setSessionPhase("break_done");
-        sendNotification("휴식 끝!", "다음 집중을 시작할까요?");
+      } else if (sessionPhase === "breaking") {
+        if (completedCount >= targetCount) {
+          // 마지막 긴 휴식 완료 → 세션 자동 종료
+          if (!sessionId) return;
+          try {
+            const endResult = await endSession(sessionId);
+            setEarnedPoints(endResult.pointsEarned);
+            setSessionPhase("session_completed");
+            sendNotification(
+              "세션 완료!",
+              `${completedCount}회 집중 완료! +${endResult.pointsEarned} 포인트`,
+            );
+          } catch (error) {
+            console.error("Failed to end session:", error);
+            setSessionPhase("session_completed");
+          }
+        } else {
+          // 중간 짧은 휴식 완료 → 다음 집중 제안
+          setSessionPhase("break_done");
+          sendNotification("휴식 끝!", "다음 집중을 시작할까요?");
+        }
       }
+    } finally {
+      setIsTransitioning(false);
     }
   }, [sessionPhase, pomodoroId, sessionId, completedCount, targetCount]);
 
@@ -222,10 +227,11 @@ export function PomodoroTimer() {
   };
 
   const handleSkipBreak = async () => {
-    timer.resetWithDuration(focusMinutes);
     if (isLastBreakLong) {
       // 긴 휴식 건너뛰기 → 바로 세션 종료
       if (!sessionId) return;
+      timer.pause();
+      setIsTransitioning(true);
       try {
         const endResult = await endSession(sessionId);
         setEarnedPoints(endResult.pointsEarned);
@@ -233,8 +239,11 @@ export function PomodoroTimer() {
       } catch (error) {
         console.error("Failed to end session:", error);
         setSessionPhase("session_completed");
+      } finally {
+        setIsTransitioning(false);
       }
     } else {
+      timer.resetWithDuration(focusMinutes);
       setSessionPhase("break_done");
     }
   };
@@ -274,10 +283,10 @@ export function PomodoroTimer() {
   };
 
   const handleStopConfirm = async () => {
-    if (isStopping) return;
-    setIsStopping(true);
+    if (isTransitioning) return;
+    setIsTransitioning(true);
     setShowStopDialog(false);
-    timer.resetWithDuration(focusMinutes);
+    timer.pause();
     if (sessionId) {
       try {
         if (sessionPhase === "focusing" && pomodoroId) {
@@ -291,7 +300,7 @@ export function PomodoroTimer() {
         setSessionPhase("session_completed");
       }
     }
-    setIsStopping(false);
+    setIsTransitioning(false);
   };
 
   const handleResetSession = () => {
@@ -353,16 +362,22 @@ export function PomodoroTimer() {
               }
               progressColor={isBreak ? "text-break" : "text-focus"}
             />
-            <TimerControls
-              status={timer.status}
-              onStart={timer.start}
-              onPause={timer.pause}
-              onResume={timer.resume}
-              onStop={handleStopRequest}
-              onReset={handleResetSession}
-              disabled={false}
-            />
-            {isBreak && (
+            {isTransitioning ? (
+              <Button size="lg" className="w-40 h-11" disabled>
+                처리 중...
+              </Button>
+            ) : (
+              <TimerControls
+                status={timer.status}
+                onStart={timer.start}
+                onPause={timer.pause}
+                onResume={timer.resume}
+                onStop={handleStopRequest}
+                onReset={handleResetSession}
+                disabled={false}
+              />
+            )}
+            {isBreak && !isTransitioning && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -485,9 +500,9 @@ export function PomodoroTimer() {
             <Button
               variant="destructive"
               onClick={handleStopConfirm}
-              disabled={isStopping}
+              disabled={isTransitioning}
             >
-              {isStopping ? "중지 중..." : "중지"}
+              {isTransitioning ? "처리 중..." : "중지"}
             </Button>
           </DialogFooter>
         </DialogContent>
