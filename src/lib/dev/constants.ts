@@ -4,12 +4,5 @@
  */
 export const IS_DEV = process.env.NODE_ENV === "development";
 
-/** 개발 환경 전용 테스트 시간 옵션 (분 단위) */
-export const DEV_DURATION_OPTIONS = [
-  { minutes: 3 / 60, label: "3초" },
-  { minutes: 30 / 60, label: "30초" },
-  { minutes: 1, label: "1분" },
-] as const;
-
-/** 개발 환경 전용 휴식 테스트 옵션 (분 단위) */
-export const DEV_BREAK_OPTION = { minutes: 3 / 60, label: "3초" } as const;
+/** 개발 환경 타이머 배속 선택지 (1× = 정상 속도) */
+export const DEV_SPEED_OPTIONS = [1, 10, 60] as const;

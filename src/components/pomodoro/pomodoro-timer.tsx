@@ -17,6 +17,8 @@ import { TimerDisplay } from "./timer-display";
 import { TimerControls } from "./timer-controls";
 import { SessionSettings } from "./session-settings";
 import { SESSION_DEFAULTS } from "@/lib/constants";
+import { DevConsole } from "@/lib/dev/dev-console";
+import { DEV_SPEED_OPTIONS } from "@/lib/dev/constants";
 import {
   startSession,
   endSession,
@@ -177,12 +179,10 @@ export function PomodoroTimer() {
     setIsLoading(true);
 
     try {
-      // Dev 테스트 옵션(3초 등)은 소수점 분이므로 올림하여 API 전달
-      // 클라이언트 타이머는 실제 소수점 값으로 동작
       const session = await startSession({
-        focusMinutes: Math.ceil(focusMinutes),
-        shortBreakMinutes: Math.ceil(shortBreakMinutes),
-        longBreakMinutes: Math.ceil(longBreakMinutes),
+        focusMinutes,
+        shortBreakMinutes,
+        longBreakMinutes,
         targetCount,
       });
       setSessionId(session.sessionId);
@@ -472,6 +472,30 @@ export function PomodoroTimer() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <DevConsole>
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-muted-foreground">배속</span>
+          {DEV_SPEED_OPTIONS.map((s) => (
+            <Button
+              key={s}
+              size="sm"
+              variant={timer.timeScale === s ? "default" : "outline"}
+              onClick={() => timer.changeTimeScale(s)}
+            >
+              {s}×
+            </Button>
+          ))}
+        </div>
+        <Button
+          size="sm"
+          variant="ghost"
+          disabled={!isTimerPhase}
+          onClick={timer.skip}
+        >
+          ⏭ 현재 단계 스킵
+        </Button>
+      </DevConsole>
     </Card>
   );
 }
