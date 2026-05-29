@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { CharacterBlob } from "@/components/home/character-blob";
 import { PomodoroTimer } from "@/components/pomodoro/pomodoro-timer";
+import { usePomodoroSession } from "@/components/pomodoro/session-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,13 +17,6 @@ const RARITY_LABEL: Record<string, string> = {
   epic: "에픽",
   legendary: "레전더리",
 };
-
-const NAV_ITEMS = [
-  { label: "홈", href: "/" },
-  { label: "도감", href: "/collection", disabled: true },
-  { label: "상점", href: "/shop", disabled: true },
-  { label: "기록", href: "/history", disabled: true },
-];
 
 // TODO: TASK-30/31 연동 후 실데이터로 교체
 const WEEKLY_PLACEHOLDER = {
@@ -40,7 +33,15 @@ type HomeClientProps = {
 };
 
 export function HomeClient({ data }: HomeClientProps) {
-  const [isSessionActive, setIsSessionActive] = useState(false);
+  const { isSessionActive, enterSession, exitSession } = usePomodoroSession();
+
+  const navItems = [
+    { label: "홈", onSelect: exitSession, active: !isSessionActive },
+    { label: "도감", href: "/collection", disabled: true },
+    { label: "상점", href: "/shop", disabled: true },
+    { label: "기록", href: "/history", disabled: true },
+  ];
+
   // 렌더 시점 기준 "오늘" 계산. 모듈 레벨 상수는 탭을 자정 넘어 열어두면 stale.
   const today = new Date().getDay();
   const todayIndex = today === 0 ? 6 : today - 1;
@@ -54,7 +55,7 @@ export function HomeClient({ data }: HomeClientProps) {
   return (
     <main className="relative z-10 flex flex-1 flex-col py-5">
       <PageContainer className="flex flex-col">
-        <ContentNav items={NAV_ITEMS} balance={balance} />
+        <ContentNav items={navItems} balance={balance} />
 
         {isSessionActive ? (
           <PomodoroTimer />
@@ -197,7 +198,7 @@ export function HomeClient({ data }: HomeClientProps) {
                 border: "none",
                 height: "auto",
               }}
-              onClick={() => setIsSessionActive(true)}
+              onClick={enterSession}
             >
               집중 시작
             </Button>

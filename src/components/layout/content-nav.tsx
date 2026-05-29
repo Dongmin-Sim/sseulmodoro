@@ -6,9 +6,22 @@ import { cn } from "@/lib/utils";
 
 type ContentNavItem = {
   label: string;
-  href: string;
+  href?: string;
   disabled?: boolean;
+  /** 라우팅 대신 뷰 전환 등 액션이 필요한 항목 (예: 홈 → 메인 복귀) */
+  onSelect?: () => void;
+  /** onSelect 항목의 활성 표시 여부 */
+  active?: boolean;
 };
+
+const TAB_BASE = "relative px-5 py-3 text-sm transition-colors";
+const tabClass = (isActive: boolean) =>
+  isActive
+    ? "font-bold text-foreground"
+    : "font-medium text-muted-foreground hover:text-foreground";
+const ActiveUnderline = () => (
+  <span className="absolute bottom-0 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-primary" />
+);
 
 type ContentNavProps = {
   items: ContentNavItem[];
@@ -23,33 +36,46 @@ export function ContentNav({ items, balance }: ContentNavProps) {
       {/* 섹션 탭 */}
       <div className="flex items-center justify-center border-b border-border">
         {items.map((item) => {
-          const isActive = !item.disabled && pathname === item.href;
-          return item.disabled ? (
-            <span
-              key={item.href}
-              role="link"
-              aria-disabled="true"
-              title="준비 중"
-              className="relative px-5 py-3 text-sm font-medium text-muted-foreground opacity-40 cursor-not-allowed select-none"
-            >
-              {item.label}
-              <span className="sr-only"> (준비 중)</span>
-            </span>
-          ) : (
+          if (item.disabled) {
+            return (
+              <span
+                key={item.label}
+                role="link"
+                aria-disabled="true"
+                title="준비 중"
+                className="relative px-5 py-3 text-sm font-medium text-muted-foreground opacity-40 cursor-not-allowed select-none"
+              >
+                {item.label}
+                <span className="sr-only"> (준비 중)</span>
+              </span>
+            );
+          }
+
+          // 라우팅 대신 뷰 전환 액션 (예: 홈 → 메인 복귀)
+          if (item.onSelect) {
+            const isActive = !!item.active;
+            return (
+              <button
+                key={item.label}
+                type="button"
+                onClick={item.onSelect}
+                className={cn(TAB_BASE, tabClass(isActive))}
+              >
+                {item.label}
+                {isActive && <ActiveUnderline />}
+              </button>
+            );
+          }
+
+          const isActive = pathname === item.href;
+          return (
             <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "relative px-5 py-3 text-sm transition-colors",
-                isActive
-                  ? "font-bold text-foreground"
-                  : "font-medium text-muted-foreground hover:text-foreground",
-              )}
+              key={item.label}
+              href={item.href ?? "#"}
+              className={cn(TAB_BASE, tabClass(isActive))}
             >
               {item.label}
-              {isActive && (
-                <span className="absolute bottom-0 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-primary" />
-              )}
+              {isActive && <ActiveUnderline />}
             </Link>
           );
         })}
