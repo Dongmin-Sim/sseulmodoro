@@ -32,9 +32,13 @@ skill: session-start를 실행한다. 세션 타입은 **FE**.
 
 session-start skill 4단계에서 처리.
 
+### 공통 워크플로우 원칙
+
+태스크·이슈 공통 실행 원칙(진단 우선·plan 게이트·검증 3종·사용자 QA·PR 초안 우선·stacked·커밋 위생)은 **`rules/workflow`**(자동 로드) 참조.
+
 ### 기능 개발 (태스크)
 
-vault `project/tasks/TASK-{N}-*.md` 기반. 워크플로우 시작 시 TaskCreate로 아래 단계를 등록한다. 각 단계 시작 전 `in_progress`, 완료 직후 `completed`.
+vault `project/tasks/TASK-{N}-*.md` 기반. 워크플로우 시작 시 TaskCreate로 아래 단계를 등록한다. 각 단계 시작 전 `in_progress`, 완료 직후 `completed`. (위 **공통 워크플로우 원칙** 함께 적용)
 
 1. `git checkout -b feature/TASK-{N}-기능명` (dev에서 분기, `TASK-{N}`은 vault 태스크 ID — 비패딩)
 2. `src/lib/types/api.ts`에서 BE가 정의한 타입 확인
@@ -53,20 +57,21 @@ vault `project/tasks/TASK-{N}-*.md` 기반. 워크플로우 시작 시 TaskCreat
 
 ### 버그 수정 (이슈)
 
-vault `project/issues/ISSUE-{N}-*.md` 기반. 워크플로우 시작 시 TaskCreate로 아래 단계를 등록한다. 각 단계 시작 전 `in_progress`, 완료 직후 `completed`.
+vault `project/issues/ISSUE-{N}-*.md` 기반. 워크플로우 시작 시 TaskCreate로 아래 단계를 등록한다. 각 단계 시작 전 `in_progress`, 완료 직후 `completed`. (위 **공통 워크플로우 원칙** 함께 적용)
 
-1. `git checkout -b fix/ISSUE-{N}-버그명` (dev에서 분기, `ISSUE-{N}`은 vault 이슈 ID — 비패딩)
-2. 이슈 재현 확인 → 원인 분석
-3. 수정 구현
-4. 커밋
-5. `/design-review` 실행 → 디자인 이슈 수정 후 커밋 ← `npm run dev` 실행 중이어야 함
-6. **PR 생성 전 `/review` 실행** → code-reviewer + security-reviewer agent 위임
-7. PR 생성 — 제목 `[ISSUE-{N}] 이슈명`
-8. **vault 동기화 알림 출력** — 다음 한 줄을 사용자에게 보고:
-   > `[VAULT 동기화 필요] ISSUE-{N} · branch=fix/ISSUE-{N}-{슬러그} · PR={PR URL} · start_date={오늘 YYYY-MM-DD} · status=in-review`
-9. **vault-content-drafter에 위임** — 본문 초안 생성:
-   > "ISSUE-{N}, PR #{N}의 본문 초안 생성 → 터미널 출력"
-   > 초안은 vault에 쓰이지 않음. 사용자가 검토 후 vault project 세션에서 직접 입력.
+1. **이슈 간략 요약** — 시작 전 증상·심각도·관련 영역을 1~3줄로 안내.
+2. **진단 우선** — 현재 코드로 원인 검증 (`rules/issue-diagnosis`). 결함이 아니면 close 제안, 증상이 vault와 다르면 보고 후 진행.
+3. `git checkout -b fix/ISSUE-{N}-버그명` (dev에서 분기, `ISSUE-{N}` 비패딩; 의존 연속 작업이면 stacked 분기 — 공통 원칙 참조).
+4. **plan 모드** — 비단순 변경은 plan 작성 → 승인 후 구현.
+5. 수정 구현.
+6. **검증 3종**: `npm run build` + `npm run lint` + `npm test` (에러 0).
+7. **(로직 변경 시)** `/review` → code-reviewer + security-reviewer. **(비주얼 변경 시)** `/design-review` ← `npm run dev`.
+8. **사용자 수동 QA** — 재현·확인 후 진행.
+9. 커밋 (관련 파일만 스테이징).
+10. **PR 초안(제목·본문) 먼저 보여주고 승인** → PR 생성 — 제목 `[ISSUE-{N}] 이슈명`.
+11. **vault 동기화 알림 출력**:
+    > `[VAULT 동기화 필요] ISSUE-{N} · branch=fix/ISSUE-{N}-{슬러그} · PR={PR URL} · start_date={오늘 YYYY-MM-DD} · status=in-review`
+12. **vault-content-drafter에 위임** — 본문 초안 터미널 출력 (vault엔 쓰지 않음; 사용자가 vault 세션에서 입력).
 
 ## 디자인 시스템
 
