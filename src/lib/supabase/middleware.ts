@@ -46,7 +46,7 @@ export async function updateSession(request: NextRequest) {
       url.pathname = "/home";
       const redirectResponse = NextResponse.redirect(url);
       response.cookies.getAll().forEach((cookie) =>
-        redirectResponse.cookies.set(cookie.name, cookie.value),
+        redirectResponse.cookies.set(cookie),
       );
       return redirectResponse;
     }
@@ -61,7 +61,7 @@ export async function updateSession(request: NextRequest) {
     url.searchParams.set("redirectTo", pathname);
     const redirectResponse = NextResponse.redirect(url);
     response.cookies.getAll().forEach((cookie) =>
-      redirectResponse.cookies.set(cookie.name, cookie.value),
+      redirectResponse.cookies.set(cookie),
     );
     return redirectResponse;
   }
@@ -72,7 +72,7 @@ export async function updateSession(request: NextRequest) {
     url.pathname = "/home";
     const redirectResponse = NextResponse.redirect(url);
     response.cookies.getAll().forEach((cookie) =>
-      redirectResponse.cookies.set(cookie.name, cookie.value),
+      redirectResponse.cookies.set(cookie),
     );
     return redirectResponse;
   }
