@@ -5,8 +5,6 @@
   },
   "permissions": {
     "deny": [
-      "Read(//Users/coding_min/Github/sseulmodoro/pipeline/certs/**)",
-      "Edit(//Users/coding_min/Github/sseulmodoro/pipeline/certs/**)",
       "Read(pipeline/certs/**)",
       "Edit(pipeline/certs/**)"
     ]
