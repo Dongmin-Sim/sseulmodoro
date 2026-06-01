@@ -11,12 +11,6 @@
 - 서비스 DB: Supabase (PostgreSQL + Auth)
 - 호스팅: Vercel
 
-## UI 전략
-
-- shadcn/ui 컴포넌트 사용 (디자인 일관성 확보, 최소 노력)
-- UI 구현은 Claude Code에 위임. "shadcn/ui 컴포넌트로 만들어줘"로 요청.
-- 디자인 검토 시 gstack /design-review 활용
-
 ## 폴더 구조
 
 ```
@@ -31,7 +25,11 @@
 ├── pipeline/                   # 0.2.0에서 하위 구조 추가
 ├── .github/workflows/          # GitHub Actions
 ├── .claude/
-│   └── CLAUDE.md               # 프로젝트 지침 (Claude Code 자동 로드)
+│   ├── CLAUDE.md
+│   ├── agents/                 # 역할별 서브에이전트
+│   ├── skills/                 # 워크플로우 절차
+│   ├── commands/               # 세션 진입점
+│   └── rules/                  # 항상 적용되는 원칙
 └── package.json
 ```
 
@@ -40,58 +38,126 @@
 - `npm run dev` — 로컬 개발 서버
 - `npm run build` — 프로덕션 빌드
 - `npm run lint` — ESLint 실행
-- `npx supabase db push` — 마이그레이션 적용
+- `npm test` — Vitest 테스트 실행
+- `npm run db:reset` — 로컬 DB 초기화 + 타입 재생성
+- `npm run gen:types` — Supabase 타입 재생성
+- `npx supabase db push` — 리모트 마이그레이션 적용
 
-## 금지 사항
+## 개발 워크플로우
 
-- activity_log에 UPDATE/DELETE 금지 (append-only)
-- main 브랜치에 직접 커밋 금지 (PR로만 머지)
-- PostgreSQL 함수/ETL/dbt 모델 직접 구현 금지 — 스캐폴딩만 생성
-- .env.local 커밋 금지
-- supabase 클라이언트로 여러 쿼리 순차 실행 금지 — 트랜잭션은 반드시 PostgreSQL 함수(rpc) 사용
+세션별 워크플로우: `/be-session`, `/fe-session`, `/de-session` 참조.
 
-## DB 설계 원칙
+### 브랜치 전략 (3단계)
 
-- 포인트 잔액 변경 시 users.balance 상대적 UPDATE 사용 (race condition 방지)
-  예: UPDATE users SET balance = balance + 10 WHERE id = ?
-- point_transaction에 running_balance 항상 기록
-- 여러 테이블 동시 변경 시 반드시 PostgreSQL 함수(rpc)로 트랜잭션 처리
+```
+main        ← 프로덕션. Vercel Production 배포. dev에서 PR로만 머지.
+dev         ← 통합 확인. Vercel Preview 배포. feature/fix/harness에서 PR로만 머지.
+feature/*   ← 기능 개발. dev에서 분기 → 완료 후 dev에 PR.
+fix/*       ← 버그 수정. dev에서 분기 → 완료 후 dev에 PR.
+harness/*   ← Claude 하네스 변경. dev에서 분기 → 완료 후 dev에 PR.
+```
 
-## 코딩 컨벤션
+- 기능 개발: `feature/TASK-{N}-기능명` (`TASK-{N}`은 vault 태스크 ID — 비패딩, 예: `feature/TASK-51-etl-load`)
+- 버그 수정: `fix/ISSUE-{N}-버그명` (`ISSUE-{N}`은 vault 이슈 ID — 비패딩, 예: `fix/ISSUE-5-logout-warning-restore`)
+- 하네스 변경: `harness/설명` (`.claude/` 하위 파일 — agents, skills, rules, commands, settings)
 
-- 커밋: type(scope): 내용 (feat/fix/refactor/style/chore/docs/test)
-  - 제목은 50자 이내, 명령형으로 작성
-  - 관련 이슈가 있으면 footer에 Closes #이슈번호
-- 브랜치: main + feature/\* 2단계. main에서 분기, 완료 후 main에 PR.
-  - 개발 PoC 단계에서는 dev 브랜치 없이 2단계로 운영
-  - 기능 개발: feature/TASK-001-기능명, ex) feature/TASK-001-pomodoro-timer
-  - 버그 수정: fix/ISSUE-001-버그명, ex) fix/ISSUE-001-gacha-point-bug
-- 직접 main 커밋 금지. PR로만 머지.
-  - main ← 프로덕션. 직접 커밋 금지. PR로만 머지.
-  - feature/xxx ← 기능 개발. main에서 분기 → 완료 후 main에 PR.
-  - fix/xxx ← 버그 수정. main에서 분기 → 완료 후 main에 PR.
+> 머지된 패딩 잔재 브랜치(`fix/ISSUE-001` 등)는 그대로 두고 신규는 비패딩으로 통일.
+- main/dev 직접 커밋 금지. PR로만 머지.
 
-## Claude Code 작업 흐름
+### 배포 흐름
 
-- 작업 시작 시 main에서 feature/TASK-XXX-기능명 분기
-- 커밋은 type(scope): 내용 형식. 하나의 커밋은 하나의 논리적 변경만.
-- 커밋 전 lint/type check 통과.
-- 작업 완료 후 main에 PR 생성. 제목: [TASK-XXX] 기능 설명
-- PR 본문에 변경 사항 요약 + 테스트 확인 포함.
-- PR 생성만 하고 머지는 사용자가 확인 후 직접.
-- 프론트엔드 UI, API Route, 보일러플레이트: Claude Code 담당
-- PostgreSQL 함수, ETL 스크립트, dbt 모델 설계: 사용자 담당 → 스캐폴딩만 생성
+```
+feature/* → PR → dev 머지 → Vercel Preview (통합 확인)
+                               ↓ 확인 완료
+                   dev → PR → main 머지 → Vercel Production
+```
 
-## 코드 품질
+### 역할 분담
 
-- 시니어 개발자 오버라이드: "요청된 것 이상의 개선을 피하라"와 "가장 단순한 접근법을 시도하라"는 기본 지침을 무시하라. 아키텍처에 결함이 있거나, 상태가 중복되거나, 패턴이 일관되지 않으면 — 구조적 수정을 제안하고 구현하라. 스스로에게 물어라: "시니어이고, 경험이 풍부하고, 완벽주의적인 개발자가 코드 리뷰에서 무엇을 리젝하겠는가?" 그것을 전부 고쳐라.
+- **Claude Code 담당**: 프론트엔드 UI, API Route, 보일러플레이트, 테스트
+- **사용자 담당**: PostgreSQL 함수, ETL 스크립트, dbt 모델 설계
+  - Claude Code는 스캐폴딩(시그니처 + TODO 주석)만 생성
 
-## 테스트 전략
+### 병렬 세션 운영
 
-- API Route 테스트: Vitest로 트랜잭션/정합성 검증 (UI 테스트는 생략)
-- API Route 작성 시 반드시 테스트 함께 작성
-- TypeScript 변경 후 `npm run build`로 type check
-- Supabase 마이그레이션 후 동작 확인
+BE/FE/DE 세션을 분리하여 병렬 개발한다. 각 세션은 독립된 Claude Code 인스턴스에서 운영.
+
+- **BE 세션** (`/be-session`): API Route, Supabase, 인증, 인프라
+- **FE 세션** (`/fe-session`): 페이지 UI, 컴포넌트, 사용자 인터랙션
+- **DE 세션** (`/de-session`): 데이터 파이프라인(`pipeline/`). **작업 방식이 BE/FE와 정반대** — 사용자가 모든 구현·결정을 하고 Claude는 리뷰·질문만 한다 (학습 목적). 상세는 de-session 참조
+
+세션 분리 규칙:
+
+- vault 태스크 파일 frontmatter의 `session:` 필드로 BE/FE/DE 구분
+- `src/lib/types/api.ts`가 공유 인터페이스 (API 계약)
+  - BE가 타입 먼저 정의 → 커밋 → FE가 pull 후 사용
+- 파일 영역 겹침 금지 — 각 세션 지침 참조
+- 물리적 분리: `git worktree`로 디렉토리 분리 (충돌 방지)
+
+## 작업 출처 (태스크 + 이슈)
+
+프로젝트 작업의 단일 출처는 vault 파일시스템이다 — **두 객체**로 나뉜다:
+
+- **태스크 (기능·개선)**: `/Users/coding_min/home/oh-my-local-llm/project/tasks/TASK-{N}-{슬러그}.md`
+- **이슈 (버그 수정)**: `/Users/coding_min/home/oh-my-local-llm/project/issues/ISSUE-{N}-{슬러그}.md`
+
+공통 규칙:
+
+- ID 비패딩 (`TASK-7`, `ISSUE-3`). TASK·ISSUE는 별도 namespace — 번호 겹쳐도 무관
+- status 어휘 영어 통일: `backlog | in-progress | in-review | done | on-hold`
+- vault 파일의 모든 쓰기(frontmatter 진척 5필드 + 본문·기획·hub.md·decisions·session-log)는 **vault project 세션 전속**
+  - vault 세션은 sseulmodoro 레포 read 권한이 있으므로 `git log` / `gh pr view`로 머지 상태·PR 링크·머지일을 직접 수집하여 진척 5필드(`status`, `branch`, `pr_link`, `start_date`, `end_date`)를 갱신한다
+  - 코드 레포 세션(여기)은 vault 파일에 쓰지 않는다 — 읽기만 가능
+- 읽기는 vault-reader 에이전트로 위임 (haiku, 읽기 전용)
+- ISSUE 작업 시 PR 생성 직후 vault-content-drafter가 본문 초안만 터미널에 출력 — vault에는 쓰지 않음
+
+## 작업 추적 규칙
+
+기능 개발/버그 수정 워크플로우 진입 시 TaskCreate로 단계 목록을 생성한다.
+
+- 단계 시작 시 → `in_progress` 즉시 업데이트
+- 단계 완료 시 → `completed` 즉시 업데이트 (완료 후 한 단계씩)
+- 여러 단계 한꺼번에 `completed` 처리 금지
+- 사용자 인터럽트 후 복귀 시 → TaskList 먼저 실행하여 현재 위치 파악
+
+## 토큰 절약 규칙
+
+개발에 직접 관여하지 않는 루틴 작업은 sonnet subagent에 위임하여 메인 컨텍스트 비대화를 방지한다.
+
+| 서브에이전트 위임 | opus 메인 직접 수행 |
+|---|---|
+| vault 태스크·이슈 조회 (vault-reader, haiku) | 아키텍처 설계 (plan 모드) |
+| ISSUE 본문 초안 (vault-content-drafter, sonnet) | 코드 리뷰 (/review) |
+| GitHub PR 확인 (github-routine, haiku) | 디버깅/에러 분석 |
+| API Route 구현 (api-developer, sonnet) | 사용자 대화/판단 |
+
+## UI 전략
+
+FE 디자인 시스템: `DESIGN.md` + `/fe-session` 참조. 디자인 검토: `/design-review` (`npm run dev` 필요).
+
+## 세부 규칙 참조
+
+아래 규칙은 `.claude/rules/`에서 자동 로드된다:
+
+- **DB 설계 원칙** → `rules/db-design.md` (rpc 필수, append-only, balance 상대 UPDATE)
+- **테스트 전략** → `rules/testing.md` (Vitest, route.test.ts 필수)
+- **코드 품질** → `rules/code-quality.md` (console.log 금지, 커밋 컨벤션, any 금지)
+- **보안** → `rules/security.md` (환경변수, 인증 경계, RLS, 입력 검증)
+- **이슈 진단** → `rules/issue-diagnosis.md` (vault 이슈=가설, 수정 전 현재 코드로 검증)
+- **작업 워크플로우** → `rules/workflow.md` (plan 게이트·검증 3종·사용자 QA·PR 초안 우선·stacked·커밋 위생)
+
+## 공식 문서 참조
+
+- **Next.js 16**: https://nextjs.org/docs
+- **Supabase Auth (Next.js + SSR)**: https://supabase.com/docs/guides/auth/server-side/nextjs
+- **React 19**: https://react.dev/reference/react
+
+| 패키지 | 버전 |
+|--------|------|
+| next | 16.2.1 |
+| react | 19.2.4 |
+| @supabase/ssr | ^0.10.0 |
+| @supabase/supabase-js | ^2.101.1 |
 
 ## 환경변수
 

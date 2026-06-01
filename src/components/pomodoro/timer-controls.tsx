@@ -8,8 +8,9 @@ interface TimerControlsProps {
   onStart: () => void;
   onPause: () => void;
   onResume: () => void;
-  onAbandon: () => void;
+  onStop: () => void;
   onReset: () => void;
+  disabled?: boolean;
 }
 
 export function TimerControls({
@@ -17,13 +18,14 @@ export function TimerControls({
   onStart,
   onPause,
   onResume,
-  onAbandon,
+  onStop,
   onReset,
+  disabled,
 }: TimerControlsProps) {
   if (status === "idle") {
     return (
-      <Button size="lg" className="w-40 h-11" onClick={onStart}>
-        시작
+      <Button size="lg" className="w-40 h-11" onClick={onStart} disabled={disabled}>
+        {disabled ? "준비 중..." : "시작"}
       </Button>
     );
   }
@@ -34,8 +36,8 @@ export function TimerControls({
         <Button size="lg" variant="secondary" className="w-28 h-11" onClick={onPause}>
           일시정지
         </Button>
-        <Button size="lg" variant="destructive" className="w-28 h-11" onClick={onAbandon}>
-          포기
+        <Button size="lg" variant="destructive" className="w-28 h-11" onClick={onStop}>
+          중지
         </Button>
       </div>
     );
@@ -47,8 +49,8 @@ export function TimerControls({
         <Button size="lg" className="w-28 h-11" onClick={onResume}>
           이어하기
         </Button>
-        <Button size="lg" variant="destructive" className="w-28 h-11" onClick={onAbandon}>
-          포기
+        <Button size="lg" variant="destructive" className="w-28 h-11" onClick={onStop}>
+          중지
         </Button>
       </div>
     );

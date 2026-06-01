@@ -1,3 +1,10 @@
+-- =============================================================
+-- 001 schema core — 테이블 / PK·FK / 인덱스
+-- =============================================================
+-- 이전의 누적 DROP→CREATE 마이그레이션(8개)을 ISSUE-5에서 정리하여
+-- 도메인 단위 6개 파일로 재작성한 baseline. RLS·정책은 003, 함수는
+-- 004/005/006에서 정의.
+
 -- 1. profiles (Supabase Auth 연동)
 CREATE TABLE public.profiles (
   id              UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -23,8 +30,14 @@ CREATE TABLE public.character_instances (
   character_type_id INTEGER NOT NULL REFERENCES public.character_types(id),
   level             INTEGER NOT NULL DEFAULT 1,
   exp               INTEGER NOT NULL DEFAULT 0,
+  is_main           BOOLEAN NOT NULL DEFAULT false,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- 유저당 대표 캐릭터(is_main=true)는 반드시 1개
+CREATE UNIQUE INDEX uniq_character_instances_main_per_user
+  ON public.character_instances (user_id)
+  WHERE is_main = true;
 
 -- 4. pomodoro_sessions (사이클 단위)
 CREATE TABLE public.pomodoro_sessions (
@@ -76,9 +89,8 @@ CREATE TABLE public.point_transaction (
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 8. app_config (서비스 설정)
+-- 8. app_config (서비스 설정 — key/value)
 CREATE TABLE public.app_config (
   key   VARCHAR(100) PRIMARY KEY,
   value JSONB NOT NULL
 );
-
