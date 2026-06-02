@@ -50,7 +50,7 @@ export function HomeClient({ data }: HomeClientProps) {
     { label: "홈", onSelect: exitSession, active: !isSessionActive },
     { label: "도감", href: "/collection", disabled: true },
     { label: "상점", href: "/shop", disabled: true },
-    { label: "기록", href: "/history", disabled: true },
+    { label: "기록", href: "/history" },
   ];
 
   const router = useRouter();
