@@ -66,6 +66,26 @@ export interface LogoutResponse {
   success: true;
 }
 
+/** 이력 집계 통계 (전체/오늘 공통) */
+export interface RecordStat {
+  count: number;
+  focusMinutes: number;
+}
+
+/** 개별 완료 포모도로 로그 항목 */
+export interface RecordLog {
+  pomodoroId: number;
+  completedAt: string; // ISO 8601
+  focusMinutes: number;
+}
+
+/** GET /api/history 성공 응답 */
+export interface RecordResponse {
+  summary: { total: RecordStat; today: RecordStat };
+  logs: RecordLog[];
+  nextCursor: string | null;
+}
+
 /** API 공통 에러 응답 */
 export interface ApiError {
   error: string;
