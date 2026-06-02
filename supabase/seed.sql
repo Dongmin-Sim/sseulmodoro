@@ -15,6 +15,13 @@ INSERT INTO auth.users (
   created_at,
   updated_at,
   confirmation_token,
+  recovery_token,
+  email_change,
+  email_change_token_new,
+  email_change_token_current,
+  phone_change,
+  phone_change_token,
+  reauthentication_token,
   raw_app_meta_data,
   raw_user_meta_data
 ) VALUES (
@@ -27,7 +34,14 @@ INSERT INTO auth.users (
   NOW(),
   NOW(),
   NOW(),
-  '',
+  '', -- confirmation_token
+  '', -- recovery_token
+  '', -- email_change
+  '', -- email_change_token_new
+  '', -- email_change_token_current
+  '', -- phone_change
+  '', -- phone_change_token
+  '', -- reauthentication_token
   '{"provider":"email","providers":["email"]}',
   '{}'
 ) ON CONFLICT (id) DO NOTHING;
