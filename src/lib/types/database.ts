@@ -337,6 +337,10 @@ export type Database = {
       }
       end_session: { Args: { p_session_id: number }; Returns: Json }
       gacha: { Args: never; Returns: Json }
+      get_record_history: {
+        Args: { p_cursor?: string; p_limit?: number }
+        Returns: Json
+      }
       start_next_pomodoro: { Args: { p_session_id: number }; Returns: Json }
       start_session: {
         Args: {
