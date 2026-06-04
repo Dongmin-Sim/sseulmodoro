@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
+    "gen:birds": "node --experimental-strip-types --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tools/bird-card-gen/generate.ts",
     "gen:types": "npx supabase gen types typescript --local > src/lib/types/database.ts",
     "db:reset": "npx supabase db reset && npm run gen:types",
     "dev:rerun": "npm run db:reset && npm run dev"

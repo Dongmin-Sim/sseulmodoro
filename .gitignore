@@ -60,3 +60,6 @@ supabase/snippets/
 .claude/settings.local.json
 .claude/worktrees/
 .gstack/
+
+# 새 카드 생성기 — 검수용 미리보기(재생성 가능, 커밋 제외)
+tools/bird-card-gen/preview.png
