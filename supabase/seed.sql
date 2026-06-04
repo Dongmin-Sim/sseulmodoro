@@ -66,7 +66,10 @@ INSERT INTO auth.identities (
   NOW()
 ) ON CONFLICT ON CONSTRAINT identities_pkey DO NOTHING;
 
--- 프로필
+-- 프로필 — handle_new_user 트리거가 auth.users INSERT 시 먼저 profiles를
+-- balance=0으로 생성하므로, DO NOTHING이면 아래 dev 편의값이 무시된다.
+-- DO UPDATE로 dev 계정 name·balance를 덮어쓴다. (로컬 전용, 실서비스 동작 무관)
 INSERT INTO public.profiles (id, name, balance)
 VALUES ('00000000-0000-0000-0000-000000000001', 'Dev User', 100)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE
+  SET name = EXCLUDED.name, balance = EXCLUDED.balance;
