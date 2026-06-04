@@ -54,6 +54,7 @@ supabase/snippets/
 
 # IDE
 .vscode/
+.idea/
 
 # claude code
 .claude/settings.local.json
