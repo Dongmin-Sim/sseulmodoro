@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // 자산 생성 도구는 앱 코드가 아니므로 lint 제외 (Node 스크립트)
+    "tools/**",
   ]),
 ]);
 
