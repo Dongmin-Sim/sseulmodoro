@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CharacterBlob } from "@/components/home/character-blob";
+import { BirdCard } from "@/components/character/bird-card";
 import { PomodoroTimer } from "@/components/pomodoro/pomodoro-timer";
 import { usePomodoroSession } from "@/components/pomodoro/session-context";
 import { Badge } from "@/components/ui/badge";
@@ -119,7 +119,12 @@ export function HomeClient({ data }: HomeClientProps) {
             {/* 캐릭터 */}
             {character ? (
               <>
-                <CharacterBlob rarity={rarityLabel ?? undefined} className="mb-6" />
+                <BirdCard
+                  slug={character.slug}
+                  rarity={character.rarity}
+                  name={character.name}
+                  className="mb-6"
+                />
                 <h1 className="mb-2.5 text-[22px] font-bold tracking-tight text-foreground">
                   {character.name}
                 </h1>

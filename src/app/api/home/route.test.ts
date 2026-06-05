@@ -91,7 +91,7 @@ describe("GET /api/home", () => {
       data: {
         id: 5,
         level: 3,
-        character_types: { name: "공부하는 모또", rarity: "common" },
+        character_types: { name: "공부하는 모또", rarity: "common", slug: "bluebird" },
       },
       error: null,
     });
@@ -105,6 +105,7 @@ describe("GET /api/home", () => {
         name: "공부하는 모또",
         level: 3,
         rarity: "common",
+        slug: "bluebird",
       },
     });
   });

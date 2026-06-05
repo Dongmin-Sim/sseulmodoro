@@ -11,7 +11,7 @@ export async function loadHomeData(userId: string): Promise<HomeDataResponse> {
     supabase.from("profiles").select("balance").eq("id", userId).single(),
     supabase
       .from("character_instances")
-      .select(`id, level, character_types ( name, rarity )`)
+      .select(`id, level, character_types ( name, rarity, slug )`)
       .eq("user_id", userId)
       .eq("is_main", true)
       .maybeSingle(),
@@ -31,7 +31,7 @@ export async function loadHomeData(userId: string): Promise<HomeDataResponse> {
   const ci = mainCharacterResult.data as unknown as {
     id: number;
     level: number;
-    character_types: { name: string; rarity: string } | null;
+    character_types: { name: string; rarity: string; slug: string } | null;
   } | null;
 
   if (ci?.character_types) {
@@ -40,6 +40,7 @@ export async function loadHomeData(userId: string): Promise<HomeDataResponse> {
       name: ci.character_types.name,
       level: ci.level,
       rarity: ci.character_types.rarity,
+      slug: ci.character_types.slug,
     };
   }
 

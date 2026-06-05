@@ -128,17 +128,16 @@
 }
 
 @layer utilities {
-  .animate-breathe {
-    animation: breathe 4s ease-in-out infinite;
+  /* 새 카드 sprite — 코너 변형 없이 가벼운 상하 bob (픽셀 또렷 유지) */
+  .animate-bird-bob {
+    animation: bird-bob 3.5s ease-in-out infinite;
   }
-  @keyframes breathe {
+  @keyframes bird-bob {
     0%, 100% {
-      transform: scale(1) translateY(0);
-      border-radius: 50% 44% 54% 46% / 46% 54% 46% 54%;
+      transform: translateY(0);
     }
     50% {
-      transform: scale(1.03) translateY(-4px);
-      border-radius: 46% 54% 48% 52% / 52% 48% 56% 44%;
+      transform: translateY(-6px);
     }
   }
 }
