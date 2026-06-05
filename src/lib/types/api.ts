@@ -61,6 +61,7 @@ export interface HomeDataResponse {
     rarity: string;
     slug: string;
   } | null;
+  onboardingCompleted: boolean;
 }
 
 /** POST /api/auth/logout 성공 응답 */
@@ -86,6 +87,11 @@ export interface RecordResponse {
   summary: { total: RecordStat; today: RecordStat };
   logs: RecordLog[];
   nextCursor: string | null;
+}
+
+/** POST /api/onboarding/complete 성공 응답 */
+export interface OnboardingCompleteResponse {
+  success: true;
 }
 
 /** API 공통 에러 응답 */
