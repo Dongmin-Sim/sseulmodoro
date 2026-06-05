@@ -51,6 +51,20 @@ export async function POST() {
     );
   }
 
+  const { data: typeRow, error: typeError } = await supabase
+    .from("character_types")
+    .select("slug")
+    .eq("id", raw.type_id)
+    .single();
+
+  if (typeError || !typeRow) {
+    console.error("character_types slug lookup failed:", typeError);
+    return NextResponse.json<ApiError>(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
+
   return NextResponse.json<GachaResponse>(
     {
       characterInstance: {
@@ -59,6 +73,7 @@ export async function POST() {
         name: raw.name,
         rarity: raw.rarity,
         level: raw.level,
+        slug: typeRow.slug,
       },
       newBalance: raw.new_balance,
       isNew: raw.is_new,
