@@ -67,7 +67,7 @@ def test_create_table(client, table_id):
             bigquery.SchemaField("name", "STRING", mode="REQUIRED"),
         ]
     table = bigquery.Table(table_id, schema=schema)
-    table = client.create_table(table, exists_ok=True, timeout=30)
+    table = client.create_table_from_ddl(table, exists_ok=True, timeout=30)
     print(
         "Created table {}.{}.{}".format(table.project, table.dataset_id, table.table_id)
     )
