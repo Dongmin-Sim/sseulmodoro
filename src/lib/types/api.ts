@@ -58,6 +58,7 @@ export interface HomeDataResponse {
     name: string;
     level: number;
     rarity: string;
+    slug: string;
   } | null;
 }
 
