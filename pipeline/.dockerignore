@@ -1,0 +1,41 @@
+# venv / virtualenv
+.venv/
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# 환경/시크릿 (TASK-61: .env 이미지에 굽지 않음)
+.env
+.env.*
+*.key
+key*.json
+credentials*.json
+secrets/
+.gcp/
+
+# IDE
+.idea/
+.vscode/
+
+# Git
+.git/
+.gitignore
+.gitkeep
+
+# 문서/메타
+*.md
+README*
+
+# TASK-61 범위 외
+dbt/
+
+# 테스트 픽스처/연결확인 코드 — 운영 이미지에서 제외 (보안 표면 축소)
+etl/test/
+
+# OS
+.DS_Store

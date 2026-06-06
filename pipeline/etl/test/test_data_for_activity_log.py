@@ -3,7 +3,7 @@ NSM transform 검증용 테스트 데이터 (known-answer fixture).
 
 raw.activity_log를 이 fixture로 WRITE_TRUNCATE 교체 → TASK-54 transform 실행 →
 fact/mart 결과가 아래 기대값과 일치하는지 대조 (TASK-55).
-※ 적재 후 extract_activity_log.py(Supabase full refresh) 재실행 금지 — 덮어써짐.
+※ 적재 후 extract.py(Supabase full refresh) 재실행 금지 — 덮어써짐.
 
 [입력 이벤트] created_at UTC 05시~ (< 15시 → KST 같은 날)
   Week 1 (2026-05-04 월 ~ 05-10)
