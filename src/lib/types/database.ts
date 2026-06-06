@@ -312,6 +312,7 @@ export type Database = {
           id: string
           last_session_at: string | null
           name: string | null
+          onboarding_completed: boolean
         }
         Insert: {
           balance?: number
@@ -319,6 +320,7 @@ export type Database = {
           id: string
           last_session_at?: string | null
           name?: string | null
+          onboarding_completed?: boolean
         }
         Update: {
           balance?: number
@@ -326,6 +328,7 @@ export type Database = {
           id?: string
           last_session_at?: string | null
           name?: string | null
+          onboarding_completed?: boolean
         }
         Relationships: []
       }

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { PageContainer } from "@/components/layout/page-container";
 import { ContentNav } from "@/components/layout/content-nav";
 import { Button } from "@/components/ui/button";
-import { GachaReveal } from "@/components/shop/gacha-reveal";
+import { EggReveal } from "@/components/character/egg-reveal";
 import { logout } from "@/lib/api/logout";
 import { drawGacha } from "@/lib/api/gacha";
 
@@ -36,19 +36,28 @@ export function ShopClient({ balance: initialBalance, gachaCost }: ShopClientPro
   const handleStartDraw = () => {
     if (!canDraw) return;
     setDrawError(null);
-    setRevealing(true); // 알 모드 진입 — 실제 draw는 알 탭 시점(GachaReveal.onDraw)
+    setRevealing(true); // 알 모드 진입 — 실제 draw는 알 탭 시점(EggReveal.onReveal)
   };
 
   // 알 탭 시 호출 — 연출이 응답 대기를 가린다(로딩 마스크).
-  const handleDraw = async () => {
+  const handleReveal = async () => {
     const res = await drawGacha();
     setBalance(res.newBalance);
-    return res;
+    return {
+      slug: res.characterInstance.slug,
+      name: res.characterInstance.name,
+      rarity: res.characterInstance.rarity,
+      isNew: res.isNew,
+    };
   };
 
-  const handleDrawError = (msg: string) => {
+  const handleRevealError = (msg: string) => {
     setRevealing(false);
-    setDrawError(msg);
+    setDrawError(
+      msg === "insufficient_balance"
+        ? "포인트가 부족해요."
+        : "뽑기에 실패했어요. 다시 시도해주세요.",
+    );
   };
 
   const handleConfirm = () => {
@@ -95,9 +104,9 @@ export function ShopClient({ balance: initialBalance, gachaCost }: ShopClientPro
         <ContentNav items={NAV_ITEMS} balance={balance} action={logoutAction} />
 
         {revealing ? (
-          <GachaReveal
-            onDraw={handleDraw}
-            onError={handleDrawError}
+          <EggReveal
+            onReveal={handleReveal}
+            onError={handleRevealError}
             onConfirm={handleConfirm}
           />
         ) : (

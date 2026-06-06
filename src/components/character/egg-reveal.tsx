@@ -4,7 +4,14 @@ import { useState, useSyncExternalStore } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BirdCard } from "@/components/character/bird-card";
-import type { GachaResponse } from "@/lib/types/api";
+
+// 알 리빌 결과 — 가챠(뽑기) / 온보딩 선물 등 출처 무관.
+export type RevealResult = {
+  slug: string;
+  name: string;
+  rarity: string;
+  isNew: boolean;
+};
 
 const RARITY_LABEL: Record<string, string> = {
   common: "커먼",
@@ -44,24 +51,31 @@ function useReducedMotion() {
 
 type Stage = "egg" | "cracking" | "revealed";
 
-type GachaRevealProps = {
-  onDraw: () => Promise<GachaResponse>;
-  onError: (msg: string) => void;
+type EggRevealProps = {
+  // 알을 깨는 동안(cracking) 결과를 resolve — 그동안 연출이 대기를 가린다.
+  onReveal: () => Promise<RevealResult>;
   onConfirm: () => void;
+  onError?: (msg: string) => void;
+  confirmLabel?: string;
 };
 
-export function GachaReveal({ onDraw, onError, onConfirm }: GachaRevealProps) {
+export function EggReveal({
+  onReveal,
+  onConfirm,
+  onError,
+  confirmLabel = "확인",
+}: EggRevealProps) {
   const [stage, setStage] = useState<Stage>("egg");
   const [crackStep, setCrackStep] = useState(0); // 0 흔들 · 1 금조금 · 2 금더
-  const [result, setResult] = useState<GachaResponse | null>(null);
+  const [result, setResult] = useState<RevealResult | null>(null);
   const reduced = useReducedMotion();
 
   const handleTap = async () => {
-    if (stage !== "egg") return; // 응답 대기 중 중복 draw 방지
+    if (stage !== "egg") return; // 응답 대기 중 중복 호출 방지
     setStage("cracking");
     setCrackStep(0);
 
-    // 크랙 단계 진행 (서버 통신과 동시에 — 연출이 응답 대기를 가린다)
+    // 크랙 단계 진행 (결과 resolve와 동시에 — 연출이 대기를 가린다)
     const timers: ReturnType<typeof setTimeout>[] = [];
     if (!reduced) {
       timers.push(setTimeout(() => setCrackStep(1), WIGGLE_MS));
@@ -70,7 +84,7 @@ export function GachaReveal({ onDraw, onError, onConfirm }: GachaRevealProps) {
 
     const t0 = performance.now();
     try {
-      const res = await onDraw();
+      const res = await onReveal();
       const minWait = reduced ? 0 : MIN_CRACK_MS;
       const elapsed = performance.now() - t0;
       if (elapsed < minWait) await sleep(minWait - elapsed);
@@ -78,24 +92,18 @@ export function GachaReveal({ onDraw, onError, onConfirm }: GachaRevealProps) {
       setStage("revealed");
     } catch (e) {
       timers.forEach(clearTimeout);
-      const msg = e instanceof Error ? e.message : "draw_failed";
-      onError(
-        msg === "insufficient_balance"
-          ? "포인트가 부족해요."
-          : "뽑기에 실패했어요. 다시 시도해주세요.",
-      );
+      onError?.(e instanceof Error ? e.message : "reveal_failed");
     }
   };
 
   const theme = result
-    ? (RARITY_THEME[result.characterInstance.rarity] ?? RARITY_THEME.common)
+    ? (RARITY_THEME[result.rarity] ?? RARITY_THEME.common)
     : RARITY_THEME.common;
   const sparkleCount = result?.isNew ? theme.sparkles : 0;
 
   // 빛 레이어 — 크랙 단계마다 점점 밝게(틈에서 빛이 새어나옴)
-  const leakOpacity =
-    stage === "egg" ? 0.12 : [0.3, 0.55, 0.85][crackStep] ?? 0.85;
-  const leakScale = stage === "egg" ? 0.6 : [0.72, 0.86, 1.05][crackStep] ?? 1.05;
+  const leakOpacity = stage === "egg" ? 0.12 : ([0.3, 0.55, 0.85][crackStep] ?? 0.85);
+  const leakScale = stage === "egg" ? 0.6 : ([0.72, 0.86, 1.05][crackStep] ?? 1.05);
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-6 py-8">
@@ -149,11 +157,7 @@ export function GachaReveal({ onDraw, onError, onConfirm }: GachaRevealProps) {
         {/* 카드 (공개) */}
         {stage === "revealed" && result && (
           <div className="animate-in fade-in zoom-in-95 duration-500">
-            <BirdCard
-              slug={result.characterInstance.slug}
-              rarity={result.characterInstance.rarity}
-              name={result.characterInstance.name}
-            />
+            <BirdCard slug={result.slug} rarity={result.rarity} name={result.name} />
           </div>
         )}
 
@@ -191,9 +195,7 @@ export function GachaReveal({ onDraw, onError, onConfirm }: GachaRevealProps) {
 
       {/* 안내 / 결과 */}
       {stage === "egg" && (
-        <p className="text-sm font-medium text-muted-foreground">
-          알을 탭해서 깨보세요!
-        </p>
+        <p className="text-sm font-medium text-muted-foreground">알을 탭해서 깨보세요!</p>
       )}
       {stage === "cracking" && (
         <p className="text-sm font-medium text-muted-foreground">
@@ -204,7 +206,7 @@ export function GachaReveal({ onDraw, onError, onConfirm }: GachaRevealProps) {
         <>
           <div className="flex flex-col items-center gap-2.5">
             <h1 className="text-[22px] font-bold tracking-tight text-foreground">
-              {result.characterInstance.name}
+              {result.name}
             </h1>
             <div className="flex gap-2">
               <Badge
@@ -214,8 +216,7 @@ export function GachaReveal({ onDraw, onError, onConfirm }: GachaRevealProps) {
                   border: "none",
                 }}
               >
-                {RARITY_LABEL[result.characterInstance.rarity] ??
-                  result.characterInstance.rarity}
+                {RARITY_LABEL[result.rarity] ?? result.rarity}
               </Badge>
               <Badge
                 className={`rounded-full px-3.5 py-1 text-xs font-semibold text-white ${
@@ -241,7 +242,7 @@ export function GachaReveal({ onDraw, onError, onConfirm }: GachaRevealProps) {
             }}
             onClick={onConfirm}
           >
-            확인
+            {confirmLabel}
           </Button>
         </>
       )}

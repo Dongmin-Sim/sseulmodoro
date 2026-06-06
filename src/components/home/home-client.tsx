@@ -19,6 +19,7 @@ import {
 import { PageContainer } from "@/components/layout/page-container";
 import { ContentNav } from "@/components/layout/content-nav";
 import { logout } from "@/lib/api/logout";
+import { OnboardingFlow } from "@/components/onboarding/onboarding-flow";
 import type { HomeDataResponse } from "@/lib/types/api";
 
 const RARITY_LABEL: Record<string, string> = {
@@ -57,6 +58,7 @@ export function HomeClient({ data }: HomeClientProps) {
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
+  const [onboarded, setOnboarded] = useState(data?.onboardingCompleted ?? true);
 
   const doLogout = async () => {
     if (isLoggingOut) return;
@@ -106,6 +108,20 @@ export function HomeClient({ data }: HomeClientProps) {
   const rarityLabel = character
     ? (RARITY_LABEL[character.rarity] ?? character.rarity)
     : null;
+
+  // 온보딩 미완료 신규 유저 — 홈 대신 온보딩 위저드 (DB 플래그 기준)
+  if (data && !onboarded && character) {
+    return (
+      <OnboardingFlow
+        starter={{
+          slug: character.slug,
+          name: character.name,
+          rarity: character.rarity,
+        }}
+        onDone={() => setOnboarded(true)}
+      />
+    );
+  }
 
   return (
     <main className="relative z-10 flex flex-1 flex-col py-5">

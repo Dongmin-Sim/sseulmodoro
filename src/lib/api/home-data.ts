@@ -8,7 +8,11 @@ export async function loadHomeData(userId: string): Promise<HomeDataResponse> {
   const supabase = await createServerClient();
 
   const [profileResult, mainCharacterResult] = await Promise.all([
-    supabase.from("profiles").select("balance").eq("id", userId).single(),
+    supabase
+      .from("profiles")
+      .select("balance, onboarding_completed")
+      .eq("id", userId)
+      .single(),
     supabase
       .from("character_instances")
       .select(`id, level, character_types ( name, rarity, slug )`)
@@ -24,7 +28,7 @@ export async function loadHomeData(userId: string): Promise<HomeDataResponse> {
     throw new Error("home main character query failed");
   }
 
-  const { balance } = profileResult.data;
+  const { balance, onboarding_completed } = profileResult.data;
 
   let mainCharacter: HomeDataResponse["mainCharacter"] = null;
 
@@ -44,5 +48,5 @@ export async function loadHomeData(userId: string): Promise<HomeDataResponse> {
     };
   }
 
-  return { balance, mainCharacter };
+  return { balance, mainCharacter, onboardingCompleted: onboarding_completed };
 }
