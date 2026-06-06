@@ -45,6 +45,7 @@ export interface GachaResponse {
     name: string;
     rarity: string;
     level: number;
+    slug: string;
   };
   newBalance: number;
   isNew: boolean;
