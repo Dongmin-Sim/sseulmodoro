@@ -4,19 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PageContainer } from "@/components/layout/page-container";
 import { ContentNav } from "@/components/layout/content-nav";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BirdCard } from "@/components/character/bird-card";
+import { GachaReveal } from "@/components/shop/gacha-reveal";
 import { logout } from "@/lib/api/logout";
 import { drawGacha } from "@/lib/api/gacha";
-import type { GachaResponse } from "@/lib/types/api";
-
-const RARITY_LABEL: Record<string, string> = {
-  common: "커먼",
-  rare: "레어",
-  epic: "에픽",
-  legendary: "레전더리",
-};
 
 const NAV_ITEMS = [
   { label: "홈", href: "/home" },
@@ -34,33 +25,35 @@ export function ShopClient({ balance: initialBalance, gachaCost }: ShopClientPro
   const router = useRouter();
 
   const [balance, setBalance] = useState(initialBalance);
-  const [isDrawing, setIsDrawing] = useState(false);
+  const [revealing, setRevealing] = useState(false);
   const [drawError, setDrawError] = useState<string | null>(null);
-  const [result, setResult] = useState<GachaResponse | null>(null);
 
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
 
-  const canDraw = balance >= gachaCost && !isDrawing;
+  const canDraw = balance >= gachaCost;
 
-  const handleDraw = async () => {
+  const handleStartDraw = () => {
     if (!canDraw) return;
-    setIsDrawing(true);
     setDrawError(null);
-    try {
-      const res = await drawGacha();
-      setBalance(res.newBalance);
-      setResult(res);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "draw_failed";
-      setDrawError(
-        msg === "insufficient_balance"
-          ? "포인트가 부족해요."
-          : "뽑기에 실패했어요. 다시 시도해주세요.",
-      );
-    } finally {
-      setIsDrawing(false);
-    }
+    setRevealing(true); // 알 모드 진입 — 실제 draw는 알 탭 시점(GachaReveal.onDraw)
+  };
+
+  // 알 탭 시 호출 — 연출이 응답 대기를 가린다(로딩 마스크).
+  const handleDraw = async () => {
+    const res = await drawGacha();
+    setBalance(res.newBalance);
+    return res;
+  };
+
+  const handleDrawError = (msg: string) => {
+    setRevealing(false);
+    setDrawError(msg);
+  };
+
+  const handleConfirm = () => {
+    setRevealing(false);
+    setDrawError(null);
   };
 
   const handleLogout = async () => {
@@ -101,13 +94,11 @@ export function ShopClient({ balance: initialBalance, gachaCost }: ShopClientPro
       <PageContainer className="flex flex-col">
         <ContentNav items={NAV_ITEMS} balance={balance} action={logoutAction} />
 
-        {result ? (
-          <ResultView
-            result={result}
-            onConfirm={() => {
-              setResult(null);
-              setDrawError(null);
-            }}
+        {revealing ? (
+          <GachaReveal
+            onDraw={handleDraw}
+            onError={handleDrawError}
+            onConfirm={handleConfirm}
           />
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-6 py-10">
@@ -128,7 +119,7 @@ export function ShopClient({ balance: initialBalance, gachaCost }: ShopClientPro
               }}
               aria-hidden
             >
-              <span className="text-5xl">🎁</span>
+              <span className="text-5xl">🥚</span>
             </div>
 
             <div className="flex w-full flex-col items-center gap-2">
@@ -140,13 +131,11 @@ export function ShopClient({ balance: initialBalance, gachaCost }: ShopClientPro
                   border: "none",
                   height: "auto",
                 }}
-                onClick={handleDraw}
+                onClick={handleStartDraw}
                 disabled={!canDraw}
                 aria-label="캐릭터 뽑기"
               >
-                {isDrawing
-                  ? "뽑는 중..."
-                  : `뽑기  ✦ ${gachaCost.toLocaleString()}`}
+                {`뽑기  ✦ ${gachaCost.toLocaleString()}`}
               </Button>
 
               {balance < gachaCost && (
@@ -164,61 +153,5 @@ export function ShopClient({ balance: initialBalance, gachaCost }: ShopClientPro
         )}
       </PageContainer>
     </main>
-  );
-}
-
-function ResultView({
-  result,
-  onConfirm,
-}: {
-  result: GachaResponse;
-  onConfirm: () => void;
-}) {
-  const { name, rarity, slug } = result.characterInstance;
-  const rarityLabel = RARITY_LABEL[rarity] ?? rarity;
-
-  return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-5 py-10">
-      <BirdCard slug={slug} rarity={rarity} name={name} />
-
-      <div className="flex flex-col items-center gap-2.5">
-        <h1 className="text-[22px] font-bold tracking-tight text-foreground">
-          {name}
-        </h1>
-        <div className="flex gap-2">
-          <Badge
-            className="rounded-full px-3.5 py-1 text-xs font-semibold text-white"
-            style={{
-              background: "linear-gradient(135deg, #D4956A, #C4725C)",
-              border: "none",
-            }}
-          >
-            {rarityLabel}
-          </Badge>
-          <Badge
-            className="rounded-full px-3.5 py-1 text-xs font-semibold text-white"
-            style={{
-              background: result.isNew ? "#7BA68E" : "#9C9590",
-              border: "none",
-            }}
-          >
-            {result.isNew ? "NEW!" : "이미 보유"}
-          </Badge>
-        </div>
-      </div>
-
-      <Button
-        className="mt-2 w-full rounded-[10px] py-4 text-base font-bold text-white"
-        style={{
-          background: "#D4956A",
-          boxShadow: "0 6px 16px rgba(212,149,106,0.38)",
-          border: "none",
-          height: "auto",
-        }}
-        onClick={onConfirm}
-      >
-        확인
-      </Button>
-    </div>
   );
 }
