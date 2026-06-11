@@ -6,11 +6,10 @@ import google.cloud.bigquery as bigquery
 
 from pathlib import Path
 
-BASE = Path(__file__).resolve().parent.parent   # pipeline/ 경로
+BASE = Path(__file__).resolve().parent.parent.parent   # pipeline/ 경로
 
 dotenv.load_dotenv(BASE / ".env")
 dotenv.load_dotenv(BASE / (".env.production" if os.getenv("ENV") == "production" else ".env.development"))
-os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 
 def bigquery_connection_test():
     # bigquer 클라이언트 생성
