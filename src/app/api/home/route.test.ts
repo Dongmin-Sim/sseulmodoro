@@ -56,7 +56,10 @@ describe("GET /api/home", () => {
   });
 
   it("character_instances 쿼리 에러 시 500", async () => {
-    mockProfileSingle.mockResolvedValue({ data: { balance: 100 }, error: null });
+    mockProfileSingle.mockResolvedValue({
+      data: { balance: 100, onboarding_completed: true },
+      error: null,
+    });
     mockMainCharacterMaybeSingle.mockResolvedValue({ data: null, error: { message: "db error" } });
     const res = await GET();
     expect(res.status).toBe(500);
@@ -65,16 +68,22 @@ describe("GET /api/home", () => {
   });
 
   it("대표 캐릭터 없을 시 200 + mainCharacter null", async () => {
-    mockProfileSingle.mockResolvedValue({ data: { balance: 200 }, error: null });
+    mockProfileSingle.mockResolvedValue({
+      data: { balance: 200, onboarding_completed: false },
+      error: null,
+    });
     mockMainCharacterMaybeSingle.mockResolvedValue({ data: null, error: null });
     const res = await GET();
     expect(res.status).toBe(200);
     const json = await res.json();
-    expect(json).toEqual({ balance: 200, mainCharacter: null });
+    expect(json).toEqual({ balance: 200, mainCharacter: null, onboardingCompleted: false });
   });
 
   it("is_main 캐릭터 있으나 character_types null 시 200 + mainCharacter null", async () => {
-    mockProfileSingle.mockResolvedValue({ data: { balance: 100 }, error: null });
+    mockProfileSingle.mockResolvedValue({
+      data: { balance: 100, onboarding_completed: true },
+      error: null,
+    });
     mockMainCharacterMaybeSingle.mockResolvedValue({
       data: { id: 5, level: 1, character_types: null },
       error: null,
@@ -82,16 +91,19 @@ describe("GET /api/home", () => {
     const res = await GET();
     expect(res.status).toBe(200);
     const json = await res.json();
-    expect(json).toEqual({ balance: 100, mainCharacter: null });
+    expect(json).toEqual({ balance: 100, mainCharacter: null, onboardingCompleted: true });
   });
 
   it("성공 시 200 + 응답 shape 검증", async () => {
-    mockProfileSingle.mockResolvedValue({ data: { balance: 350 }, error: null });
+    mockProfileSingle.mockResolvedValue({
+      data: { balance: 350, onboarding_completed: true },
+      error: null,
+    });
     mockMainCharacterMaybeSingle.mockResolvedValue({
       data: {
         id: 5,
         level: 3,
-        character_types: { name: "공부하는 모또", rarity: "common" },
+        character_types: { name: "공부하는 모또", rarity: "common", slug: "bluebird" },
       },
       error: null,
     });
@@ -100,11 +112,13 @@ describe("GET /api/home", () => {
     const json = await res.json();
     expect(json).toEqual({
       balance: 350,
+      onboardingCompleted: true,
       mainCharacter: {
         instanceId: 5,
         name: "공부하는 모또",
         level: 3,
         rarity: "common",
+        slug: "bluebird",
       },
     });
   });

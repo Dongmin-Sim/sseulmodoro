@@ -46,16 +46,24 @@ __pycache__/
 venv/
 .venv/
 
-# certs
+# certs / GCP 서비스 계정 키 등 (방어층)
 pipeline/certs/
+*.key
+key*.json
+credentials*.json
+*-key.json
 
 # supabase local
 supabase/snippets/
 
 # IDE
 .vscode/
+.idea/
 
 # claude code
 .claude/settings.local.json
 .claude/worktrees/
 .gstack/
+
+# 새 카드 생성기 — 검수용 미리보기(재생성 가능, 커밋 제외)
+tools/bird-card-gen/preview.png

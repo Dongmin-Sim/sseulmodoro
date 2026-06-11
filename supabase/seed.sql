@@ -15,6 +15,13 @@ INSERT INTO auth.users (
   created_at,
   updated_at,
   confirmation_token,
+  recovery_token,
+  email_change,
+  email_change_token_new,
+  email_change_token_current,
+  phone_change,
+  phone_change_token,
+  reauthentication_token,
   raw_app_meta_data,
   raw_user_meta_data
 ) VALUES (
@@ -27,7 +34,14 @@ INSERT INTO auth.users (
   NOW(),
   NOW(),
   NOW(),
-  '',
+  '', -- confirmation_token
+  '', -- recovery_token
+  '', -- email_change
+  '', -- email_change_token_new
+  '', -- email_change_token_current
+  '', -- phone_change
+  '', -- phone_change_token
+  '', -- reauthentication_token
   '{"provider":"email","providers":["email"]}',
   '{}'
 ) ON CONFLICT (id) DO NOTHING;
@@ -52,7 +66,10 @@ INSERT INTO auth.identities (
   NOW()
 ) ON CONFLICT ON CONSTRAINT identities_pkey DO NOTHING;
 
--- 프로필
+-- 프로필 — handle_new_user 트리거가 auth.users INSERT 시 먼저 profiles를
+-- balance=0으로 생성하므로, DO NOTHING이면 아래 dev 편의값이 무시된다.
+-- DO UPDATE로 dev 계정 name·balance를 덮어쓴다. (로컬 전용, 실서비스 동작 무관)
 INSERT INTO public.profiles (id, name, balance)
 VALUES ('00000000-0000-0000-0000-000000000001', 'Dev User', 100)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE
+  SET name = EXCLUDED.name, balance = EXCLUDED.balance;

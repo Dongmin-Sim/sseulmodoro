@@ -136,6 +136,7 @@ export type Database = {
           id: number
           name: string
           rarity: string
+          slug: string
         }
         Insert: {
           created_at?: string
@@ -143,6 +144,7 @@ export type Database = {
           id?: number
           name: string
           rarity: string
+          slug: string
         }
         Update: {
           created_at?: string
@@ -150,6 +152,7 @@ export type Database = {
           id?: number
           name?: string
           rarity?: string
+          slug?: string
         }
         Relationships: []
       }
@@ -309,6 +312,7 @@ export type Database = {
           id: string
           last_session_at: string | null
           name: string | null
+          onboarding_completed: boolean
         }
         Insert: {
           balance?: number
@@ -316,6 +320,7 @@ export type Database = {
           id: string
           last_session_at?: string | null
           name?: string | null
+          onboarding_completed?: boolean
         }
         Update: {
           balance?: number
@@ -323,6 +328,7 @@ export type Database = {
           id?: string
           last_session_at?: string | null
           name?: string | null
+          onboarding_completed?: boolean
         }
         Relationships: []
       }
@@ -337,6 +343,10 @@ export type Database = {
       }
       end_session: { Args: { p_session_id: number }; Returns: Json }
       gacha: { Args: never; Returns: Json }
+      get_record_history: {
+        Args: { p_cursor?: string; p_limit?: number }
+        Returns: Json
+      }
       start_next_pomodoro: { Args: { p_session_id: number }; Returns: Json }
       start_session: {
         Args: {

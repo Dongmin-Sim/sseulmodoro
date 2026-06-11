@@ -127,21 +127,104 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
-@layer utilities {
-  .animate-breathe {
-    animation: breathe 4s ease-in-out infinite;
+/* 커스텀 애니메이션 — Tailwind v4 + Turbopack에서 @layer utilities 안의 raw CSS/keyframes가
+   dev 빌드에 누락되어, @layer 밖 최상위에 둔다. */
+
+/* 새 카드 sprite — 코너 변형 없이 가벼운 상하 bob (픽셀 또렷 유지) */
+  .animate-bird-bob {
+    animation: bird-bob 3.5s ease-in-out infinite;
   }
-  @keyframes breathe {
+  @keyframes bird-bob {
     0%, 100% {
-      transform: scale(1) translateY(0);
-      border-radius: 50% 44% 54% 46% / 46% 54% 46% 54%;
+      transform: translateY(0);
     }
     50% {
-      transform: scale(1.03) translateY(-4px);
-      border-radius: 46% 54% 48% 52% / 52% 48% 56% 44%;
+      transform: translateY(-6px);
     }
   }
-}
+
+  /* 가챠 알(egg) 리빌 (TASK-78) — 라이브러리(tw-animate-css)에 없는 알 전용 동작만 */
+  .animate-egg-bob {
+    animation: egg-bob 2.6s ease-in-out infinite;
+  }
+  @keyframes egg-bob {
+    0%, 100% { transform: translateY(0) rotate(-1.5deg); }
+    50% { transform: translateY(-9px) rotate(1.5deg); }
+  }
+
+  /* 깨지기 직전 흔들림 */
+  .animate-egg-wiggle {
+    animation: egg-wiggle 0.45s ease-in-out infinite;
+  }
+  @keyframes egg-wiggle {
+    0%, 100% { transform: translateX(0) rotate(0deg); }
+    20% { transform: translateX(-5px) rotate(-6deg); }
+    45% { transform: translateX(5px) rotate(6deg); }
+    70% { transform: translateX(-4px) rotate(-5deg); }
+    90% { transform: translateX(3px) rotate(4deg); }
+  }
+
+  /* 금이 갈 때마다 한 번 쿵 (기대감 증폭, 1회) */
+  .animate-egg-jolt {
+    animation: egg-jolt 0.42s ease-out;
+  }
+  @keyframes egg-jolt {
+    0% { transform: translateX(0) rotate(0deg) scale(1); }
+    14% { transform: translateX(-8px) rotate(-8deg) scale(1.04); }
+    36% { transform: translateX(7px) rotate(7deg) scale(1.02); }
+    58% { transform: translateX(-5px) rotate(-5deg) scale(1.01); }
+    80% { transform: translateX(3px) rotate(3deg) scale(1); }
+    100% { transform: translateX(0) rotate(0deg) scale(1); }
+  }
+
+  /* 틈으로 새어나오는 빛 — cracking 동안 밝아졌다 어두워졌다 (응답 대기 마스크) */
+  .animate-light-leak {
+    animation: light-leak 0.85s ease-in-out infinite alternate;
+  }
+  @keyframes light-leak {
+    0% { opacity: 0.2; transform: scale(0.65); }
+    100% { opacity: 0.55; transform: scale(1); }
+  }
+
+  /* 공개 순간 빛 버스트 */
+  .animate-light-burst {
+    animation: light-burst 0.7s ease-out forwards;
+  }
+  @keyframes light-burst {
+    0% { opacity: 0.9; transform: scale(0.5); }
+    60% { opacity: 0.85; transform: scale(1.5); }
+    100% { opacity: 0; transform: scale(2.1); }
+  }
+
+  /* 알 두 쪽 분리 */
+  .animate-egg-split-top {
+    animation: egg-split-top 0.6s cubic-bezier(0.2, 0.85, 0.25, 1) forwards;
+  }
+  @keyframes egg-split-top {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(-96px) rotate(-22deg); opacity: 0; }
+  }
+  .animate-egg-split-bottom {
+    animation: egg-split-bottom 0.6s cubic-bezier(0.2, 0.85, 0.25, 1) forwards;
+  }
+  @keyframes egg-split-bottom {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(80px) rotate(14deg); opacity: 0; }
+  }
+
+  /* NEW·고레어 sparkle 파티클 — 컴포넌트가 --sx/--sy/--sd 변수 주입 */
+  .animate-sparkle {
+    animation: sparkle 1.2s ease-out var(--sd, 0ms) forwards;
+    opacity: 0;
+  }
+  @keyframes sparkle {
+    0% { opacity: 0; transform: translate(0, 0) scale(0); }
+    25% { opacity: 1; transform: translate(var(--sx, 0), var(--sy, 0)) scale(1); }
+    100% {
+      opacity: 0;
+      transform: translate(calc(var(--sx, 0) * 1.7), calc(var(--sy, 0) * 1.7)) scale(0.3);
+    }
+  }
 
 @layer base {
   * {

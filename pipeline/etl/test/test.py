@@ -6,11 +6,10 @@ import google.cloud.bigquery as bigquery
 
 from pathlib import Path
 
-BASE = Path(__file__).resolve().parent.parent   # pipeline/ 경로
+BASE = Path(__file__).resolve().parent.parent.parent   # pipeline/ 경로
 
 dotenv.load_dotenv(BASE / ".env")
 dotenv.load_dotenv(BASE / (".env.production" if os.getenv("ENV") == "production" else ".env.development"))
-os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 
 def bigquery_connection_test():
     # bigquer 클라이언트 생성
@@ -67,7 +66,7 @@ def test_create_table(client, table_id):
             bigquery.SchemaField("name", "STRING", mode="REQUIRED"),
         ]
     table = bigquery.Table(table_id, schema=schema)
-    table = client.create_table(table, exists_ok=True, timeout=30)
+    table = client.create_table_from_ddl(table, exists_ok=True, timeout=30)
     print(
         "Created table {}.{}.{}".format(table.project, table.dataset_id, table.table_id)
     )
