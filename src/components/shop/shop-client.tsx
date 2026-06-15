@@ -4,17 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PageContainer } from "@/components/layout/page-container";
 import { ContentNav } from "@/components/layout/content-nav";
+import { MAIN_NAV_ITEMS } from "@/components/layout/nav-items";
 import { Button } from "@/components/ui/button";
 import { EggReveal } from "@/components/character/egg-reveal";
 import { logout } from "@/lib/api/logout";
 import { drawGacha } from "@/lib/api/gacha";
-
-const NAV_ITEMS = [
-  { label: "홈", href: "/home" },
-  { label: "도감", href: "/collection" },
-  { label: "상점", href: "/shop" },
-  { label: "기록", href: "/history" },
-];
 
 type ShopClientProps = {
   balance: number;
@@ -101,7 +95,7 @@ export function ShopClient({ balance: initialBalance, gachaCost }: ShopClientPro
   return (
     <main className="relative z-10 flex flex-1 flex-col py-5">
       <PageContainer className="flex flex-col">
-        <ContentNav items={NAV_ITEMS} balance={balance} action={logoutAction} />
+        <ContentNav items={MAIN_NAV_ITEMS} balance={balance} action={logoutAction} />
 
         {revealing ? (
           <EggReveal

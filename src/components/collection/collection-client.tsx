@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PageContainer } from "@/components/layout/page-container";
 import { ContentNav } from "@/components/layout/content-nav";
+import { MAIN_NAV_ITEMS } from "@/components/layout/nav-items";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,22 +15,13 @@ import {
 } from "@/components/ui/dialog";
 import { BirdCard } from "@/components/character/bird-card";
 import { LockCard } from "@/components/collection/lock-card";
-import { getCollectionDetail } from "@/lib/api/collection";
 import { logout } from "@/lib/api/logout";
 import type {
   CollectionResponse,
   CollectionType,
   CollectionOwnedType,
   CollectionLockedType,
-  CollectionDetailResponse,
 } from "@/lib/types/api";
-
-const NAV_ITEMS = [
-  { label: "홈", href: "/home" },
-  { label: "도감", href: "/collection" },
-  { label: "상점", href: "/shop" },
-  { label: "기록", href: "/history" },
-];
 
 // rarity 정렬 우선순위 (낮을수록 먼저). 같은 rarity 내에서는 종 id 오름차순.
 const RARITY_ORDER: Record<string, number> = {
@@ -40,10 +32,10 @@ const RARITY_ORDER: Record<string, number> = {
 };
 
 const RARITY_LABEL: Record<string, string> = {
-  common: "커먼",
+  common: "일반",
   rare: "레어",
   epic: "에픽",
-  legendary: "레전더리",
+  legendary: "전설",
 };
 
 function rarityLabel(rarity: string): string {
@@ -56,28 +48,30 @@ function byRarityThenId(a: CollectionType, b: CollectionType): number {
   return ra !== rb ? ra - rb : a.typeId - b.typeId;
 }
 
-type DetailStatus = "loading" | "ready" | "error";
-
 export function CollectionClient({ data }: { data: CollectionResponse | null }) {
   const router = useRouter();
 
+  // 상세 모달 — 목록에 이미 있는 종 데이터를 그대로 표시 (추가 fetch 없음).
   const [open, setOpen] = useState(false);
-  const [detail, setDetail] = useState<CollectionDetailResponse | null>(null);
-  const [detailStatus, setDetailStatus] = useState<DetailStatus>("loading");
+  const [selected, setSelected] = useState<CollectionType | null>(null);
 
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
 
-  const openDetail = async (typeId: number) => {
+  const openDetail = (type: CollectionType) => {
+    setSelected(type);
     setOpen(true);
-    setDetailStatus("loading");
-    setDetail(null);
-    try {
-      const d = await getCollectionDetail(typeId);
-      setDetail(d);
-      setDetailStatus("ready");
-    } catch {
-      setDetailStatus("error");
+  };
+
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+    // 모달을 닫으면 포커스가 트리거 카드로 복귀하며 focus ring이 남는다
+    // (특히 ESC는 keyboard 조작으로 간주). 닫힌 직후 포커스를 해제해 테두리 제거.
+    if (!next) {
+      setTimeout(() => {
+        const active = document.activeElement;
+        if (active instanceof HTMLElement) active.blur();
+      }, 0);
     }
   };
 
@@ -126,21 +120,25 @@ export function CollectionClient({ data }: { data: CollectionResponse | null }) 
     (t): t is CollectionLockedType => !t.owned,
   );
 
+  // 미보유는 rarity별로 줄을 나눠 표시 (일반 → 레어 → 에픽 → 전설 순)
+  const lockedByRarity = Array.from(new Set(lockedTypes.map((t) => t.rarity)))
+    .sort((a, b) => (RARITY_ORDER[a] ?? 99) - (RARITY_ORDER[b] ?? 99))
+    .map((rarity) => ({
+      rarity,
+      types: lockedTypes.filter((t) => t.rarity === rarity),
+    }));
+
   return (
     <main className="relative z-10 flex flex-1 flex-col py-5">
       <PageContainer className="flex flex-col">
-        <ContentNav items={NAV_ITEMS} action={logoutAction} />
+        <ContentNav items={MAIN_NAV_ITEMS} action={logoutAction} />
 
         {!data && (
           <div className="flex flex-col items-center gap-4 py-16 text-center">
             <p role="alert" className="text-sm text-destructive">
               도감을 불러오지 못했습니다.
             </p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.refresh()}
-            >
+            <Button variant="outline" size="sm" onClick={() => router.refresh()}>
               다시 시도
             </Button>
           </div>
@@ -167,7 +165,7 @@ export function CollectionClient({ data }: { data: CollectionResponse | null }) 
                     <button
                       key={inst.instanceId}
                       type="button"
-                      onClick={() => openDetail(type.typeId)}
+                      onClick={() => openDetail(type)}
                       className="flex flex-col items-center gap-2 rounded-[24px] transition-transform hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                       aria-label={`${type.name} 상세 보기`}
                     >
@@ -175,6 +173,7 @@ export function CollectionClient({ data }: { data: CollectionResponse | null }) 
                         slug={type.slug}
                         rarity={type.rarity}
                         name={type.name}
+                        animated={false}
                       />
                       <span className="text-sm font-bold text-foreground">
                         {type.name}
@@ -188,31 +187,36 @@ export function CollectionClient({ data }: { data: CollectionResponse | null }) 
               </section>
             )}
 
-            {/* 미보유 섹션 (비어 있으면 숨김) */}
+            {/* 미보유 섹션 (비어 있으면 숨김) — rarity별로 줄 분리 */}
             {lockedTypes.length > 0 && (
-              <section className="flex flex-col gap-3">
+              <section className="flex flex-col gap-4">
                 <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                   아직 못 만난 친구
                 </span>
-                <div className="flex flex-wrap justify-center gap-4">
-                  {lockedTypes.map((type) => (
-                    <button
-                      key={type.typeId}
-                      type="button"
-                      onClick={() => openDetail(type.typeId)}
-                      className="flex flex-col items-center gap-2 rounded-[24px] transition-transform hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                      aria-label={`미보유 ${rarityLabel(type.rarity)} 종 상세 보기`}
-                    >
-                      <LockCard rarity={type.rarity} />
-                      <span className="text-sm font-bold text-muted-foreground">
-                        ???
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {rarityLabel(type.rarity)}
-                      </span>
-                    </button>
-                  ))}
-                </div>
+                {lockedByRarity.map((group) => (
+                  <div
+                    key={group.rarity}
+                    className="flex flex-wrap justify-start gap-4"
+                  >
+                    {group.types.map((type) => (
+                      <button
+                        key={type.typeId}
+                        type="button"
+                        onClick={() => openDetail(type)}
+                        className="flex flex-col items-center gap-2 rounded-[24px] transition-transform hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        aria-label={`미보유 ${rarityLabel(type.rarity)} 종 상세 보기`}
+                      >
+                        <LockCard rarity={type.rarity} />
+                        <span className="text-sm font-bold text-muted-foreground">
+                          ???
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {rarityLabel(type.rarity)}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                ))}
               </section>
             )}
           </div>
@@ -220,51 +224,38 @@ export function CollectionClient({ data }: { data: CollectionResponse | null }) 
       </PageContainer>
 
       {/* 상세 모달 — 닫기만 (카드 전환 없음) */}
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent>
-          {detailStatus === "loading" && (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              불러오는 중...
-            </p>
-          )}
-
-          {detailStatus === "error" && (
-            <p role="alert" className="py-8 text-center text-sm text-destructive">
-              상세 정보를 불러오지 못했습니다.
-            </p>
-          )}
-
-          {detailStatus === "ready" && detail && detail.owned && (
+          {selected?.owned && (
             <>
               <DialogHeader>
-                <DialogTitle>{detail.name}</DialogTitle>
-                <DialogDescription>
-                  {rarityLabel(detail.rarity)} · {detail.instances.length}마리 보유
-                </DialogDescription>
+                <DialogTitle>{selected.name}</DialogTitle>
+                <DialogDescription>{rarityLabel(selected.rarity)}</DialogDescription>
               </DialogHeader>
               <div className="flex justify-center py-2">
                 <BirdCard
-                  slug={detail.slug}
-                  rarity={detail.rarity}
-                  name={detail.name}
+                  slug={selected.slug}
+                  rarity={selected.rarity}
+                  name={selected.name}
+                  animated={false}
                 />
               </div>
-              {detail.description && (
+              {selected.description && (
                 <p className="text-center text-sm text-muted-foreground">
-                  {detail.description}
+                  {selected.description}
                 </p>
               )}
             </>
           )}
 
-          {detailStatus === "ready" && detail && !detail.owned && (
+          {selected && !selected.owned && (
             <>
               <DialogHeader>
                 <DialogTitle>???</DialogTitle>
-                <DialogDescription>{rarityLabel(detail.rarity)}</DialogDescription>
+                <DialogDescription>{rarityLabel(selected.rarity)}</DialogDescription>
               </DialogHeader>
               <div className="flex justify-center py-2">
-                <LockCard rarity={detail.rarity} />
+                <LockCard rarity={selected.rarity} />
               </div>
               <p className="text-center text-sm text-muted-foreground">
                 아직 만나지 못한 친구예요. 집중을 모아 만나보세요.
