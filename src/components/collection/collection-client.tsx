@@ -63,18 +63,6 @@ export function CollectionClient({ data }: { data: CollectionResponse | null }) 
     setOpen(true);
   };
 
-  const handleOpenChange = (next: boolean) => {
-    setOpen(next);
-    // 모달을 닫으면 포커스가 트리거 카드로 복귀하며 focus ring이 남는다
-    // (특히 ESC는 keyboard 조작으로 간주). 닫힌 직후 포커스를 해제해 테두리 제거.
-    if (!next) {
-      setTimeout(() => {
-        const active = document.activeElement;
-        if (active instanceof HTMLElement) active.blur();
-      }, 0);
-    }
-  };
-
   const handleLogout = async () => {
     if (isLoggingOut) return;
     setIsLoggingOut(true);
@@ -166,7 +154,7 @@ export function CollectionClient({ data }: { data: CollectionResponse | null }) 
                       key={inst.instanceId}
                       type="button"
                       onClick={() => openDetail(type)}
-                      className="flex flex-col items-center gap-2 rounded-[24px] transition-transform hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                      className="flex flex-col items-center gap-2 rounded-[24px] transition-transform hover:-translate-y-0.5 focus:outline-none"
                       aria-label={`${type.name} 상세 보기`}
                     >
                       <BirdCard
@@ -203,7 +191,7 @@ export function CollectionClient({ data }: { data: CollectionResponse | null }) 
                         key={type.typeId}
                         type="button"
                         onClick={() => openDetail(type)}
-                        className="flex flex-col items-center gap-2 rounded-[24px] transition-transform hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        className="flex flex-col items-center gap-2 rounded-[24px] transition-transform hover:-translate-y-0.5 focus:outline-none"
                         aria-label={`미보유 ${rarityLabel(type.rarity)} 종 상세 보기`}
                       >
                         <LockCard rarity={type.rarity} />
@@ -224,7 +212,7 @@ export function CollectionClient({ data }: { data: CollectionResponse | null }) 
       </PageContainer>
 
       {/* 상세 모달 — 닫기만 (카드 전환 없음) */}
-      <Dialog open={open} onOpenChange={handleOpenChange}>
+      <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           {selected?.owned && (
             <>
