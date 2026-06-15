@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { PageContainer } from "@/components/layout/page-container";
 import { ContentNav } from "@/components/layout/content-nav";
+import { MAIN_NAV_ITEMS } from "@/components/layout/nav-items";
 import { logout } from "@/lib/api/logout";
 import { OnboardingFlow } from "@/components/onboarding/onboarding-flow";
 import type { HomeDataResponse } from "@/lib/types/api";
@@ -47,11 +48,10 @@ type HomeClientProps = {
 export function HomeClient({ data }: HomeClientProps) {
   const { isSessionActive, enterSession, exitSession } = usePomodoroSession();
 
+  // 홈은 세션 종료 액션으로 동작하므로 첫 항목만 교체하고 나머지는 공유 네비 재사용.
   const navItems = [
     { label: "홈", onSelect: exitSession, active: !isSessionActive },
-    { label: "도감", href: "/collection" },
-    { label: "상점", href: "/shop" },
-    { label: "기록", href: "/history" },
+    ...MAIN_NAV_ITEMS.slice(1),
   ];
 
   const router = useRouter();
