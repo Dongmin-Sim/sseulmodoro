@@ -46,8 +46,6 @@ __pycache__/
 venv/
 .venv/
 
-# certs / GCP 서비스 계정 키 등 (방어층)
-pipeline/certs/
 *.key
 key*.json
 credentials*.json
