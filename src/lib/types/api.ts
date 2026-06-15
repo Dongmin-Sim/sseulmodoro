@@ -129,9 +129,6 @@ export type CollectionResponse = {
   totalTypeCount: number;
 };
 
-/** GET /api/collection/:typeId 성공 응답 */
-export type CollectionDetailResponse = CollectionType;
-
 /** API 공통 에러 응답 */
 export interface ApiError {
   error: string;
