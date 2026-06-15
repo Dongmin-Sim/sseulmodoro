@@ -49,7 +49,7 @@ export function HomeClient({ data }: HomeClientProps) {
 
   const navItems = [
     { label: "홈", onSelect: exitSession, active: !isSessionActive },
-    { label: "도감", href: "/collection", disabled: true },
+    { label: "도감", href: "/collection" },
     { label: "상점", href: "/shop" },
     { label: "기록", href: "/history" },
   ];

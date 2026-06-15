@@ -11,7 +11,7 @@ import { drawGacha } from "@/lib/api/gacha";
 
 const NAV_ITEMS = [
   { label: "홈", href: "/home" },
-  { label: "도감", href: "/collection", disabled: true },
+  { label: "도감", href: "/collection" },
   { label: "상점", href: "/shop" },
   { label: "기록", href: "/history" },
 ];
