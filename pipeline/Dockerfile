@@ -29,6 +29,7 @@ COPY --from=builder --chown=app:app /app/.venv /app/.venv
 
 # 코드 복사 (소유권 app)
 COPY --chown=app:app etl/ /app/etl/
+COPY --chown=app:app certs/ /app/certs/
 
 # venv 활성화 + 런타임 최적화
 ENV PATH="/app/.venv/bin:$PATH" \
