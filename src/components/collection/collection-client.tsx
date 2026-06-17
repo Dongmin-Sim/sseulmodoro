@@ -3,8 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PageContainer } from "@/components/layout/page-container";
-import { ContentNav } from "@/components/layout/content-nav";
-import { MAIN_NAV_ITEMS } from "@/components/layout/nav-items";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -82,8 +80,6 @@ export function CollectionClient({ data }: { data: CollectionResponse | null }) 
   return (
     <main className="relative z-10 flex flex-1 flex-col py-5">
       <PageContainer className="flex flex-col">
-        <ContentNav items={MAIN_NAV_ITEMS} />
-
         {!data && (
           <div className="flex flex-col items-center gap-4 py-16 text-center">
             <p role="alert" className="text-sm text-destructive">

@@ -20,14 +20,14 @@ export default async function AppLayout({
   const supabase = await createServerClient();
   const { data } = await supabase
     .from("profiles")
-    .select("nickname")
+    .select("nickname, balance")
     .eq("id", user.id)
     .single();
 
   return (
     <AppShell>
       <PomodoroSessionProvider>
-        <AuthHeader nickname={data?.nickname ?? null} />
+        <AuthHeader nickname={data?.nickname ?? null} balance={data?.balance ?? 0} />
         {children}
       </PomodoroSessionProvider>
     </AppShell>

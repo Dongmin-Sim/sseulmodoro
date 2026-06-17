@@ -3,8 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PageContainer } from "@/components/layout/page-container";
-import { ContentNav } from "@/components/layout/content-nav";
-import { MAIN_NAV_ITEMS } from "@/components/layout/nav-items";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getHistory } from "@/lib/api/history";
@@ -92,8 +90,6 @@ export function HistoryClient() {
   return (
     <main className="relative z-10 flex flex-1 flex-col py-5">
       <PageContainer className="flex flex-col">
-        <ContentNav items={MAIN_NAV_ITEMS} />
-
         {status === "loading" && (
           <p className="py-16 text-center text-sm text-muted-foreground">
             불러오는 중...

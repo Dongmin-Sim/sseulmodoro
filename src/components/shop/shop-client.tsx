@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { PageContainer } from "@/components/layout/page-container";
-import { ContentNav } from "@/components/layout/content-nav";
-import { MAIN_NAV_ITEMS } from "@/components/layout/nav-items";
 import { Button } from "@/components/ui/button";
 import { EggReveal } from "@/components/character/egg-reveal";
 import { drawGacha } from "@/lib/api/gacha";
@@ -14,6 +13,7 @@ type ShopClientProps = {
 };
 
 export function ShopClient({ balance: initialBalance, gachaCost }: ShopClientProps) {
+  const router = useRouter();
   const [balance, setBalance] = useState(initialBalance);
   const [revealing, setRevealing] = useState(false);
   const [drawError, setDrawError] = useState<string | null>(null);
@@ -50,13 +50,12 @@ export function ShopClient({ balance: initialBalance, gachaCost }: ShopClientPro
   const handleConfirm = () => {
     setRevealing(false);
     setDrawError(null);
+    router.refresh(); // 상단 헤더 잔액(서버 조회) 동기화
   };
 
   return (
     <main className="relative z-10 flex flex-1 flex-col py-5">
       <PageContainer className="flex flex-col">
-        <ContentNav items={MAIN_NAV_ITEMS} balance={balance} />
-
         {revealing ? (
           <EggReveal
             onReveal={handleReveal}
