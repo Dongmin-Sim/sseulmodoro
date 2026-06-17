@@ -18,9 +18,9 @@ DECLARE
   v_instance_id     INTEGER;
   v_welcome_points  INTEGER;
 BEGIN
-  -- 1) profiles INSERT
-  INSERT INTO public.profiles (id, name, balance)
-  VALUES (NEW.id, COALESCE(NEW.raw_user_meta_data->>'name', ''), 0);
+  -- 1) profiles INSERT (nickname은 NULL로 시작 — 닉네임 등록 화면에서 채움)
+  INSERT INTO public.profiles (id, balance)
+  VALUES (NEW.id, 0);
 
   -- 2) 기본 캐릭터 부여 + 대표 캐릭터 설정 (common 레어리티, id 오름차순 첫 번째)
   SELECT id INTO v_default_type_id
