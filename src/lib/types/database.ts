@@ -311,7 +311,7 @@ export type Database = {
           created_at: string
           id: string
           last_session_at: string | null
-          name: string | null
+          nickname: string | null
           onboarding_completed: boolean
         }
         Insert: {
@@ -319,7 +319,7 @@ export type Database = {
           created_at?: string
           id: string
           last_session_at?: string | null
-          name?: string | null
+          nickname?: string | null
           onboarding_completed?: boolean
         }
         Update: {
@@ -327,7 +327,7 @@ export type Database = {
           created_at?: string
           id?: string
           last_session_at?: string | null
-          name?: string | null
+          nickname?: string | null
           onboarding_completed?: boolean
         }
         Relationships: []

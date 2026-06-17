@@ -129,6 +129,11 @@ export type CollectionResponse = {
   totalTypeCount: number;
 };
 
+/** GET /api/auth/check-nickname 성공 응답 */
+export type CheckNicknameResponse = {
+  available: boolean;
+};
+
 /** API 공통 에러 응답 */
 export interface ApiError {
   error: string;
