@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/dialog";
 import { BirdCard } from "@/components/character/bird-card";
 import { LockCard } from "@/components/collection/lock-card";
-import { logout } from "@/lib/api/logout";
 import type {
   CollectionResponse,
   CollectionType,
@@ -55,46 +54,10 @@ export function CollectionClient({ data }: { data: CollectionResponse | null }) 
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<CollectionType | null>(null);
 
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [logoutError, setLogoutError] = useState<string | null>(null);
-
   const openDetail = (type: CollectionType) => {
     setSelected(type);
     setOpen(true);
   };
-
-  const handleLogout = async () => {
-    if (isLoggingOut) return;
-    setIsLoggingOut(true);
-    setLogoutError(null);
-    try {
-      await logout();
-      router.replace("/login");
-    } catch {
-      setLogoutError("로그아웃에 실패했습니다.");
-      setIsLoggingOut(false);
-    }
-  };
-
-  const logoutAction = (
-    <div className="flex items-center gap-2">
-      {logoutError && (
-        <p role="alert" aria-live="assertive" className="text-xs text-destructive">
-          {logoutError}
-        </p>
-      )}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="text-xs text-muted-foreground"
-        onClick={handleLogout}
-        disabled={isLoggingOut}
-        aria-label={isLoggingOut ? "로그아웃 처리 중" : "로그아웃"}
-      >
-        {isLoggingOut ? "로그아웃 중..." : "로그아웃"}
-      </Button>
-    </div>
-  );
 
   const sortedTypes = data ? [...data.types].sort(byRarityThenId) : [];
 
@@ -119,7 +82,7 @@ export function CollectionClient({ data }: { data: CollectionResponse | null }) 
   return (
     <main className="relative z-10 flex flex-1 flex-col py-5">
       <PageContainer className="flex flex-col">
-        <ContentNav items={MAIN_NAV_ITEMS} action={logoutAction} />
+        <ContentNav items={MAIN_NAV_ITEMS} />
 
         {!data && (
           <div className="flex flex-col items-center gap-4 py-16 text-center">

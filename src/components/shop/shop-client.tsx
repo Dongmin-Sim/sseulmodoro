@@ -1,13 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { PageContainer } from "@/components/layout/page-container";
 import { ContentNav } from "@/components/layout/content-nav";
 import { MAIN_NAV_ITEMS } from "@/components/layout/nav-items";
 import { Button } from "@/components/ui/button";
 import { EggReveal } from "@/components/character/egg-reveal";
-import { logout } from "@/lib/api/logout";
 import { drawGacha } from "@/lib/api/gacha";
 
 type ShopClientProps = {
@@ -16,14 +14,9 @@ type ShopClientProps = {
 };
 
 export function ShopClient({ balance: initialBalance, gachaCost }: ShopClientProps) {
-  const router = useRouter();
-
   const [balance, setBalance] = useState(initialBalance);
   const [revealing, setRevealing] = useState(false);
   const [drawError, setDrawError] = useState<string | null>(null);
-
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [logoutError, setLogoutError] = useState<string | null>(null);
 
   const canDraw = balance >= gachaCost;
 
@@ -59,43 +52,10 @@ export function ShopClient({ balance: initialBalance, gachaCost }: ShopClientPro
     setDrawError(null);
   };
 
-  const handleLogout = async () => {
-    if (isLoggingOut) return;
-    setIsLoggingOut(true);
-    setLogoutError(null);
-    try {
-      await logout();
-      router.replace("/login");
-    } catch {
-      setLogoutError("로그아웃에 실패했습니다.");
-      setIsLoggingOut(false);
-    }
-  };
-
-  const logoutAction = (
-    <div className="flex items-center gap-2">
-      {logoutError && (
-        <p role="alert" aria-live="assertive" className="text-xs text-destructive">
-          {logoutError}
-        </p>
-      )}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="text-xs text-muted-foreground"
-        onClick={handleLogout}
-        disabled={isLoggingOut}
-        aria-label={isLoggingOut ? "로그아웃 처리 중" : "로그아웃"}
-      >
-        {isLoggingOut ? "로그아웃 중..." : "로그아웃"}
-      </Button>
-    </div>
-  );
-
   return (
     <main className="relative z-10 flex flex-1 flex-col py-5">
       <PageContainer className="flex flex-col">
-        <ContentNav items={MAIN_NAV_ITEMS} balance={balance} action={logoutAction} />
+        <ContentNav items={MAIN_NAV_ITEMS} balance={balance} />
 
         {revealing ? (
           <EggReveal

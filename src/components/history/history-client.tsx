@@ -8,7 +8,6 @@ import { MAIN_NAV_ITEMS } from "@/components/layout/nav-items";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getHistory } from "@/lib/api/history";
-import { logout } from "@/lib/api/logout";
 import { formatFocusDuration, formatRecordTimestamp } from "@/lib/format";
 import type { RecordLog, RecordResponse, RecordStat } from "@/lib/types/api";
 
@@ -56,9 +55,6 @@ export function HistoryClient() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [moreError, setMoreError] = useState<string | null>(null);
 
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [logoutError, setLogoutError] = useState<string | null>(null);
-
   const loadInitial = useCallback(async () => {
     setStatus("loading");
     try {
@@ -91,45 +87,12 @@ export function HistoryClient() {
     }
   };
 
-  const handleLogout = async () => {
-    if (isLoggingOut) return;
-    setIsLoggingOut(true);
-    setLogoutError(null);
-    try {
-      await logout();
-      router.replace("/login");
-    } catch {
-      setLogoutError("로그아웃에 실패했습니다.");
-      setIsLoggingOut(false);
-    }
-  };
-
-  const logoutAction = (
-    <div className="flex items-center gap-2">
-      {logoutError && (
-        <p role="alert" aria-live="assertive" className="text-xs text-destructive">
-          {logoutError}
-        </p>
-      )}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="text-xs text-muted-foreground"
-        onClick={handleLogout}
-        disabled={isLoggingOut}
-        aria-label={isLoggingOut ? "로그아웃 처리 중" : "로그아웃"}
-      >
-        {isLoggingOut ? "로그아웃 중..." : "로그아웃"}
-      </Button>
-    </div>
-  );
-
   const isEmpty = status === "ready" && (summary?.total.count ?? 0) === 0;
 
   return (
     <main className="relative z-10 flex flex-1 flex-col py-5">
       <PageContainer className="flex flex-col">
-        <ContentNav items={MAIN_NAV_ITEMS} action={logoutAction} />
+        <ContentNav items={MAIN_NAV_ITEMS} />
 
         {status === "loading" && (
           <p className="py-16 text-center text-sm text-muted-foreground">
