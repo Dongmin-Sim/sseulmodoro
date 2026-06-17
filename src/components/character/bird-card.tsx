@@ -16,12 +16,20 @@ type BirdCardProps = {
   slug: string;
   rarity: string;
   name: string;
+  /** 상하 bob 애니메이션. 그리드처럼 여러 장을 깔 땐 false로(블러 오버레이 뒤 재합성 부하 방지). */
+  animated?: boolean;
   className?: string;
 };
 
 // 보유 캐릭터의 픽셀 새 카드. sprite(public/characters/{slug}.png)는 투명배경
 // 순수 자산이고, 카드 틀(레어리티 패널)은 여기서 React가 얹는다.
-export function BirdCard({ slug, rarity, name, className }: BirdCardProps) {
+export function BirdCard({
+  slug,
+  rarity,
+  name,
+  animated = true,
+  className,
+}: BirdCardProps) {
   const panel = RARITY_PANEL[rarity] ?? RARITY_PANEL.common;
 
   return (
@@ -41,7 +49,7 @@ export function BirdCard({ slug, rarity, name, className }: BirdCardProps) {
         height={SPRITE_SIZE}
         unoptimized
         priority
-        className="animate-bird-bob"
+        className={cn(animated && "animate-bird-bob")}
         style={{ imageRendering: "pixelated" }}
       />
     </div>

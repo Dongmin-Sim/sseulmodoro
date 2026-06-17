@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PageContainer } from "@/components/layout/page-container";
 import { ContentNav } from "@/components/layout/content-nav";
+import { MAIN_NAV_ITEMS } from "@/components/layout/nav-items";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getHistory } from "@/lib/api/history";
@@ -12,13 +13,6 @@ import { formatFocusDuration, formatRecordTimestamp } from "@/lib/format";
 import type { RecordLog, RecordResponse, RecordStat } from "@/lib/types/api";
 
 const HISTORY_PAGE_SIZE = 10;
-
-const NAV_ITEMS = [
-  { label: "홈", href: "/home" },
-  { label: "도감", href: "/collection", disabled: true },
-  { label: "상점", href: "/shop" },
-  { label: "기록", href: "/history" },
-];
 
 type LoadStatus = "loading" | "ready" | "error";
 
@@ -135,7 +129,7 @@ export function HistoryClient() {
   return (
     <main className="relative z-10 flex flex-1 flex-col py-5">
       <PageContainer className="flex flex-col">
-        <ContentNav items={NAV_ITEMS} action={logoutAction} />
+        <ContentNav items={MAIN_NAV_ITEMS} action={logoutAction} />
 
         {status === "loading" && (
           <p className="py-16 text-center text-sm text-muted-foreground">
