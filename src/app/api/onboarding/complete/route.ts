@@ -10,13 +10,13 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => ({}));
-  const name = typeof body.name === "string" ? body.name.trim() : "";
+  const nickname = typeof body.nickname === "string" ? body.nickname.trim() : "";
 
   const supabase = await createServerClient();
 
   const updatePayload = {
     onboarding_completed: true,
-    ...(name ? { name } : {}),
+    ...(nickname ? { nickname } : {}),
   };
 
   const { error } = await supabase
