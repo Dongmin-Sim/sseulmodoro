@@ -1,10 +1,13 @@
-import type { ContentNavItem } from "@/components/layout/content-nav";
+export type NavItem = {
+  label: string;
+  href: string;
+};
 
 /**
  * 메인 4탭 네비게이션(홈·도감·상점·기록) 단일 출처.
- * 홈을 세션 종료 액션으로 쓰는 home-client는 첫 항목만 교체하고 나머지를 재사용한다.
+ * 공통 상단 헤더(AuthHeader)가 렌더하며, 홈 탭은 /home에서 세션 종료 액션으로 동작한다.
  */
-export const MAIN_NAV_ITEMS: ContentNavItem[] = [
+export const MAIN_NAV_ITEMS: NavItem[] = [
   { label: "홈", href: "/home" },
   { label: "도감", href: "/collection" },
   { label: "상점", href: "/shop" },
