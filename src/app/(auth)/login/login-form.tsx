@@ -1,55 +1,51 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 
 export function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const raw = searchParams.get("redirectTo") ?? "/home";
-  const redirectTo = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/home";
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(
+    searchParams.get("error") === "oauth"
+      ? "로그인에 실패했어요. 다시 시도해주세요."
+      : null,
+  );
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleGoogleLogin = async () => {
     setError(null);
     setIsLoading(true);
-
     try {
       const supabase = createClient();
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const { error: authError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
       });
-
       if (authError) {
-        setError("이메일 또는 비밀번호가 올바르지 않습니다.");
-        return;
+        setError("로그인에 실패했어요. 다시 시도해주세요.");
+        setIsLoading(false);
       }
-
-      router.push(redirectTo);
-      router.refresh();
-    } catch (e) {
-      console.error("[LoginForm] unexpected error", e);
-      setError("로그인 중 오류가 발생했습니다.");
-    } finally {
+      // 성공 시 Google로 리다이렉트되므로 로딩 상태 유지
+    } catch {
+      setError("로그인에 실패했어요. 다시 시도해주세요.");
       setIsLoading(false);
     }
   };
 
   return (
-    <Card className="w-full max-w-sm rounded-2xl" style={{ boxShadow: "0 4px 6px rgba(45,42,38,0.07), 0 2px 4px rgba(45,42,38,0.04)" }}>
+    <Card
+      className="w-full max-w-sm rounded-2xl"
+      style={{
+        boxShadow:
+          "0 4px 6px rgba(45,42,38,0.07), 0 2px 4px rgba(45,42,38,0.04)",
+      }}
+    >
       <CardContent className="pt-8 pb-6 px-6">
-        <form onSubmit={handleSubmit} className="flex flex-col items-center gap-6">
+        <div className="flex flex-col items-center gap-6">
           {/* 캐릭터 */}
           <div
             className="w-16 h-16 relative"
@@ -77,49 +73,19 @@ export function LoginForm() {
             </p>
           </div>
 
-          {/* 폼 */}
-          <div className="w-full flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="email">이메일</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="email@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                className="h-11 px-4 rounded-[10px]"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="password">비밀번호</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="비밀번호 입력"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-                className="h-11 px-4 rounded-[10px]"
-              />
-            </div>
-          </div>
-
           {/* 에러 메시지 */}
           {error && (
             <p className="text-sm text-destructive text-center">{error}</p>
           )}
 
-          {/* 로그인 버튼 */}
+          {/* Google 로그인 버튼 */}
           <Button
-            type="submit"
-            className="w-full h-11 rounded-[10px] font-semibold"
+            type="button"
+            onClick={handleGoogleLogin}
             disabled={isLoading}
+            className="w-full h-11 rounded-[10px] font-semibold"
           >
-            {isLoading ? "로그인 중..." : "로그인"}
+            {isLoading ? "이동 중..." : "Google로 로그인"}
           </Button>
 
           {/* 회원가입 링크 */}
@@ -129,7 +95,7 @@ export function LoginForm() {
           >
             계정이 없으신가요? 회원가입
           </Link>
-        </form>
+        </div>
       </CardContent>
     </Card>
   );
