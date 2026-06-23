@@ -122,4 +122,30 @@ describe("POST /api/onboarding/complete", () => {
     const json = await res.json();
     expect(json.error).toBe("Internal server error");
   });
+
+  it("should return 400 when nickname format is invalid", async () => {
+    // Arrange — 특수문자 포함
+    const request = createRequest({ nickname: "hi!" });
+
+    // Act
+    const res = await POST(request);
+
+    // Assert
+    expect(res.status).toBe(400);
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it("should return 409 when nickname is taken (unique violation)", async () => {
+    // Arrange — lower(nickname) unique 위반
+    mockEq.mockResolvedValue({ error: { code: "23505", message: "duplicate" } });
+    const request = createRequest({ nickname: "모또" });
+
+    // Act
+    const res = await POST(request);
+
+    // Assert
+    expect(res.status).toBe(409);
+    const json = await res.json();
+    expect(json.error).toBe("nickname_taken");
+  });
 });

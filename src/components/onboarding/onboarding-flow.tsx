@@ -4,7 +4,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EggReveal } from "@/components/character/egg-reveal";
-import { completeOnboarding } from "@/lib/api/onboarding";
+import { completeOnboarding, NicknameTakenError } from "@/lib/api/onboarding";
+import { checkNickname } from "@/lib/api/check-nickname";
+
+// 닉네임 형식: 한글·영문·숫자 2~12자 (DB CHECK 제약과 동일)
+const NICKNAME_PATTERN = /^[0-9A-Za-z가-힣]{2,12}$/;
 
 type Starter = { slug: string; name: string; rarity: string };
 
@@ -31,10 +35,41 @@ const ctaStyle = {
 export function OnboardingFlow({ starter, onDone }: OnboardingFlowProps) {
   const [step, setStep] = useState(0);
   const [nickname, setNickname] = useState("");
+  const [isNicknameVerified, setIsNicknameVerified] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [nicknameMsg, setNicknameMsg] = useState<string | null>(null);
   const [finishing, setFinishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const goNext = () => setStep((s) => Math.min(s + 1, TOTAL_STEPS - 1));
+
+  const handleNicknameChange = (value: string) => {
+    setNickname(value);
+    setIsNicknameVerified(false);
+    setNicknameMsg(null);
+  };
+
+  const handleCheckNickname = async () => {
+    if (checking) return;
+    const trimmed = nickname.trim();
+    if (!NICKNAME_PATTERN.test(trimmed)) {
+      setNicknameMsg("한글·영문·숫자 2~12자로 입력해주세요.");
+      setIsNicknameVerified(false);
+      return;
+    }
+    setChecking(true);
+    setNicknameMsg(null);
+    try {
+      const available = await checkNickname(trimmed);
+      setIsNicknameVerified(available);
+      setNicknameMsg(available ? "사용할 수 있는 닉네임이에요." : "이미 사용 중인 닉네임이에요.");
+    } catch {
+      setNicknameMsg("확인에 실패했어요. 다시 시도해주세요.");
+      setIsNicknameVerified(false);
+    } finally {
+      setChecking(false);
+    }
+  };
 
   const handleFinish = async () => {
     if (finishing) return;
@@ -43,8 +78,14 @@ export function OnboardingFlow({ starter, onDone }: OnboardingFlowProps) {
     try {
       await completeOnboarding(nickname.trim());
       onDone();
-    } catch {
-      setError("저장에 실패했어요. 다시 시도해주세요.");
+    } catch (e) {
+      if (e instanceof NicknameTakenError) {
+        setIsNicknameVerified(false);
+        setNicknameMsg("이미 사용 중인 닉네임이에요. 다시 확인해주세요.");
+        setStep(2);
+      } else {
+        setError("저장에 실패했어요. 다시 시도해주세요.");
+      }
       setFinishing(false);
     }
   };
@@ -125,20 +166,42 @@ export function OnboardingFlow({ starter, onDone }: OnboardingFlowProps) {
               어떻게 불러드릴까요?
             </h1>
             <div className="flex w-full flex-col gap-2">
-              <Input
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
-                placeholder="닉네임"
-                maxLength={20}
-                aria-label="닉네임"
-                className="text-center"
-              />
-              <p className="text-xs text-muted-foreground">나중에 바꿀 수 있어요.</p>
+              <div className="flex w-full gap-2">
+                <Input
+                  value={nickname}
+                  onChange={(e) => handleNicknameChange(e.target.value)}
+                  placeholder="닉네임"
+                  maxLength={12}
+                  aria-label="닉네임"
+                  className="flex-1 text-center"
+                />
+                <Button
+                  variant="outline"
+                  className="shrink-0"
+                  onClick={handleCheckNickname}
+                  disabled={checking || nickname.trim().length === 0}
+                >
+                  {checking ? "확인 중..." : "중복확인"}
+                </Button>
+              </div>
+              {nicknameMsg ? (
+                <p
+                  className={`text-xs ${isNicknameVerified ? "text-muted-foreground" : "text-destructive"}`}
+                  aria-live="polite"
+                >
+                  {nicknameMsg}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  한글·영문·숫자 2~12자. 나중에 바꿀 수 있어요.
+                </p>
+              )}
             </div>
             <Button
-              className="mt-2 w-full rounded-[10px] py-4 text-base font-bold text-white"
+              className="mt-2 w-full rounded-[10px] py-4 text-base font-bold text-white disabled:opacity-50"
               style={ctaStyle}
               onClick={goNext}
+              disabled={!isNicknameVerified}
             >
               다음
             </Button>
