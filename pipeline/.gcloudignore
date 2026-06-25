@@ -1,0 +1,38 @@
+# .gcloudignore — `gcloud builds submit` 시 GCS 스테이징 버킷에 업로드할 파일을 거른다.
+#
+# 주의 1: 이 파일이 존재하면 gcloud는 .gitignore 폴백을 하지 않는다.
+# 주의 2: pipeline/ 에는 로컬 .gitignore 가 없고(ignore 규칙은 레포 루트에만 존재)
+#         gcloud는 부모 디렉토리 .gitignore 를 보지 않으므로, 업로드 제외 규칙을
+#         여기서 명시한다. (.dockerignore 는 이미지 빌드용이라 업로드엔 적용 안 됨)
+
+# ── 시크릿 (절대 업로드 금지) ─────────────────────────
+.env
+.env.*
+*.key
+key*.json
+credentials*.json
+secrets/
+.gcp/
+
+# ── 빌드에 불필요 (업로드 슬림화) ──────────────────────
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.idea/
+.vscode/
+.DS_Store
+.git/
+*.md
+README*
+dbt/
+
+# 테스트/연결확인 코드 — 운영 이미지 범위 외 (.dockerignore 와 동일 의도)
+etl/test/
+
+# ── Claude 하네스 파일 (빌드 무관) ────────────────────
+.claude/
+CLAUDE.md

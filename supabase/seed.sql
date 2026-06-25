@@ -68,8 +68,9 @@ INSERT INTO auth.identities (
 
 -- 프로필 — handle_new_user 트리거가 auth.users INSERT 시 먼저 profiles를
 -- balance=0으로 생성하므로, DO NOTHING이면 아래 dev 편의값이 무시된다.
--- DO UPDATE로 dev 계정 name·balance를 덮어쓴다. (로컬 전용, 실서비스 동작 무관)
-INSERT INTO public.profiles (id, name, balance)
-VALUES ('00000000-0000-0000-0000-000000000001', 'Dev User', 100)
+-- DO UPDATE로 dev 계정 nickname·balance를 덮어쓴다. (로컬 전용, 실서비스 동작 무관)
+-- nickname은 CHECK(한글·영문·숫자 2~12자)를 만족해야 하므로 공백 없는 값 사용.
+INSERT INTO public.profiles (id, nickname, balance)
+VALUES ('00000000-0000-0000-0000-000000000001', 'DevUser', 100)
 ON CONFLICT (id) DO UPDATE
-  SET name = EXCLUDED.name, balance = EXCLUDED.balance;
+  SET nickname = EXCLUDED.nickname, balance = EXCLUDED.balance;

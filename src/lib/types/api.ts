@@ -94,6 +94,46 @@ export interface OnboardingCompleteResponse {
   success: true;
 }
 
+/** 도감 종별 보유 인스턴스 */
+export type CollectionInstance = {
+  instanceId: number;
+  level: number;
+  createdAt: string; // ISO 8601
+};
+
+/** 도감 종 — 보유 (이름·외형 공개) */
+export type CollectionOwnedType = {
+  typeId: number;
+  rarity: string;
+  owned: true;
+  name: string;
+  slug: string;
+  description: string | null;
+  instances: CollectionInstance[];
+};
+
+/** 도감 종 — 미보유 (잠금: rarity만 공개) */
+export type CollectionLockedType = {
+  typeId: number;
+  rarity: string;
+  owned: false;
+};
+
+/** 도감 종 항목 (보유/미보유 판별 유니온) */
+export type CollectionType = CollectionOwnedType | CollectionLockedType;
+
+/** GET /api/collection 성공 응답 */
+export type CollectionResponse = {
+  types: CollectionType[];
+  ownedTypeCount: number;
+  totalTypeCount: number;
+};
+
+/** GET /api/auth/check-nickname 성공 응답 */
+export type CheckNicknameResponse = {
+  available: boolean;
+};
+
 /** API 공통 에러 응답 */
 export interface ApiError {
   error: string;

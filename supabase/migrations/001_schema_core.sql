@@ -6,13 +6,19 @@
 -- 004/005/006에서 정의.
 
 -- 1. profiles (Supabase Auth 연동)
+-- nickname: 식별자. 가입 직후엔 NULL(닉네임 등록 전 = 신규 판별 기준),
+--   등록 화면에서 채운다. 한글·영문·숫자 2~12자. 중복은 대소문자 무시.
 CREATE TABLE public.profiles (
   id              UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  name            VARCHAR(100),
+  nickname        VARCHAR(12) CHECK (nickname ~ '^[0-9A-Za-z가-힣]{2,12}$'),
   balance         INTEGER NOT NULL DEFAULT 0,
   last_session_at TIMESTAMPTZ,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- 닉네임 대소문자 무시 유일성 (NULL 다중 허용)
+CREATE UNIQUE INDEX uniq_profiles_nickname_lower
+  ON public.profiles (lower(nickname));
 
 -- 2. character_types
 CREATE TABLE public.character_types (

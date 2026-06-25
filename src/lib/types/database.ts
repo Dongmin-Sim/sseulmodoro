@@ -311,7 +311,7 @@ export type Database = {
           created_at: string
           id: string
           last_session_at: string | null
-          name: string | null
+          nickname: string | null
           onboarding_completed: boolean
         }
         Insert: {
@@ -319,7 +319,7 @@ export type Database = {
           created_at?: string
           id: string
           last_session_at?: string | null
-          name?: string | null
+          nickname?: string | null
           onboarding_completed?: boolean
         }
         Update: {
@@ -327,7 +327,7 @@ export type Database = {
           created_at?: string
           id?: string
           last_session_at?: string | null
-          name?: string | null
+          nickname?: string | null
           onboarding_completed?: boolean
         }
         Relationships: []
@@ -347,6 +347,7 @@ export type Database = {
         Args: { p_cursor?: string; p_limit?: number }
         Returns: Json
       }
+      is_nickname_available: { Args: { p_nickname: string }; Returns: boolean }
       start_next_pomodoro: { Args: { p_session_id: number }; Returns: Json }
       start_session: {
         Args: {

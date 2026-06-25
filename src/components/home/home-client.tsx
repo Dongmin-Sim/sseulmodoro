@@ -1,24 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { BirdCard } from "@/components/character/bird-card";
 import { PomodoroTimer } from "@/components/pomodoro/pomodoro-timer";
 import { usePomodoroSession } from "@/components/pomodoro/session-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { PageContainer } from "@/components/layout/page-container";
-import { ContentNav } from "@/components/layout/content-nav";
-import { logout } from "@/lib/api/logout";
 import { OnboardingFlow } from "@/components/onboarding/onboarding-flow";
 import type { HomeDataResponse } from "@/lib/types/api";
 
@@ -45,66 +34,15 @@ type HomeClientProps = {
 };
 
 export function HomeClient({ data }: HomeClientProps) {
-  const { isSessionActive, enterSession, exitSession } = usePomodoroSession();
+  const { isSessionActive, enterSession } = usePomodoroSession();
 
-  const navItems = [
-    { label: "홈", onSelect: exitSession, active: !isSessionActive },
-    { label: "도감", href: "/collection", disabled: true },
-    { label: "상점", href: "/shop" },
-    { label: "기록", href: "/history" },
-  ];
-
-  const router = useRouter();
-  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [logoutError, setLogoutError] = useState<string | null>(null);
   const [onboarded, setOnboarded] = useState(data?.onboardingCompleted ?? true);
-
-  const doLogout = async () => {
-    if (isLoggingOut) return;
-    setIsLoggingOut(true);
-    setLogoutError(null);
-    try {
-      await logout();
-      router.replace("/login");
-    } catch {
-      setLogoutError("로그아웃에 실패했습니다. 다시 시도해주세요.");
-      setIsLoggingOut(false);
-    }
-  };
-
-  const handleLogoutClick = () => {
-    // 세션 진행 중이면 데이터 손실 경고 후 확인, 아니면 바로 로그아웃
-    if (isSessionActive) setShowLogoutDialog(true);
-    else void doLogout();
-  };
-
-  const logoutAction = (
-    <div className="flex items-center gap-2">
-      {logoutError && (
-        <p role="alert" aria-live="assertive" className="text-xs text-destructive">
-          {logoutError}
-        </p>
-      )}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="text-xs text-muted-foreground"
-        onClick={handleLogoutClick}
-        disabled={isLoggingOut}
-        aria-label={isLoggingOut ? "로그아웃 처리 중" : "로그아웃"}
-      >
-        {isLoggingOut ? "로그아웃 중..." : "로그아웃"}
-      </Button>
-    </div>
-  );
 
   // 렌더 시점 기준 "오늘" 계산. 모듈 레벨 상수는 탭을 자정 넘어 열어두면 stale.
   const today = new Date().getDay();
   const todayIndex = today === 0 ? 6 : today - 1;
 
   const character = data?.mainCharacter ?? null;
-  const balance = data?.balance ?? 0;
   const rarityLabel = character
     ? (RARITY_LABEL[character.rarity] ?? character.rarity)
     : null;
@@ -126,8 +64,6 @@ export function HomeClient({ data }: HomeClientProps) {
   return (
     <main className="relative z-10 flex flex-1 flex-col py-5">
       <PageContainer className="flex flex-col">
-        <ContentNav items={navItems} balance={balance} action={logoutAction} />
-
         {isSessionActive ? (
           <PomodoroTimer />
         ) : (
@@ -280,33 +216,6 @@ export function HomeClient({ data }: HomeClientProps) {
             </Button>
           </div>
         )}
-
-        <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>로그아웃할까요?</DialogTitle>
-              <DialogDescription>
-                진행 중인 포모도로 세션이 있습니다. 로그아웃하면 현재 진행 상황이
-                저장되지 않을 수 있습니다.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button
-                variant="secondary"
-                onClick={() => setShowLogoutDialog(false)}
-              >
-                계속하기
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={doLogout}
-                disabled={isLoggingOut}
-              >
-                {isLoggingOut ? "로그아웃 중..." : "로그아웃"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </PageContainer>
     </main>
   );

@@ -3,22 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PageContainer } from "@/components/layout/page-container";
-import { ContentNav } from "@/components/layout/content-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getHistory } from "@/lib/api/history";
-import { logout } from "@/lib/api/logout";
 import { formatFocusDuration, formatRecordTimestamp } from "@/lib/format";
 import type { RecordLog, RecordResponse, RecordStat } from "@/lib/types/api";
 
 const HISTORY_PAGE_SIZE = 10;
-
-const NAV_ITEMS = [
-  { label: "홈", href: "/home" },
-  { label: "도감", href: "/collection", disabled: true },
-  { label: "상점", href: "/shop" },
-  { label: "기록", href: "/history" },
-];
 
 type LoadStatus = "loading" | "ready" | "error";
 
@@ -62,9 +53,6 @@ export function HistoryClient() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [moreError, setMoreError] = useState<string | null>(null);
 
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [logoutError, setLogoutError] = useState<string | null>(null);
-
   const loadInitial = useCallback(async () => {
     setStatus("loading");
     try {
@@ -97,46 +85,11 @@ export function HistoryClient() {
     }
   };
 
-  const handleLogout = async () => {
-    if (isLoggingOut) return;
-    setIsLoggingOut(true);
-    setLogoutError(null);
-    try {
-      await logout();
-      router.replace("/login");
-    } catch {
-      setLogoutError("로그아웃에 실패했습니다.");
-      setIsLoggingOut(false);
-    }
-  };
-
-  const logoutAction = (
-    <div className="flex items-center gap-2">
-      {logoutError && (
-        <p role="alert" aria-live="assertive" className="text-xs text-destructive">
-          {logoutError}
-        </p>
-      )}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="text-xs text-muted-foreground"
-        onClick={handleLogout}
-        disabled={isLoggingOut}
-        aria-label={isLoggingOut ? "로그아웃 처리 중" : "로그아웃"}
-      >
-        {isLoggingOut ? "로그아웃 중..." : "로그아웃"}
-      </Button>
-    </div>
-  );
-
   const isEmpty = status === "ready" && (summary?.total.count ?? 0) === 0;
 
   return (
     <main className="relative z-10 flex flex-1 flex-col py-5">
       <PageContainer className="flex flex-col">
-        <ContentNav items={NAV_ITEMS} action={logoutAction} />
-
         {status === "loading" && (
           <p className="py-16 text-center text-sm text-muted-foreground">
             불러오는 중...

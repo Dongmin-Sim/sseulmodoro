@@ -41,7 +41,7 @@ describe("POST /api/onboarding/complete", () => {
   it("should return 401 when user is not authenticated", async () => {
     // Arrange
     mockGetAuthUser.mockResolvedValue(null);
-    const request = createRequest({ name: "테스터" });
+    const request = createRequest({ nickname: "테스터" });
 
     // Act
     const res = await POST(request);
@@ -52,10 +52,10 @@ describe("POST /api/onboarding/complete", () => {
     expect(json.error).toBe("Unauthorized");
   });
 
-  it("should return 200 with success:true and update with name when name is provided", async () => {
+  it("should return 200 with success:true and update with nickname when nickname is provided", async () => {
     // Arrange
     mockEq.mockResolvedValue({ error: null });
-    const request = createRequest({ name: "모또" });
+    const request = createRequest({ nickname: "모또" });
 
     // Act
     const res = await POST(request);
@@ -64,14 +64,14 @@ describe("POST /api/onboarding/complete", () => {
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json).toEqual({ success: true });
-    expect(mockUpdate).toHaveBeenCalledWith({ onboarding_completed: true, name: "모또" });
+    expect(mockUpdate).toHaveBeenCalledWith({ onboarding_completed: true, nickname: "모또" });
     expect(mockEq).toHaveBeenCalledWith("id", "test-user-id");
   });
 
-  it("should return 200 and update without name when name is empty string", async () => {
+  it("should return 200 and update without nickname when nickname is empty string", async () => {
     // Arrange
     mockEq.mockResolvedValue({ error: null });
-    const request = createRequest({ name: "" });
+    const request = createRequest({ nickname: "" });
 
     // Act
     const res = await POST(request);
@@ -83,7 +83,7 @@ describe("POST /api/onboarding/complete", () => {
     expect(mockUpdate).toHaveBeenCalledWith({ onboarding_completed: true });
   });
 
-  it("should return 200 and update without name when name field is missing", async () => {
+  it("should return 200 and update without nickname when nickname field is missing", async () => {
     // Arrange
     mockEq.mockResolvedValue({ error: null });
     const request = createRequest({});
@@ -96,10 +96,10 @@ describe("POST /api/onboarding/complete", () => {
     expect(mockUpdate).toHaveBeenCalledWith({ onboarding_completed: true });
   });
 
-  it("should return 200 and update without name when name is whitespace only", async () => {
+  it("should return 200 and update without nickname when nickname is whitespace only", async () => {
     // Arrange
     mockEq.mockResolvedValue({ error: null });
-    const request = createRequest({ name: "   " });
+    const request = createRequest({ nickname: "   " });
 
     // Act
     const res = await POST(request);
@@ -112,7 +112,7 @@ describe("POST /api/onboarding/complete", () => {
   it("should return 500 when profiles update returns error", async () => {
     // Arrange
     mockEq.mockResolvedValue({ error: { message: "db error" } });
-    const request = createRequest({ name: "모또" });
+    const request = createRequest({ nickname: "모또" });
 
     // Act
     const res = await POST(request);
@@ -121,5 +121,31 @@ describe("POST /api/onboarding/complete", () => {
     expect(res.status).toBe(500);
     const json = await res.json();
     expect(json.error).toBe("Internal server error");
+  });
+
+  it("should return 400 when nickname format is invalid", async () => {
+    // Arrange — 특수문자 포함
+    const request = createRequest({ nickname: "hi!" });
+
+    // Act
+    const res = await POST(request);
+
+    // Assert
+    expect(res.status).toBe(400);
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it("should return 409 when nickname is taken (unique violation)", async () => {
+    // Arrange — lower(nickname) unique 위반
+    mockEq.mockResolvedValue({ error: { code: "23505", message: "duplicate" } });
+    const request = createRequest({ nickname: "모또" });
+
+    // Act
+    const res = await POST(request);
+
+    // Assert
+    expect(res.status).toBe(409);
+    const json = await res.json();
+    expect(json.error).toBe("nickname_taken");
   });
 });
