@@ -27,6 +27,22 @@ CREATE POLICY "profiles_select_own" ON public.profiles
 CREATE POLICY "profiles_update_own" ON public.profiles
   FOR UPDATE TO authenticated USING (id = auth.uid());
 
+-- 닉네임 중복확인: profiles_select_own이 본인 행만 노출해 온보딩 중엔
+-- 남의 닉네임도 안 보임 → 전역 조회가 막힘. SECURITY DEFINER로 정책을
+-- 좁게 우회하고 boolean만 반환(닉네임 비노출). lower(nickname) 유일 인덱스와 정합.
+CREATE OR REPLACE FUNCTION public.is_nickname_available(p_nickname text)
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = ''            -- search_path 하이재킹 방지 — 객체는 전부 schema-qualify
+AS $$
+  SELECT NOT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE lower(nickname) = lower(p_nickname)
+  );
+$$;
+GRANT EXECUTE ON FUNCTION public.is_nickname_available(text) TO authenticated;
+
 -- pomodoro_sessions: 본인 세션만 조회/생성
 CREATE POLICY "sessions_select_own" ON public.pomodoro_sessions
   FOR SELECT TO authenticated USING (user_id = auth.uid());

@@ -1,20 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const mockQuery = vi.fn();
+const mockRpc = vi.fn();
 const mockGetAuthUser = vi.fn();
 
-// profiles.select("id").ilike("nickname", value).maybeSingle() 체인 모킹
+// supabase.rpc("is_nickname_available", { p_nickname }) 모킹
 vi.mock("@/lib/supabase/server", () => ({
   createServerClient: () =>
     Promise.resolve({
-      from: () => {
-        const builder = {
-          select: () => builder,
-          ilike: () => builder,
-          maybeSingle: () => mockQuery(),
-        };
-        return builder;
-      },
+      rpc: (...args: unknown[]) => mockRpc(...args),
     }),
 }));
 
@@ -34,7 +27,7 @@ function makeRequest(nickname?: string) {
 
 describe("GET /api/auth/check-nickname", () => {
   beforeEach(() => {
-    mockQuery.mockReset();
+    mockRpc.mockReset();
     mockGetAuthUser.mockReset();
     mockGetAuthUser.mockResolvedValue({ id: "user-1", email: "a@b.com" });
   });
@@ -71,20 +64,23 @@ describe("GET /api/auth/check-nickname", () => {
 
   it("should return 200 with available:true when nickname is not taken", async () => {
     // Arrange
-    mockQuery.mockResolvedValue({ data: null, error: null });
+    mockRpc.mockResolvedValue({ data: true, error: null });
 
     // Act
     const res = await GET(makeRequest("모또"));
 
     // Assert
     expect(res.status).toBe(200);
+    expect(mockRpc).toHaveBeenCalledWith("is_nickname_available", {
+      p_nickname: "모또",
+    });
     const json = await res.json();
     expect(json).toEqual({ available: true });
   });
 
   it("should return 200 with available:false when nickname is already taken", async () => {
     // Arrange
-    mockQuery.mockResolvedValue({ data: { id: "other-user" }, error: null });
+    mockRpc.mockResolvedValue({ data: false, error: null });
 
     // Act
     const res = await GET(makeRequest("모또"));
@@ -95,9 +91,9 @@ describe("GET /api/auth/check-nickname", () => {
     expect(json).toEqual({ available: false });
   });
 
-  it("should return 500 when query returns an error", async () => {
+  it("should return 500 when rpc returns an error", async () => {
     // Arrange
-    mockQuery.mockResolvedValue({ data: null, error: { message: "db error" } });
+    mockRpc.mockResolvedValue({ data: null, error: { message: "db error" } });
 
     // Act
     const res = await GET(makeRequest("모또"));
