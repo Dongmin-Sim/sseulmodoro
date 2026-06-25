@@ -24,22 +24,21 @@ export async function GET(request: Request) {
     );
   }
 
-  // 3. 중복 조회 (대소문자 무시 — DB의 lower(nickname) 유일 인덱스와 정합)
-  //    허용 문자(한글·영문·숫자)엔 ilike 와일드카드(% _)가 없어 정확 일치로 동작.
+  // 3. 중복 조회 — SECURITY DEFINER rpc로 전역 조회(boolean만 반환).
+  //    직접 profiles 조회는 RLS(profiles_select_own)에 막혀 본인 행만 보이므로
+  //    남이 쓴 닉네임도 available:true로 오답 → rpc로 우회. (010 마이그레이션)
   const supabase = await createServerClient();
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("id")
-    .ilike("nickname", nickname)
-    .maybeSingle();
+  const { data, error } = await supabase.rpc("is_nickname_available", {
+    p_nickname: nickname,
+  });
 
   if (error) {
-    console.error("check-nickname query error:", error);
+    console.error("check-nickname rpc error:", error);
     return NextResponse.json<ApiError>(
       { error: "Internal server error" },
       { status: 500 },
     );
   }
 
-  return NextResponse.json<CheckNicknameResponse>({ available: data === null });
+  return NextResponse.json<CheckNicknameResponse>({ available: data === true });
 }
