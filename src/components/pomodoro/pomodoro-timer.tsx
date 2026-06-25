@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -27,6 +27,11 @@ import {
   startNextPomodoro,
 } from "@/lib/api/sessions";
 import { completePomodoro, stopPomodoro } from "@/lib/api/pomodoros";
+import {
+  notifyComplete,
+  unlockAudio,
+  stopBackgroundAlert,
+} from "./notify";
 
 export type SessionPhase =
   | "idle"
@@ -35,20 +40,6 @@ export type SessionPhase =
   | "breaking"
   | "break_done"
   | "session_completed";
-
-function sendNotification(title: string, body: string) {
-  if (typeof window === "undefined" || !("Notification" in window)) return;
-
-  if (Notification.permission === "granted") {
-    new Notification(title, { body });
-  } else if (Notification.permission === "default") {
-    Notification.requestPermission().then((permission) => {
-      if (permission === "granted") {
-        new Notification(title, { body });
-      }
-    });
-  }
-}
 
 export function PomodoroTimer() {
   const router = useRouter();
@@ -90,9 +81,10 @@ export function PomodoroTimer() {
 
           // 모든 사이클 완료 후에도 휴식 제안 (마지막은 긴 휴식)
           setSessionPhase("pomodoro_done");
-          sendNotification(
+          notifyComplete(
             "포모도로 완료!",
             `${result.completedCount}/${result.targetCount} 완료. 휴식할까요?`,
+            `pomodoro-${result.completedCount}`,
           );
         } catch (error) {
           console.error("Failed to complete pomodoro:", error);
@@ -106,9 +98,10 @@ export function PomodoroTimer() {
             const endResult = await endSession(sessionId);
             setEarnedPoints(endResult.pointsEarned);
             setSessionPhase("session_completed");
-            sendNotification(
+            notifyComplete(
               "세션 완료!",
               `${completedCount}회 집중 완료! +${endResult.pointsEarned} 포인트`,
+              "session-done",
             );
           } catch (error) {
             console.error("Failed to end session:", error);
@@ -117,7 +110,11 @@ export function PomodoroTimer() {
         } else {
           // 중간 짧은 휴식 완료 → 다음 집중 제안
           setSessionPhase("break_done");
-          sendNotification("휴식 끝!", "다음 집중을 시작할까요?");
+          notifyComplete(
+            "휴식 끝!",
+            "다음 집중을 시작할까요?",
+            `break-${completedCount}`,
+          );
         }
       }
     } finally {
@@ -130,6 +127,9 @@ export function PomodoroTimer() {
     onComplete: handleTimerComplete,
   });
 
+  // 언마운트(세션 이탈 등) 시 깜박임·소리 반복 정지 + 제목 원복
+  useEffect(() => stopBackgroundAlert, []);
+
   const handleFocusChange = (minutes: number, label: string) => {
     setFocusMinutes(minutes);
     setFocusLabel(label);
@@ -139,6 +139,8 @@ export function PomodoroTimer() {
     setEarnedPoints(null);
     setCompletedCount(0);
     setIsLoading(true);
+    // 사용자 제스처 시점에 오디오 unlock (자동재생 정책 우회)
+    unlockAudio();
 
     try {
       const session = await startSession({
