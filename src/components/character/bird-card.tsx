@@ -1,13 +1,6 @@
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-
-// 레어리티별 패널 톤 (preview.png 톤 참고). 알 수 없는 값은 common으로 폴백.
-const RARITY_PANEL: Record<string, { bg: string; ring: string }> = {
-  common: { bg: "#E8EFE6", ring: "#C7D3C0" }, // 세이지
-  rare: { bg: "#E4ECF4", ring: "#C2D2E0" }, // 블루
-  epic: { bg: "#ECE5F4", ring: "#D2C2E4" }, // 라벤더
-  legendary: { bg: "#F4ECD9", ring: "#E2D2A8" }, // 크림·골드
-};
+import { getRarityPanel } from "@/lib/rarity";
 
 const PANEL_SIZE = 160;
 const SPRITE_SIZE = 144; // 576px sprite의 1/4 정수배율 → 픽셀 또렷
@@ -30,7 +23,7 @@ export function BirdCard({
   animated = true,
   className,
 }: BirdCardProps) {
-  const panel = RARITY_PANEL[rarity] ?? RARITY_PANEL.common;
+  const panel = getRarityPanel(rarity);
 
   return (
     <div

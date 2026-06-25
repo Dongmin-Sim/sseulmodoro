@@ -212,7 +212,7 @@ export function EggReveal({
               <Badge
                 className="rounded-full px-3.5 py-1 text-xs font-semibold text-white"
                 style={{
-                  background: "linear-gradient(135deg, #D4956A, #C4725C)",
+                  background: "linear-gradient(135deg, var(--accent), var(--chart-2))",
                   border: "none",
                 }}
               >
@@ -223,7 +223,7 @@ export function EggReveal({
                   result.isNew && !reduced ? "animate-bounce" : ""
                 }`}
                 style={{
-                  background: result.isNew ? "#7BA68E" : "#9C9590",
+                  background: result.isNew ? "var(--break)" : "var(--muted-foreground)",
                   border: "none",
                 }}
               >
@@ -232,16 +232,7 @@ export function EggReveal({
             </div>
           </div>
 
-          <Button
-            className="mt-1 w-full rounded-[10px] py-4 text-base font-bold text-white"
-            style={{
-              background: "#D4956A",
-              boxShadow: "0 6px 16px rgba(212,149,106,0.38)",
-              border: "none",
-              height: "auto",
-            }}
-            onClick={onConfirm}
-          >
+          <Button size="cta" className="mt-1 w-full" onClick={onConfirm}>
             {confirmLabel}
           </Button>
         </>

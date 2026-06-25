@@ -115,16 +115,7 @@ export function HistoryClient() {
             <p className="text-sm text-muted-foreground">
               포모도로를 완료하면 여기에 기록이 쌓여요.
             </p>
-            <Button
-              className="rounded-[10px] px-6 py-3 text-sm font-bold text-white"
-              style={{
-                background: "#D4956A",
-                boxShadow: "0 6px 16px rgba(212,149,106,0.38)",
-                border: "none",
-                height: "auto",
-              }}
-              onClick={() => router.push("/home")}
-            >
+            <Button size="cta" onClick={() => router.push("/home")}>
               집중 시작
             </Button>
           </div>

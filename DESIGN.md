@@ -40,7 +40,9 @@
 | Timer | Geist Mono | 500 | 44-48px |
 | Code / Data | Geist Mono | 400 | 13-14px |
 
-- Plus Jakarta Sans: Google Fonts에서 로드
+- Plus Jakarta Sans: Google Fonts에서 로드 (영문·숫자 본문/제목)
+- Pretendard: self-host 가변 폰트 (`src/app/fonts/PretendardVariable.woff2`, next/font/local) — 한글 본문/제목. Plus Jakarta Sans에 한글 글리프 없음
+- 폰트 스택: `Plus Jakarta Sans → Pretendard → 시스템 한글 → sans-serif` (글자별로 브라우저가 선택)
 - Geist Mono: 프로젝트에 이미 설치됨 (next/font)
 - 타이머 숫자는 반드시 Geist Mono 사용 (tabular-nums)
 
