@@ -99,6 +99,25 @@ export interface RecordResponse {
   nextCursor: string | null;
 }
 
+/** 히트맵 한 칸 — 특정 날짜의 완료 포모도로 수 */
+export interface HeatmapDay {
+  date: string; // YYYY-MM-DD (KST)
+  count: number;
+}
+
+/** GET /api/history/heatmap 성공 응답 */
+export type HeatmapResponse = HeatmapDay[];
+
+/** POST /api/profile/nickname 요청 — 변경할 닉네임 */
+export interface UpdateNicknameRequest {
+  nickname: string;
+}
+
+/** POST /api/profile/nickname 성공 응답 */
+export interface UpdateNicknameResponse {
+  nickname: string;
+}
+
 /** POST /api/onboarding/complete 성공 응답 */
 export interface OnboardingCompleteResponse {
   success: true;
