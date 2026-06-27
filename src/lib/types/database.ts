@@ -351,6 +351,7 @@ export type Database = {
         Returns: Json
       }
       is_nickname_available: { Args: { p_nickname: string }; Returns: boolean }
+      set_main_character: { Args: { p_instance_id: number }; Returns: Json }
       start_next_pomodoro: { Args: { p_session_id: number }; Returns: Json }
       start_session: {
         Args: {

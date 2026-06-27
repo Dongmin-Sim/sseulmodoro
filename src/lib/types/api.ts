@@ -51,6 +51,16 @@ export interface GachaResponse {
   isNew: boolean;
 }
 
+/** POST /api/characters/main 요청 — 대표 캐릭터로 지정할 인스턴스 */
+export interface SetMainCharacterRequest {
+  instanceId: number;
+}
+
+/** POST /api/characters/main 성공 응답 */
+export interface SetMainCharacterResponse {
+  instanceId: number;
+}
+
 /** GET /api/home 성공 응답 */
 export interface HomeDataResponse {
   balance: number;
