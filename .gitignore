@@ -65,3 +65,6 @@ supabase/snippets/
 
 # 새 카드 생성기 — 검수용 미리보기(재생성 가능, 커밋 제외)
 tools/bird-card-gen/preview.png
+
+# 디자인 핸드오프 번들 — 리디자인 참조용(시안 HTML·에셋 원본), 레포에 커밋하지 않음
+desing_handoff/
