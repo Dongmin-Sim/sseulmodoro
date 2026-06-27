@@ -51,7 +51,7 @@ export function HomeClient({ data }: HomeClientProps) {
     return (
       <main className="relative z-10 flex flex-1 flex-col py-5">
         <PageContainer width="narrow" className="flex flex-col">
-          <PomodoroTimer />
+          <PomodoroTimer character={character} />
         </PageContainer>
       </main>
     );

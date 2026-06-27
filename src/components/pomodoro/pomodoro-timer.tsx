@@ -2,21 +2,16 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CycleProgress } from "./cycle-progress";
 import { useTimer } from "./use-timer";
 import { TimerDisplay } from "./timer-display";
 import { TimerControls } from "./timer-controls";
-import { SessionSettings } from "./session-settings";
+import { SessionPrep } from "./session-prep";
+import { BreakScreen } from "./break-screen";
+import { SessionComplete } from "./session-complete";
+import { StopDialog } from "./stop-dialog";
+import { SessionBuddy } from "./session-buddy";
 import { SESSION_DEFAULTS } from "@/lib/constants";
 import { DevConsole } from "@/lib/dev/dev-console";
 import { DEV_SPEED_OPTIONS } from "@/lib/dev/constants";
@@ -41,9 +36,19 @@ export type SessionPhase =
   | "break_done"
   | "session_completed";
 
-export function PomodoroTimer() {
+type PomodoroBuddy = {
+  slug: string;
+  name: string;
+  level: number;
+  rarity: string;
+};
+
+export function PomodoroTimer({ character }: { character?: PomodoroBuddy | null }) {
   const router = useRouter();
   const { exitSession } = usePomodoroSession();
+
+  const buddySlug = character?.slug ?? null;
+  const buddyName = character?.name ?? "버디";
 
   // 세션 설정
   const [focusMinutes, setFocusMinutes] = useState(25);
@@ -271,196 +276,166 @@ export function PomodoroTimer() {
     exitSession(); // 메인 화면(캐릭터+현황)으로 복귀
   };
 
+  const isFocusing = sessionPhase === "focusing";
   const isTimerPhase = sessionPhase === "focusing" || sessionPhase === "breaking";
-  const isBreak = sessionPhase === "breaking";
 
   return (
-    <Card className="w-full">
-      <CardContent className="flex flex-col items-center gap-6 pt-6">
-        {/* idle: 세션 설정 */}
-        {sessionPhase === "idle" && (
-          <>
-            <SessionSettings
-              focusMinutes={focusMinutes}
-              shortBreakMinutes={shortBreakMinutes}
-              longBreakMinutes={longBreakMinutes}
-              targetCount={targetCount}
-              onFocusChange={handleFocusChange}
-              onShortBreakChange={setShortBreakMinutes}
-              onLongBreakChange={setLongBreakMinutes}
-              onTargetCountChange={setTargetCount}
-            />
-            <Button
-              size="lg"
-              className="w-40 h-11"
-              onClick={handleStart}
-              disabled={isLoading}
-            >
-              {isLoading ? "준비 중..." : "시작"}
-            </Button>
-          </>
-        )}
+    <div className="relative flex w-full flex-col items-center">
+      {/* idle: 세션 준비 */}
+      {sessionPhase === "idle" && (
+        <SessionPrep
+          focusMinutes={focusMinutes}
+          shortBreakMinutes={shortBreakMinutes}
+          longBreakMinutes={longBreakMinutes}
+          targetCount={targetCount}
+          buddySlug={buddySlug}
+          buddyName={buddyName}
+          isLoading={isLoading}
+          onFocusChange={handleFocusChange}
+          onShortBreakChange={setShortBreakMinutes}
+          onLongBreakChange={setLongBreakMinutes}
+          onTargetCountChange={setTargetCount}
+          onStart={handleStart}
+        />
+      )}
 
-        {/* focusing / breaking: 타이머 */}
-        {isTimerPhase && (
-          <>
-            <CycleProgress phase={sessionPhase} completed={completedCount} target={targetCount} />
-            <TimerDisplay
-              display={timer.display}
-              progress={timer.progress}
+      {/* focusing: 집중 */}
+      {isFocusing && (
+        <div className="flex w-full flex-col items-center gap-6">
+          <div className="flex items-center gap-2 rounded-full border border-focus/30 bg-focus/10 px-4 py-1.5">
+            <span className="h-2 w-2 rounded-full bg-focus shadow-[0_0_0_4px_rgba(196,114,92,.18)]" />
+            <span className="font-pixel text-[10px] tracking-[1px] text-focus">FOCUS MODE</span>
+          </div>
+          <CycleProgress phase={sessionPhase} completed={completedCount} target={targetCount} />
+          <TimerDisplay
+            display={timer.display}
+            progress={timer.progress}
+            status={timer.status}
+            label={`${completedCount + 1} / ${targetCount} 집중 중`}
+            progressColor="text-focus"
+          />
+          {isTransitioning ? (
+            <Button size="lg" className="h-11 w-40" disabled>
+              처리 중...
+            </Button>
+          ) : (
+            <TimerControls
               status={timer.status}
-              label={
-                isBreak
-                  ? `☕ ${isLastBreakLong ? "긴" : "짧은"} 휴식`
-                  : `🍅 ${completedCount + 1} / ${targetCount} 집중 중`
-              }
-              progressColor={isBreak ? "text-break" : "text-focus"}
+              onStart={timer.start}
+              onPause={timer.pause}
+              onResume={timer.resume}
+              onStop={handleStopRequest}
+              onReset={handleResetSession}
+              disabled={false}
             />
-            {isTransitioning ? (
-              <Button size="lg" className="w-40 h-11" disabled>
-                처리 중...
-              </Button>
-            ) : (
-              <TimerControls
-                status={timer.status}
-                onStart={timer.start}
-                onPause={timer.pause}
-                onResume={timer.resume}
-                onStop={handleStopRequest}
-                onReset={handleResetSession}
-                disabled={false}
-              />
-            )}
-            {isBreak && !isTransitioning && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleSkipBreak}
-              >
-                건너뛰기
-              </Button>
-            )}
-          </>
-        )}
+          )}
+        </div>
+      )}
 
-        {/* pomodoro_done: 중간 완료 → 휴식/종료 선택 */}
-        {sessionPhase === "pomodoro_done" && (
-          <>
-            <CycleProgress phase={sessionPhase} completed={completedCount} target={targetCount} />
-            <div className="text-center">
-              <p className="text-lg font-semibold">
-                🍅 {completedCount} / {targetCount} 완료!
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                {currentBreakMinutes}분 {isLastBreakLong ? "긴 " : ""}휴식할까요?
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <Button size="lg" className="h-11" onClick={handleStartBreak}>
-                휴식 시작
-              </Button>
-              <Button
-                size="lg"
-                variant="secondary"
-                className="h-11"
-                onClick={handleEndSessionEarly}
-                disabled={isLoading}
-              >
-                세션 종료
-              </Button>
-            </div>
-          </>
-        )}
+      {/* breaking: 휴식 */}
+      {sessionPhase === "breaking" && (
+        <BreakScreen
+          display={timer.display}
+          progress={timer.progress}
+          status={timer.status}
+          isLastBreakLong={isLastBreakLong}
+          nextFocusIndex={completedCount + 1}
+          buddySlug={buddySlug}
+          buddyName={buddyName}
+          isTransitioning={isTransitioning}
+          onSkip={handleSkipBreak}
+          onEnd={handleEndSessionEarly}
+        />
+      )}
 
-        {/* break_done: 휴식 끝 → 다음 집중/종료 선택 */}
-        {sessionPhase === "break_done" && (
-          <>
-            <CycleProgress phase={sessionPhase} completed={completedCount} target={targetCount} />
-            <div className="text-center">
-              <p className="text-lg font-semibold">☕ 휴식 끝!</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                다음: {completedCount + 1}회차 집중 {focusLabel}
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <Button
-                size="lg"
-                className="h-11"
-                onClick={handleStartNextFocus}
-                disabled={isLoading}
-              >
-                {isLoading ? "준비 중..." : "집중 시작"}
-              </Button>
-              <Button
-                size="lg"
-                variant="secondary"
-                className="h-11"
-                onClick={handleEndSessionEarly}
-                disabled={isLoading}
-              >
-                세션 종료
-              </Button>
-            </div>
-          </>
-        )}
-
-        {/* session_completed: 세션 완료 */}
-        {sessionPhase === "session_completed" && (
-          <>
-            {earnedPoints !== null && (
-              <div className="text-center">
-                <p className="text-2xl font-bold text-success">
-                  +{earnedPoints} 포인트
-                </p>
-              </div>
-            )}
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">
-                {completedCount} / {targetCount} 사이클 완료
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <Button size="lg" className="h-11" onClick={handleReturnHome}>
-                홈으로
-              </Button>
-              <Button
-                size="lg"
-                variant="secondary"
-                className="h-11"
-                onClick={handleResetSession}
-              >
-                다시 시작
-              </Button>
-            </div>
-          </>
-        )}
-      </CardContent>
-
-      <Dialog open={showStopDialog} onOpenChange={setShowStopDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>세션을 중지할까요?</DialogTitle>
-            <DialogDescription>
-              중지하면 현재 진행 중인 포모도로는 완료로 인정되지 않습니다.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={() => setShowStopDialog(false)}
+      {/* pomodoro_done: 중간 완료 → 휴식/종료 선택 */}
+      {sessionPhase === "pomodoro_done" && (
+        <div className="flex w-full flex-col items-center gap-5 text-center">
+          <SessionBuddy slug={buddySlug} name={buddyName} size={96} glow="rgba(224,177,94,.24)" />
+          <CycleProgress phase={sessionPhase} completed={completedCount} target={targetCount} />
+          <div>
+            <p className="text-xl font-extrabold text-foreground">
+              {completedCount} / {targetCount} 포모도로 완료!
+            </p>
+            <p className="mt-1.5 text-sm text-text-secondary">
+              {currentBreakMinutes}분 {isLastBreakLong ? "긴 " : ""}휴식할까요?
+            </p>
+          </div>
+          <div className="flex w-full flex-col gap-2.5">
+            <button
+              type="button"
+              onClick={handleStartBreak}
+              className="h-13 w-full rounded-[14px] text-[15px] font-bold text-primary-foreground shadow-[0_8px_20px_rgba(212,149,106,.4)] transition-transform hover:scale-[1.01]"
+              style={{ background: "var(--primary-gradient)" }}
             >
-              계속하기
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleStopConfirm}
-              disabled={isTransitioning}
+              휴식 시작
+            </button>
+            <button
+              type="button"
+              onClick={handleEndSessionEarly}
+              disabled={isLoading}
+              className="h-12 w-full rounded-[14px] border border-border bg-card text-[15px] font-semibold text-foreground transition-colors hover:bg-surface-2 disabled:opacity-50"
             >
-              {isTransitioning ? "처리 중..." : "중지"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              세션 종료
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* break_done: 휴식 끝 → 다음 집중/종료 선택 */}
+      {sessionPhase === "break_done" && (
+        <div className="flex w-full flex-col items-center gap-5 text-center">
+          <SessionBuddy slug={buddySlug} name={buddyName} size={96} glow="rgba(123,166,142,.22)" />
+          <CycleProgress phase={sessionPhase} completed={completedCount} target={targetCount} />
+          <div>
+            <p className="text-xl font-extrabold text-foreground">휴식 끝!</p>
+            <p className="mt-1.5 text-sm text-text-secondary">
+              다음: {completedCount + 1}번째 집중 {focusLabel}
+            </p>
+          </div>
+          <div className="flex w-full flex-col gap-2.5">
+            <button
+              type="button"
+              onClick={handleStartNextFocus}
+              disabled={isLoading}
+              className="h-13 w-full rounded-[14px] text-[15px] font-bold text-primary-foreground shadow-[0_8px_20px_rgba(212,149,106,.4)] transition-transform hover:scale-[1.01] disabled:opacity-60"
+              style={{ background: "var(--primary-gradient)" }}
+            >
+              {isLoading ? "준비 중..." : "집중 시작"}
+            </button>
+            <button
+              type="button"
+              onClick={handleEndSessionEarly}
+              disabled={isLoading}
+              className="h-12 w-full rounded-[14px] border border-border bg-card text-[15px] font-semibold text-foreground transition-colors hover:bg-surface-2 disabled:opacity-50"
+            >
+              세션 종료
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* session_completed: 세션 완료 */}
+      {sessionPhase === "session_completed" && (
+        <SessionComplete
+          completedCount={completedCount}
+          targetCount={targetCount}
+          focusMinutes={focusMinutes}
+          earnedPoints={earnedPoints}
+          buddySlug={buddySlug}
+          buddyName={buddyName}
+          onRestart={handleResetSession}
+          onHome={handleReturnHome}
+        />
+      )}
+
+      <StopDialog
+        open={showStopDialog}
+        onOpenChange={setShowStopDialog}
+        onConfirm={handleStopConfirm}
+        isTransitioning={isTransitioning}
+        isFocusing={isFocusing}
+      />
 
       <DevConsole>
         <div className="flex items-center gap-1">
@@ -485,6 +460,6 @@ export function PomodoroTimer() {
           ⏭ 현재 단계 스킵
         </Button>
       </DevConsole>
-    </Card>
+    </div>
   );
 }
