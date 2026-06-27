@@ -140,7 +140,7 @@ export function ProfileClient({
       await logout();
       router.replace("/login");
     } catch {
-      setLogoutError("로그아웃에 실패했습니다.");
+      setLogoutError("로그아웃에 실패했어요.");
       setLoggingOut(false);
     }
   };

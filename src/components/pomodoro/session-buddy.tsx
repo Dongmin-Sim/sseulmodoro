@@ -21,7 +21,7 @@ const SPARKLES = [
 
 export function SessionBuddy({
   slug,
-  name = "버디",
+  name = "친구",
   size = 104,
   glow = "rgba(196,114,92,.22)",
   halo = false,

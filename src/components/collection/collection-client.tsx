@@ -48,7 +48,7 @@ export function CollectionClient({ data }: { data: CollectionResponse | null }) 
     return (
       <main className="relative z-10 flex flex-1 flex-col py-6">
         <div className="flex flex-col items-center gap-4 py-16 text-center">
-          <p role="alert" className="text-sm text-destructive">도감을 불러오지 못했습니다.</p>
+          <p role="alert" className="text-sm text-destructive">도감을 불러오지 못했어요.</p>
           <button
             type="button"
             onClick={() => router.refresh()}

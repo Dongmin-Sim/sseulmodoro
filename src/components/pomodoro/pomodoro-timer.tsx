@@ -48,7 +48,7 @@ export function PomodoroTimer({ character }: { character?: PomodoroBuddy | null 
   const { exitSession } = usePomodoroSession();
 
   const buddySlug = character?.slug ?? null;
-  const buddyName = character?.name ?? "버디";
+  const buddyName = character?.name ?? "친구";
 
   // 세션 설정
   const [focusMinutes, setFocusMinutes] = useState(25);

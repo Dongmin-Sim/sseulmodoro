@@ -117,7 +117,7 @@ export function AuthHeader({ nickname, balance }: AuthHeaderProps) {
       await logout();
       router.replace("/login");
     } catch {
-      setLogoutError("로그아웃에 실패했습니다. 다시 시도해주세요.");
+      setLogoutError("로그아웃에 실패했어요. 다시 시도해주세요.");
       setIsLoggingOut(false);
     }
   };
@@ -193,8 +193,8 @@ export function AuthHeader({ nickname, balance }: AuthHeaderProps) {
           <DialogHeader>
             <DialogTitle>로그아웃할까요?</DialogTitle>
             <DialogDescription>
-              진행 중인 포모도로 세션이 있습니다. 로그아웃하면 현재 진행 상황이
-              저장되지 않을 수 있습니다.
+              진행 중인 포모도로 세션이 있어요. 로그아웃하면 현재 진행 상황이
+              저장되지 않을 수 있어요.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
