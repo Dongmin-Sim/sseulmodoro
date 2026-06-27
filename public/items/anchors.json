@@ -1,0 +1,51 @@
+{
+  "note": "head anchor = top-center of head on the 264x264 character canvas. Items are pre-aligned to this anchor; compositing = overlay item PNG over character PNG. For characters whose head sits elsewhere, shift the item by (dx,dy).",
+  "canvas": [
+    264,
+    264
+  ],
+  "grid": [
+    22,
+    18
+  ],
+  "scale": 12,
+  "verticalOffset": 24,
+  "headAnchorPx": [
+    132,
+    60
+  ],
+  "characters": {
+    "owl": [
+      132,
+      60
+    ],
+    "sparrow": [
+      132,
+      60
+    ],
+    "pigeon": [
+      132,
+      60
+    ],
+    "bluebird": [
+      132,
+      60
+    ],
+    "magpie": [
+      132,
+      60
+    ],
+    "parrot": [
+      132,
+      60
+    ],
+    "peacock": [
+      132,
+      48
+    ],
+    "longtit": [
+      96,
+      72
+    ]
+  }
+}
