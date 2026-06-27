@@ -2,48 +2,39 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { getRarityCard } from "@/lib/rarity";
 
-const DEFAULT_SIZE = 160;
-const CHAR_RATIO = 0.62; // 카드 프레임 위 캐릭터 크기 (19% inset · 62%)
-
 type BirdCardProps = {
   slug: string;
   rarity: string;
   name: string;
-  size?: number;
+  size?: number; // 생략 시 컨테이너를 채우는 반응형(aspect-square)
   animated?: boolean;
   className?: string;
 };
 
 // 보유 캐릭터 카드 — 레어리티 카드 프레임 위에 픽셀 새를 합성한다.
-export function BirdCard({
-  slug,
-  rarity,
-  name,
-  size = DEFAULT_SIZE,
-  animated = false,
-  className,
-}: BirdCardProps) {
-  const charSize = Math.round(size * CHAR_RATIO);
+// 캐릭터는 퍼센트(19% inset · 62%)로 배치돼 고정·반응형 모두에서 동일 비율을 유지한다.
+export function BirdCard({ slug, rarity, name, size, animated = false, className }: BirdCardProps) {
+  const fixed = size != null;
 
   return (
-    <div className={cn("relative", className)} style={{ width: size, height: size }}>
+    <div
+      className={cn("relative", !fixed && "aspect-square w-full", className)}
+      style={fixed ? { width: size, height: size } : undefined}
+    >
       <Image
         src={getRarityCard(rarity)}
         alt=""
         fill
         unoptimized
-        sizes={`${size}px`}
+        sizes={fixed ? `${size}px` : "160px"}
         className="pixelated"
       />
-      <Image
-        src={`/characters/${slug}.png`}
-        alt={name}
-        width={charSize}
-        height={charSize}
-        unoptimized
-        className={cn("pixelated absolute", animated && "animate-bird-bob")}
-        style={{ top: "19%", left: "19%" }}
-      />
+      <div
+        className={cn("absolute", animated && "animate-bird-bob")}
+        style={{ top: "19%", left: "19%", width: "62%", height: "62%" }}
+      >
+        <Image src={`/characters/${slug}.png`} alt={name} fill unoptimized className="pixelated object-contain" />
+      </div>
     </div>
   );
 }
