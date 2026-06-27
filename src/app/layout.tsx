@@ -45,6 +45,14 @@ export default function RootLayout({
       lang="ko"
       className={`${plusJakarta.variable} ${pretendard.variable} ${geistMono.variable} ${silkscreen.variable} h-full antialiased`}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{if(localStorage.getItem('sm-theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}",
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
