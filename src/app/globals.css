@@ -10,6 +10,8 @@
   --font-sans: var(--font-plus-jakarta), var(--font-pretendard), "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
+  /* 픽셀 폰트 — 로고·eyebrow·대문자 마이크로 라벨 (font-pixel) */
+  --font-pixel: var(--font-silkscreen), "Geist Mono", monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,6 +51,16 @@
   --color-focus: var(--focus);
   --color-break: var(--break);
   --color-success: var(--success);
+  /* 신 시안 확장 토큰 (픽셀-게임 무드) */
+  --color-primary-deep: var(--primary-deep);
+  --color-gold: var(--gold);
+  --color-gold-deep: var(--gold-deep);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-background-focus: var(--background-focus);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-faint: var(--text-faint);
+  --color-border-warm: var(--border-warm);
 }
 
 :root {
@@ -82,6 +94,19 @@
   --focus: #C4725C;
   --break: #7BA68E;
   --success: #A8C7A0;
+
+  /* 신 시안 확장 토큰 (픽셀-게임 무드 · DESIGN.md) */
+  --primary-deep: #C4725C;        /* primary hover/그라데이션 끝 */
+  --primary-grad-end: #C97F58;    /* primary 그라데이션 종점 */
+  --gold: #E0B15E;                /* 액센트(골드) — 스파클·포인트·잔액 */
+  --gold-deep: #B68A3E;           /* 골드 진하게 — 전설 라벨 */
+  --surface-2: #F3EDE6;           /* 보조 표면(연베이지 pill) */
+  --surface-3: #FBF6EF;           /* 보조 표면 밝은 톤 */
+  --background-focus: #F3ECE4;    /* 집중모드 배경(따뜻한 그림자) */
+  --text-secondary: #6F665E;      /* 보조 텍스트 */
+  --text-faint: #B8AEA3;          /* 흐린 텍스트/placeholder */
+  --border-warm: #F0E7D9;         /* 따뜻한 보더(골드 톤) */
+  --primary-gradient: linear-gradient(135deg, #D4956A, #C97F58);
 
   /* 그림자 (DESIGN.md) — 브라운 톤(회색 아님) */
   --shadow: 0 1px 3px rgba(45,42,38,0.06), 0 1px 2px rgba(45,42,38,0.04);
@@ -231,6 +256,64 @@
       transform: translate(calc(var(--sx, 0) * 1.7), calc(var(--sy, 0) * 1.7)) scale(0.3);
     }
   }
+
+/* 픽셀 아트 이미지 — 도트 또렷하게 (모든 캐릭터/카드/아이콘 img) */
+.pixelated {
+  image-rendering: pixelated;
+}
+
+/* 미세 그리드 텍스처 배경 — 홈/대시보드 (DESIGN.md) */
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(45, 42, 38, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(45, 42, 38, 0.035) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+/* 마스코트 둥실 (홈 버디 — translateY ±7px) */
+.animate-buddy-bob {
+  animation: buddy-bob 3.6s ease-in-out infinite;
+}
+@keyframes buddy-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+/* 버디 오라 펄스 */
+.animate-aura-pulse {
+  animation: aura-pulse 3.2s ease-in-out infinite;
+}
+@keyframes aura-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.08); opacity: 0.85; }
+}
+
+/* 링 글로우 */
+.animate-ring-glow {
+  animation: ring-glow 2.8s ease-in-out infinite;
+}
+@keyframes ring-glow {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.8; }
+}
+
+/* 앰비언트 스파클 펄스 — 버디 무대 주변(가챠 1회성 sparkle과 별개, 무한 반복) */
+.animate-sparkle-pulse {
+  animation: sparkle-pulse 2.8s ease-in-out infinite;
+}
+@keyframes sparkle-pulse {
+  0%, 100% { opacity: 0.25; transform: translateY(0) scale(0.85); }
+  50% { opacity: 1; transform: translateY(-4px) scale(1); }
+}
+
+/* 친구 마퀴(컨베이어) — 리스트 2회 복제 후 -50% 이동 (랜딩). 모바일은 인라인 duration 단축 */
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
 
 @layer base {
   * {

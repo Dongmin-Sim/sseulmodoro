@@ -7,6 +7,7 @@ export const RARITY_PANEL: Record<string, RarityPanel> = {
   rare: { bg: "#E4ECF4", ring: "#C2D2E0" }, // 블루
   epic: { bg: "#ECE5F4", ring: "#D2C2E4" }, // 라벤더
   legendary: { bg: "#F4ECD9", ring: "#E2D2A8" }, // 크림·골드
+  mythic: { bg: "#F1ECF6", ring: "#C9A8D6" }, // 신화 — 홀로그래픽(임시 톤). 카드 프레임은 T4(mythic.png)에서 정식화
 };
 
 // 알 수 없는 rarity는 common으로 폴백.

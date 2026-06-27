@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, Geist_Mono, Silkscreen } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 
@@ -7,6 +7,13 @@ import "./globals.css";
 const plusJakarta = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta",
   subsets: ["latin"],
+});
+
+// 픽셀 폰트 — 로고·eyebrow 라벨·대문자 마이크로 라벨 전용 (DESIGN.md). 가변 폰트 아님 → weight 명시
+const silkscreen = Silkscreen({
+  variable: "--font-silkscreen",
+  subsets: ["latin"],
+  weight: ["400", "700"],
 });
 
 // 한글 본문/제목 — Pretendard (self-host 가변 폰트). Plus Jakarta Sans에 한글 글리프 없음
@@ -36,7 +43,7 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${plusJakarta.variable} ${pretendard.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${plusJakarta.variable} ${pretendard.variable} ${geistMono.variable} ${silkscreen.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
