@@ -9,7 +9,7 @@ export type BirdFamily =
   | "parrot" // 앵무·꿩류: hooked 부리 + 볏 옵션 + 얼굴 패치 (앵무·공작)
   | "waterfowl"; // 물새류: 수평 몸 + S넥 + 납작 부리 (오리)
 
-export type Rarity = "common" | "rare" | "epic" | "legendary";
+export type Rarity = "common" | "rare" | "epic" | "legendary" | "mythic";
 
 export type RGBA = readonly [number, number, number, number];
 

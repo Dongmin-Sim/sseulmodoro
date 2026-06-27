@@ -136,6 +136,7 @@ export type Database = {
           id: number
           name: string
           rarity: string
+          scientific_name: string | null
           slug: string
         }
         Insert: {
@@ -144,6 +145,7 @@ export type Database = {
           id?: number
           name: string
           rarity: string
+          scientific_name?: string | null
           slug: string
         }
         Update: {
@@ -152,6 +154,7 @@ export type Database = {
           id?: number
           name?: string
           rarity?: string
+          scientific_name?: string | null
           slug?: string
         }
         Relationships: []
