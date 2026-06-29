@@ -5,10 +5,13 @@ from utils.gcp import get_bigquery_client, create_dataset, create_table_from_ddl
 from ddl.raw import RAW_ACTIVITY_LOG_TABLE_DDL
 from ddl.fact import FACT_USER_DAILY_POMODORO_TABLE_DDL
 from ddl.mart import MART_WEEKLY_NSM_TABLE_DDL
+from utils.logger import get_logger
 
 from .extract import extract_activity_log, extract_pomodoro_sessions
 from .load import load_to_raw, load_pomodoro_sessions, preprocess_pomodoro_sessions
 from .transform import transform
+
+logger = get_logger(__name__)
 
 def prepare_schema(bq_client):
     create_dataset(bq_client, 'raw')
@@ -19,6 +22,12 @@ def prepare_schema(bq_client):
 
     create_dataset(bq_client, 'mart')
     create_table_from_ddl(bq_client, 'weekly_nsm', MART_WEEKLY_NSM_TABLE_DDL)
+
+    ddl_path = Path(__file__).parent.parent / "sql" / "ddl" / "mart_fact_pomodoro_sessions.sql"
+    with open(ddl_path, "r", encoding="utf-8") as f:
+        ddl_sql = f.read()
+        logger.info(f"read sql query from {ddl_path}")
+    create_table_from_ddl(bq_client, 'fact_pomodoro_sessions', ddl_sql)
 
 def run_nsm() -> None:
     database_url = os.getenv("DATABASE_URL")
@@ -38,8 +47,14 @@ def run_nsm() -> None:
 
     # transform to fact, mart
     sql_dir = Path(__file__).parent.parent / "sql"
-    file_paths = [sql_dir / "raw_to_fact.sql", sql_dir / "fact_to_mart.sql"]
-    table_names = [f'{project_id}.fact.daily_user_pomodoro_completions', f'{project_id}.mart.weekly_nsm']
+    file_paths = [
+        sql_dir / "raw_to_fact.sql",
+        sql_dir / "fact_to_mart.sql",
+        sql_dir / "marts/fact_pomodoro_sessions.sql"]
+    table_names = [
+        f'{project_id}.fact.daily_user_pomodoro_completions',
+        f'{project_id}.mart.weekly_nsm',
+        f'{project_id}.mart.fact_pomodoro_sessions']
 
     transform(bq_client, file_paths, table_names)
 
