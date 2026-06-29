@@ -28,6 +28,9 @@ def load_to_raw(client, table_name, df):
     load_job.result()
     logger.info(f"loaded {load_job.output_rows} rows into {table_id}")
 
+def preprocess_pomodoro_sessions(df: pd.DataFrame)-> pd.DataFrame:
+    return df.assign(user_id=df['user_id'].astype(str))
+
 def load_pomodoro_sessions(client, table_name, df):
     """supabase로부터 추출된 pomodoro_sessions 테이블을 bigquery raw 데이터 셋에 업로드
 
@@ -37,13 +40,12 @@ def load_pomodoro_sessions(client, table_name, df):
             :param table_name: 적재할 테이블 명
             :param df: 적재 대상 데이터프레임
         """
-    df['user_id'] = df['user_id'].astype(str)
     df["loaded_at"] = pd.Timestamp.now(tz='UTC')
 
     table_id = f'{client.project}.raw.{table_name}'
     job_config = bigquery.LoadJobConfig(
         schema=RAW_POMODORO_SESSIONS_TABLE_SCHEMA,
-        write_disposition='WRITE_TRUNCATE'
+        write_disposition="WRITE_TRUNCATE"
     )
     load_job = client.load_table_from_dataframe(df, table_id, job_config=job_config)
     load_job.result()

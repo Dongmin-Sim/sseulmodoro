@@ -16,7 +16,7 @@ def extract_activity_log(database_url:str|None):
         logger.info(f"extracted {len(df)} rows")
     return df
 
-def extract_pomodoro_session(database_url:str|None):
+def extract_pomodoro_sessions(database_url: str | None):
     """supabase에서 pomodoro_sessions 테이블을 추출하여 Pandas Dataframe으로 반환
     """
     if database_url is None: raise RuntimeError("DATABASE_URL not set")

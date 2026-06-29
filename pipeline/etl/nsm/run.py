@@ -6,8 +6,8 @@ from ddl.raw import RAW_ACTIVITY_LOG_TABLE_DDL
 from ddl.fact import FACT_USER_DAILY_POMODORO_TABLE_DDL
 from ddl.mart import MART_WEEKLY_NSM_TABLE_DDL
 
-from .extract import extract_activity_log, extract_pomodoro_session
-from .load import load_to_raw, load_pomodoro_sessions
+from .extract import extract_activity_log, extract_pomodoro_sessions
+from .load import load_to_raw, load_pomodoro_sessions, preprocess_pomodoro_sessions
 from .transform import transform
 
 def prepare_schema(bq_client):
@@ -28,11 +28,13 @@ def run_nsm() -> None:
 
     # extract from Supabase activiti_log
     activity_log_df = extract_activity_log(database_url=database_url)
-    pomodoro_session_df = extract_pomodoro_session(database_url=database_url)
+    pomodoro_session_df = extract_pomodoro_sessions(database_url=database_url)
 
     # load to bigquery raw.activiti_log
     load_to_raw(bq_client, 'activity_log', activity_log_df)
-    load_pomodoro_sessions(bq_client, 'pomodoro_sessions', pomodoro_session_df)
+
+    processed_pomodoro_session_df = preprocess_pomodoro_sessions(pomodoro_session_df)
+    load_pomodoro_sessions(bq_client, 'pomodoro_sessions', processed_pomodoro_session_df)
 
     # transform to fact, mart
     sql_dir = Path(__file__).parent.parent / "sql"
