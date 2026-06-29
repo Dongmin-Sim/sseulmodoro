@@ -18,3 +18,13 @@ dependencies = [
 search-path = ["etl"]
 python-version = "3.12"
 
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["etl"]
+addopts = "-v"
+
