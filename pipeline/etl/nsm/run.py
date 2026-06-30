@@ -29,6 +29,12 @@ def prepare_schema(bq_client):
         logger.info(f"read sql query from {ddl_path}")
     create_table_from_ddl(bq_client, 'fact_pomodoro_sessions', ddl_sql)
 
+    ddl_path = Path(__file__).parent.parent / "sql" / "ddl" / "mart_agg_nsm_weekly.sql"
+    with open(ddl_path, "r", encoding="utf-8") as f:
+        ddl_sql = f.read()
+        logger.info(f"read sql query from {ddl_path}")
+    create_table_from_ddl(bq_client, 'agg_nsm_weekly', ddl_sql)
+
 def run_nsm() -> None:
     database_url = os.getenv("DATABASE_URL")
     bq_client = get_bigquery_client()
@@ -50,11 +56,13 @@ def run_nsm() -> None:
     file_paths = [
         sql_dir / "raw_to_fact.sql",
         sql_dir / "fact_to_mart.sql",
-        sql_dir / "marts/fact_pomodoro_sessions.sql"]
+        sql_dir / "marts/fact_pomodoro_sessions.sql",
+        sql_dir / "marts/agg_nsm_weekly.sql"]
     table_names = [
         f'{project_id}.fact.daily_user_pomodoro_completions',
         f'{project_id}.mart.weekly_nsm',
-        f'{project_id}.mart.fact_pomodoro_sessions']
+        f'{project_id}.mart.fact_pomodoro_sessions',
+        f'{project_id}.mart.agg_nsm_weekly']
 
     transform(bq_client, file_paths, table_names)
 
