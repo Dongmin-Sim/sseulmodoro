@@ -1,7 +1,7 @@
 import os
-from pathlib import Path
 
-from utils.gcp import get_bigquery_client, create_dataset, create_table_from_ddl
+from config import SQL_DIR
+from utils.gcp import get_bigquery_client, create_dataset, create_table_from_ddl, create_table_from_ddl_file
 from ddl.raw import RAW_ACTIVITY_LOG_TABLE_DDL
 from ddl.fact import FACT_USER_DAILY_POMODORO_TABLE_DDL
 from ddl.mart import MART_WEEKLY_NSM_TABLE_DDL
@@ -23,17 +23,8 @@ def prepare_schema(bq_client):
     create_dataset(bq_client, 'mart')
     create_table_from_ddl(bq_client, 'weekly_nsm', MART_WEEKLY_NSM_TABLE_DDL)
 
-    ddl_path = Path(__file__).parent.parent / "sql" / "ddl" / "mart_fact_pomodoro_sessions.sql"
-    with open(ddl_path, "r", encoding="utf-8") as f:
-        ddl_sql = f.read()
-        logger.info(f"read sql query from {ddl_path}")
-    create_table_from_ddl(bq_client, 'fact_pomodoro_sessions', ddl_sql)
-
-    ddl_path = Path(__file__).parent.parent / "sql" / "ddl" / "mart_agg_nsm_weekly.sql"
-    with open(ddl_path, "r", encoding="utf-8") as f:
-        ddl_sql = f.read()
-        logger.info(f"read sql query from {ddl_path}")
-    create_table_from_ddl(bq_client, 'agg_nsm_weekly', ddl_sql)
+    create_table_from_ddl_file(bq_client, 'fact_pomodoro_sessions', 'mart_fact_pomodoro_sessions.sql')
+    create_table_from_ddl_file(bq_client, 'agg_nsm_weekly', 'mart_agg_nsm_weekly.sql')
 
 def run_nsm() -> None:
     database_url = os.getenv("DATABASE_URL")
@@ -52,12 +43,11 @@ def run_nsm() -> None:
     load_pomodoro_sessions(bq_client, 'pomodoro_sessions', processed_pomodoro_session_df)
 
     # transform to fact, mart
-    sql_dir = Path(__file__).parent.parent / "sql"
     file_paths = [
-        sql_dir / "raw_to_fact.sql",
-        sql_dir / "fact_to_mart.sql",
-        sql_dir / "marts/fact_pomodoro_sessions.sql",
-        sql_dir / "marts/agg_nsm_weekly.sql"]
+        SQL_DIR / "raw_to_fact.sql",
+        SQL_DIR / "fact_to_mart.sql",
+        SQL_DIR / "marts/fact_pomodoro_sessions.sql",
+        SQL_DIR / "marts/agg_nsm_weekly.sql"]
     table_names = [
         f'{project_id}.fact.daily_user_pomodoro_completions',
         f'{project_id}.mart.weekly_nsm',
@@ -65,4 +55,3 @@ def run_nsm() -> None:
         f'{project_id}.mart.agg_nsm_weekly']
 
     transform(bq_client, file_paths, table_names)
-

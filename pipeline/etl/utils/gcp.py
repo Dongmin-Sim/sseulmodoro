@@ -1,6 +1,7 @@
 import google.cloud.bigquery as bigquery
 
 from utils.logger import get_logger
+from config import DDL_DIR
 
 logger = get_logger(__name__)
 
@@ -36,3 +37,10 @@ def create_table_from_ddl(client, table_name: str, ddl_template: str) -> None:
     job = client.query(ddl)
     job.result()
     logger.info(f"Table Created: {table_name}, state={job.state}, errors={job.errors}")
+
+def create_table_from_ddl_file(bq_client, table_name, ddl_filename):
+    ddl_path = DDL_DIR / ddl_filename
+    with open(ddl_path, "r", encoding="utf-8") as f:
+        ddl_sql = f.read()
+        logger.info(f"read ddl from {ddl_path}")
+    create_table_from_ddl(bq_client, table_name, ddl_sql)
