@@ -12,7 +12,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
 
   return (
     <FullscreenStatus
-      buddySrc="/characters/main/owl-confused.png"
+      buddySrc="/characters/owl-confused.png"
       glow="rgba(196,114,92,.14)"
       glowSize={260}
       eyebrow={

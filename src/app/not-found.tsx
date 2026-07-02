@@ -5,7 +5,7 @@ import { BackButton } from "@/components/status/back-button";
 export default function NotFound() {
   return (
     <FullscreenStatus
-      buddySrc="/characters/main/owl-helmet.png"
+      buddySrc="/characters/owl-helmet.png"
       glow="rgba(224,177,94,.16)"
       decorations={
         <>
