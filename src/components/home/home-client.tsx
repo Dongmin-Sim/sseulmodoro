@@ -90,7 +90,7 @@ export function HomeClient({ data }: HomeClientProps) {
                   <Badge
                     className="rounded-full px-3.5 py-1 text-xs font-semibold text-white"
                     style={{
-                      background: "linear-gradient(135deg, #D4956A, #C4725C)",
+                      background: "linear-gradient(135deg, var(--accent), var(--chart-2))",
                       boxShadow: "0 2px 8px rgba(212,149,106,0.35)",
                       border: "none",
                     }}
@@ -106,7 +106,7 @@ export function HomeClient({ data }: HomeClientProps) {
                   style={{
                     width: 140,
                     height: 140,
-                    background: "#EDE8E1",
+                    background: "var(--border)",
                     borderRadius: "50%",
                   }}
                 >
@@ -152,7 +152,7 @@ export function HomeClient({ data }: HomeClientProps) {
                     </span>
                   </div>
                   <div className="flex flex-col items-center gap-1">
-                    <span className="text-xl font-bold leading-none" style={{ color: "#7BA68E" }}>
+                    <span className="text-xl font-bold leading-none" style={{ color: "var(--break)" }}>
                       {WEEKLY_PLACEHOLDER.streakDays}
                     </span>
                     <span className="text-center text-xs font-medium text-muted-foreground">
@@ -181,15 +181,15 @@ export function HomeClient({ data }: HomeClientProps) {
                           height: Math.max(height, 4),
                           background:
                             i === todayIndex
-                              ? "#D4956A"
-                              : "rgba(212,149,106,0.2)",
+                              ? "var(--accent)"
+                              : "color-mix(in srgb, var(--accent) 20%, transparent)",
                           opacity: height === 0 ? 0.35 : 1,
                         }}
                       />
                       <span
                         className="text-[10px] font-medium"
                         style={{
-                          color: i === todayIndex ? "#D4956A" : "#9C9590",
+                          color: i === todayIndex ? "var(--accent)" : "var(--muted-foreground)",
                           fontWeight: i === todayIndex ? 700 : 500,
                         }}
                       >
@@ -202,16 +202,7 @@ export function HomeClient({ data }: HomeClientProps) {
             </Card>
 
             {/* CTA */}
-            <Button
-              className="w-full rounded-[10px] py-4 text-base font-bold text-white"
-              style={{
-                background: "#D4956A",
-                boxShadow: "0 6px 16px rgba(212,149,106,0.38)",
-                border: "none",
-                height: "auto",
-              }}
-              onClick={enterSession}
-            >
+            <Button size="cta" className="w-full" onClick={enterSession}>
               집중 시작
             </Button>
           </div>

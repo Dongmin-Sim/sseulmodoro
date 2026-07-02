@@ -150,6 +150,32 @@ describe("POST /api/gacha", () => {
     expect(json.error).toBe("Internal server error");
   });
 
+  it("should pass through mythic rarity from rpc when a mythic character is drawn", async () => {
+    // Arrange
+    mockRpc.mockResolvedValue({
+      data: {
+        instance_id: 8,
+        type_id: 8,
+        name: "맴새",
+        rarity: "mythic",
+        level: 1,
+        new_balance: 100,
+        is_new: true,
+      },
+      error: null,
+    });
+    mockSingle.mockResolvedValue({ data: { slug: "maemsae" }, error: null });
+
+    // Act
+    const res = await POST();
+
+    // Assert
+    expect(res.status).toBe(201);
+    const json = await res.json();
+    expect(json.characterInstance.rarity).toBe("mythic");
+    expect(json.characterInstance.slug).toBe("maemsae");
+  });
+
   it("should return 201 with characterInstance including slug when request is valid", async () => {
     // Arrange
     mockRpc.mockResolvedValue({ data: VALID_RPC_DATA, error: null });

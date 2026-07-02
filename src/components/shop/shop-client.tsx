@@ -86,13 +86,8 @@ export function ShopClient({ balance: initialBalance, gachaCost }: ShopClientPro
 
             <div className="flex w-full flex-col items-center gap-2">
               <Button
-                className="w-full rounded-[10px] py-4 text-base font-bold text-white"
-                style={{
-                  background: canDraw ? "#D4956A" : "#D7CFC6",
-                  boxShadow: canDraw ? "0 6px 16px rgba(212,149,106,0.38)" : "none",
-                  border: "none",
-                  height: "auto",
-                }}
+                size="cta"
+                className="w-full"
                 onClick={handleStartDraw}
                 disabled={!canDraw}
                 aria-label="캐릭터 뽑기"

@@ -25,13 +25,6 @@ const FEATURES = [
 
 const TOTAL_STEPS = 4;
 
-const ctaStyle = {
-  background: "#D4956A",
-  boxShadow: "0 6px 16px rgba(212,149,106,0.38)",
-  border: "none",
-  height: "auto",
-} as const;
-
 export function OnboardingFlow({ starter, onDone }: OnboardingFlowProps) {
   const [step, setStep] = useState(0);
   const [nickname, setNickname] = useState("");
@@ -101,7 +94,7 @@ export function OnboardingFlow({ starter, onDone }: OnboardingFlowProps) {
               className="h-1.5 rounded-full transition-all duration-300"
               style={{
                 width: i === step ? 24 : 8,
-                background: i <= step ? "#D4956A" : "#EDE8E1",
+                background: i <= step ? "var(--accent)" : "var(--border)",
               }}
             />
           ))}
@@ -118,11 +111,7 @@ export function OnboardingFlow({ starter, onDone }: OnboardingFlowProps) {
               집중하면 캐릭터가 자라고,
               <br />그 시간이 고스란히 기록으로 남아요.
             </p>
-            <Button
-              className="mt-4 w-full rounded-[10px] py-4 text-base font-bold text-white"
-              style={ctaStyle}
-              onClick={goNext}
-            >
+            <Button size="cta" className="mt-4 w-full" onClick={goNext}>
               다음
             </Button>
           </div>
@@ -148,11 +137,7 @@ export function OnboardingFlow({ starter, onDone }: OnboardingFlowProps) {
                 </div>
               ))}
             </div>
-            <Button
-              className="w-full rounded-[10px] py-4 text-base font-bold text-white"
-              style={ctaStyle}
-              onClick={goNext}
-            >
+            <Button size="cta" className="w-full" onClick={goNext}>
               다음
             </Button>
           </div>
@@ -198,8 +183,8 @@ export function OnboardingFlow({ starter, onDone }: OnboardingFlowProps) {
               )}
             </div>
             <Button
-              className="mt-2 w-full rounded-[10px] py-4 text-base font-bold text-white disabled:opacity-50"
-              style={ctaStyle}
+              size="cta"
+              className="mt-2 w-full"
               onClick={goNext}
               disabled={!isNicknameVerified}
             >

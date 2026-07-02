@@ -22,11 +22,13 @@ CREATE UNIQUE INDEX uniq_profiles_nickname_lower
 
 -- 2. character_types
 CREATE TABLE public.character_types (
-  id          SERIAL PRIMARY KEY,
-  name        VARCHAR(100) NOT NULL,
-  rarity      VARCHAR(20) NOT NULL,
-  description TEXT,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  id              SERIAL PRIMARY KEY,
+  slug            VARCHAR(50) NOT NULL UNIQUE,
+  name            VARCHAR(100) NOT NULL,
+  scientific_name VARCHAR(100),
+  rarity          VARCHAR(20) NOT NULL,
+  description     TEXT,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- 3. character_instances
