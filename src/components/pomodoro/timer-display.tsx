@@ -23,7 +23,7 @@ export function TimerDisplay({ display, progress, status, label, progressColor }
         width="280"
         height="280"
         viewBox="0 0 280 280"
-        className="-rotate-90"
+        className="-rotate-90 lg:h-80 lg:w-80"
       >
         {/* 배경 원 */}
         <circle
@@ -31,9 +31,8 @@ export function TimerDisplay({ display, progress, status, label, progressColor }
           cy="140"
           r={CIRCLE_RADIUS}
           fill="none"
-          stroke="currentColor"
-          strokeWidth="6"
-          className="text-muted"
+          stroke="#E5DAC9"
+          strokeWidth="9"
         />
         {/* 진행 원 */}
         <circle
@@ -42,7 +41,7 @@ export function TimerDisplay({ display, progress, status, label, progressColor }
           r={CIRCLE_RADIUS}
           fill="none"
           stroke="currentColor"
-          strokeWidth="6"
+          strokeWidth="9"
           strokeLinecap="round"
           strokeDasharray={CIRCLE_CIRCUMFERENCE}
           strokeDashoffset={strokeDashoffset}
@@ -58,7 +57,7 @@ export function TimerDisplay({ display, progress, status, label, progressColor }
       <div className="absolute flex flex-col items-center gap-1">
         <span
           className={cn(
-            "font-mono text-6xl font-bold tabular-nums tracking-tight",
+            "font-mono text-6xl font-bold tabular-nums tracking-tight lg:text-7xl",
             status === "completed" && "text-success"
           )}
         >

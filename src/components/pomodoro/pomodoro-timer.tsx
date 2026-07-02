@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { CycleProgress } from "./cycle-progress";
 import { useTimer } from "./use-timer";
@@ -10,12 +12,13 @@ import { TimerControls } from "./timer-controls";
 import { SessionPrep } from "./session-prep";
 import { BreakScreen } from "./break-screen";
 import { SessionComplete } from "./session-complete";
+import { CycleTransition } from "./cycle-transition";
 import { StopDialog } from "./stop-dialog";
 import { SessionBuddy } from "./session-buddy";
 import { SESSION_DEFAULTS } from "@/lib/constants";
 import { DevConsole } from "@/lib/dev/dev-console";
 import { DEV_SPEED_OPTIONS } from "@/lib/dev/constants";
-import { usePomodoroSession } from "./session-context";
+import { usePomodoroSession, type TimerHeaderMode } from "./session-context";
 import {
   startSession,
   endSession,
@@ -43,16 +46,46 @@ type PomodoroBuddy = {
   rarity: string;
 };
 
+type RoadmapStep = { kind: "focus" | "short" | "long"; label: string; minutes: number; n: number };
+
+const ROADMAP_ICON = {
+  focus: "/icons/tomato.png",
+  short: "/icons/coffee.png",
+  long: "/icons/tree.png",
+} as const;
+
+const fmtMin = (m: number) => `${String(m).padStart(2, "0")}:00`;
+
+const GRID_IMAGE =
+  "linear-gradient(rgba(45,42,38,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(45,42,38,.035) 1px,transparent 1px)";
+const FOCUS_TINT = "radial-gradient(circle at 50% 40%, rgba(196,114,92,.12), rgba(196,114,92,0) 55%)";
+const BREAK_TINT = "radial-gradient(circle at 50% 40%, rgba(123,166,142,.16), rgba(123,166,142,0) 55%)";
+const GOLD_TINT = "radial-gradient(circle at 50% 38%, rgba(224,177,94,.18), rgba(224,177,94,0) 52%)";
+
+function buildRoadmap(
+  targetCount: number,
+  focusMinutes: number,
+  shortBreakMinutes: number,
+  longBreakMinutes: number,
+): RoadmapStep[] {
+  return Array.from({ length: targetCount }, (_, idx) => idx + 1).flatMap((i) => [
+    { kind: "focus" as const, label: `${i}번째 집중`, minutes: focusMinutes, n: i },
+    i < targetCount
+      ? { kind: "short" as const, label: "짧은 휴식", minutes: shortBreakMinutes, n: i }
+      : { kind: "long" as const, label: "긴 휴식", minutes: longBreakMinutes, n: i },
+  ]);
+}
+
 export function PomodoroTimer({ character }: { character?: PomodoroBuddy | null }) {
   const router = useRouter();
-  const { exitSession } = usePomodoroSession();
+  const { exitSession, setTimerHeader, registerStopHandler } = usePomodoroSession();
 
   const buddySlug = character?.slug ?? null;
-  const buddyName = character?.name ?? "버디";
+  const buddyName = character?.name ?? "친구";
+  const buddyRarity = character?.rarity ?? "common";
 
   // 세션 설정
   const [focusMinutes, setFocusMinutes] = useState(25);
-  const [focusLabel, setFocusLabel] = useState("25분");
   const [shortBreakMinutes, setShortBreakMinutes] = useState<number>(
     SESSION_DEFAULTS.shortBreakMinutes,
   );
@@ -135,9 +168,28 @@ export function PomodoroTimer({ character }: { character?: PomodoroBuddy | null 
   // 언마운트(세션 이탈 등) 시 깜박임·소리 반복 정지 + 제목 원복
   useEffect(() => stopBackgroundAlert, []);
 
-  const handleFocusChange = (minutes: number, label: string) => {
+  // 세션 단계 → 상단 헤더 변형 동기화. 언마운트 시 기본 헤더로 복원.
+  useEffect(() => {
+    const headerByPhase: Record<SessionPhase, TimerHeaderMode> = {
+      idle: "prep",
+      focusing: "focus",
+      pomodoro_done: "complete", // 사이클 전환 화면: 헤더 디자인 제공 전까지 숨김
+      breaking: "break",
+      break_done: "complete", // 사이클 전환 화면: 헤더 디자인 제공 전까지 숨김
+      session_completed: "complete",
+    };
+    setTimerHeader(headerByPhase[sessionPhase]);
+    return () => setTimerHeader("default");
+  }, [sessionPhase, setTimerHeader]);
+
+  // 헤더 '집중 종료'가 본문 '중지'와 동일하게 확인 다이얼로그를 열도록 브리지 등록
+  useEffect(() => {
+    registerStopHandler(() => setShowStopDialog(true));
+    return () => registerStopHandler(null);
+  }, [registerStopHandler]);
+
+  const handleFocusChange = (minutes: number) => {
     setFocusMinutes(minutes);
-    setFocusLabel(label);
   };
 
   const handleStart = async () => {
@@ -181,6 +233,12 @@ export function PomodoroTimer({ character }: { character?: PomodoroBuddy | null 
 
   const handleStartBreak = () => {
     timer.resetWithDuration(currentBreakMinutes);
+    timer.start();
+    setSessionPhase("breaking");
+  };
+
+  const handleExtendBreak = () => {
+    timer.resetWithDuration(5);
     timer.start();
     setSessionPhase("breaking");
   };
@@ -279,8 +337,26 @@ export function PomodoroTimer({ character }: { character?: PomodoroBuddy | null 
   const isFocusing = sessionPhase === "focusing";
   const isTimerPhase = sessionPhase === "focusing" || sessionPhase === "breaking";
 
+  const isTransition = sessionPhase === "pomodoro_done" || sessionPhase === "break_done";
+  const phaseTint = isFocusing
+    ? FOCUS_TINT
+    : sessionPhase === "breaking"
+      ? BREAK_TINT
+      : isTransition
+        ? GOLD_TINT
+        : null;
+
   return (
     <div className="relative flex w-full flex-col items-center">
+      <div
+        aria-hidden
+        className="fixed inset-0 -z-10"
+        style={{
+          backgroundColor: "var(--background)",
+          backgroundImage: phaseTint ? `${phaseTint}, ${GRID_IMAGE}` : GRID_IMAGE,
+          backgroundSize: phaseTint ? "auto, 26px 26px, 26px 26px" : "26px 26px, 26px 26px",
+        }}
+      />
       {/* idle: 세션 준비 */}
       {sessionPhase === "idle" && (
         <SessionPrep
@@ -290,6 +366,7 @@ export function PomodoroTimer({ character }: { character?: PomodoroBuddy | null 
           targetCount={targetCount}
           buddySlug={buddySlug}
           buddyName={buddyName}
+          buddyRarity={buddyRarity}
           isLoading={isLoading}
           onFocusChange={handleFocusChange}
           onShortBreakChange={setShortBreakMinutes}
@@ -301,34 +378,78 @@ export function PomodoroTimer({ character }: { character?: PomodoroBuddy | null 
 
       {/* focusing: 집중 */}
       {isFocusing && (
-        <div className="flex w-full flex-col items-center gap-6">
-          <div className="flex items-center gap-2 rounded-full border border-focus/30 bg-focus/10 px-4 py-1.5">
-            <span className="h-2 w-2 rounded-full bg-focus shadow-[0_0_0_4px_rgba(196,114,92,.18)]" />
-            <span className="font-pixel text-[10px] tracking-[1px] text-focus">FOCUS MODE</span>
-          </div>
-          <CycleProgress phase={sessionPhase} completed={completedCount} target={targetCount} />
-          <TimerDisplay
-            display={timer.display}
-            progress={timer.progress}
-            status={timer.status}
-            label={`${completedCount + 1} / ${targetCount} 집중 중`}
-            progressColor="text-focus"
-          />
-          {isTransitioning ? (
-            <Button size="lg" className="h-11 w-40" disabled>
-              처리 중...
-            </Button>
-          ) : (
-            <TimerControls
+        <div className="mx-auto grid w-full max-w-[1000px] gap-8 py-2 lg:min-h-[calc(100dvh-9rem)] lg:grid-cols-[1.05fr_.95fr] lg:items-center">
+          {/* 좌: 링·컨트롤 */}
+          <div className="flex flex-col items-center gap-6">
+            <CycleProgress phase={sessionPhase} completed={completedCount} target={targetCount} />
+            <TimerDisplay
+              display={timer.display}
+              progress={timer.progress}
               status={timer.status}
-              onStart={timer.start}
-              onPause={timer.pause}
-              onResume={timer.resume}
-              onStop={handleStopRequest}
-              onReset={handleResetSession}
-              disabled={false}
+              label={`${completedCount + 1} / ${targetCount} 집중 중`}
+              progressColor="text-focus"
             />
-          )}
+            {isTransitioning ? (
+              <Button size="lg" className="h-11 w-40" disabled>
+                처리 중...
+              </Button>
+            ) : (
+              <TimerControls
+                status={timer.status}
+                onStart={timer.start}
+                onPause={timer.pause}
+                onResume={timer.resume}
+                onStop={handleStopRequest}
+                onReset={handleResetSession}
+                disabled={false}
+              />
+            )}
+          </div>
+
+          {/* 우: 버디 + 세션 플랜 (데스크톱) */}
+          <div className="hidden flex-col gap-6 lg:flex">
+            <div className="flex items-center gap-6 rounded-3xl border border-border bg-card/70 p-7">
+              <SessionBuddy slug={buddySlug} name={buddyName} size={116} glow="rgba(196,114,92,.22)" />
+              <div>
+                <p className="font-pixel mb-1.5 text-[10px] tracking-[1px] text-focus">BUDDY</p>
+                <p className="text-lg font-extrabold text-foreground">{buddyName} 함께 집중 중</p>
+                <p className="mt-1.5 text-[13px] leading-relaxed text-text-secondary">
+                  한 사이클 끝낼 때마다
+                  <br />
+                  경험치가 쌓여요
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-border bg-card/70 p-7">
+              <p className="font-pixel mb-4 text-[10px] tracking-[1.5px] text-muted-foreground">SESSION PLAN</p>
+              <div className="flex flex-col gap-2.5">
+                {buildRoadmap(targetCount, focusMinutes, shortBreakMinutes, longBreakMinutes).map((step, idx) => {
+                  const current = step.kind === "focus" && step.n === completedCount + 1;
+                  const done = step.n <= completedCount;
+                  return (
+                    <div
+                      key={idx}
+                      className={cn(
+                        "flex items-center gap-3",
+                        current
+                          ? "-mx-1 rounded-xl border border-focus/30 bg-focus/10 px-3 py-2.5"
+                          : done && "opacity-50",
+                      )}
+                    >
+                      <Image src={ROADMAP_ICON[step.kind]} alt="" width={24} height={24} unoptimized className="pixelated" />
+                      <span className={cn("flex-1 text-sm font-semibold", current && "font-extrabold text-focus")}>
+                        {step.label}
+                      </span>
+                      <span className={cn("font-mono text-xs", current ? "font-semibold text-focus" : "text-muted-foreground")}>
+                        {current ? "진행 중" : done ? `${fmtMin(step.minutes)} ✓` : fmtMin(step.minutes)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -348,71 +469,40 @@ export function PomodoroTimer({ character }: { character?: PomodoroBuddy | null 
         />
       )}
 
-      {/* pomodoro_done: 중간 완료 → 휴식/종료 선택 */}
+      {/* pomodoro_done: 집중 완료 → 휴식 전환 */}
       {sessionPhase === "pomodoro_done" && (
-        <div className="flex w-full flex-col items-center gap-5 text-center">
-          <SessionBuddy slug={buddySlug} name={buddyName} size={96} glow="rgba(224,177,94,.24)" />
-          <CycleProgress phase={sessionPhase} completed={completedCount} target={targetCount} />
-          <div>
-            <p className="text-xl font-extrabold text-foreground">
-              {completedCount} / {targetCount} 포모도로 완료!
-            </p>
-            <p className="mt-1.5 text-sm text-text-secondary">
-              {currentBreakMinutes}분 {isLastBreakLong ? "긴 " : ""}휴식할까요?
-            </p>
-          </div>
-          <div className="flex w-full flex-col gap-2.5">
-            <button
-              type="button"
-              onClick={handleStartBreak}
-              className="h-13 w-full rounded-[14px] text-[15px] font-bold text-primary-foreground shadow-[0_8px_20px_rgba(212,149,106,.4)] transition-transform hover:scale-[1.01]"
-              style={{ background: "var(--primary-gradient)" }}
-            >
-              휴식 시작
-            </button>
-            <button
-              type="button"
-              onClick={handleEndSessionEarly}
-              disabled={isLoading}
-              className="h-12 w-full rounded-[14px] border border-border bg-card text-[15px] font-semibold text-foreground transition-colors hover:bg-surface-2 disabled:opacity-50"
-            >
-              세션 종료
-            </button>
-          </div>
-        </div>
+        <CycleTransition
+          variant="toBreak"
+          completedCount={completedCount}
+          targetCount={targetCount}
+          buddySlug={buddySlug}
+          buddyName={buddyName}
+          nextMinutes={currentBreakMinutes}
+          nextFocusIndex={completedCount + 1}
+          isLastBreakLong={isLastBreakLong}
+          isBusy={isLoading || isTransitioning}
+          onPrimary={handleStartBreak}
+          onEnd={handleEndSessionEarly}
+          onTertiary={handleStartNextFocus}
+        />
       )}
 
-      {/* break_done: 휴식 끝 → 다음 집중/종료 선택 */}
+      {/* break_done: 휴식 완료 → 집중 전환 */}
       {sessionPhase === "break_done" && (
-        <div className="flex w-full flex-col items-center gap-5 text-center">
-          <SessionBuddy slug={buddySlug} name={buddyName} size={96} glow="rgba(123,166,142,.22)" />
-          <CycleProgress phase={sessionPhase} completed={completedCount} target={targetCount} />
-          <div>
-            <p className="text-xl font-extrabold text-foreground">휴식 끝!</p>
-            <p className="mt-1.5 text-sm text-text-secondary">
-              다음: {completedCount + 1}번째 집중 {focusLabel}
-            </p>
-          </div>
-          <div className="flex w-full flex-col gap-2.5">
-            <button
-              type="button"
-              onClick={handleStartNextFocus}
-              disabled={isLoading}
-              className="h-13 w-full rounded-[14px] text-[15px] font-bold text-primary-foreground shadow-[0_8px_20px_rgba(212,149,106,.4)] transition-transform hover:scale-[1.01] disabled:opacity-60"
-              style={{ background: "var(--primary-gradient)" }}
-            >
-              {isLoading ? "준비 중..." : "집중 시작"}
-            </button>
-            <button
-              type="button"
-              onClick={handleEndSessionEarly}
-              disabled={isLoading}
-              className="h-12 w-full rounded-[14px] border border-border bg-card text-[15px] font-semibold text-foreground transition-colors hover:bg-surface-2 disabled:opacity-50"
-            >
-              세션 종료
-            </button>
-          </div>
-        </div>
+        <CycleTransition
+          variant="toFocus"
+          completedCount={completedCount}
+          targetCount={targetCount}
+          buddySlug={buddySlug}
+          buddyName={buddyName}
+          nextMinutes={focusMinutes}
+          nextFocusIndex={completedCount + 1}
+          isLastBreakLong={false}
+          isBusy={isLoading || isTransitioning}
+          onPrimary={handleStartNextFocus}
+          onEnd={handleEndSessionEarly}
+          onTertiary={handleExtendBreak}
+        />
       )}
 
       {/* session_completed: 세션 완료 */}

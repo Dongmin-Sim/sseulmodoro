@@ -63,7 +63,7 @@ export function HistoryClient() {
       setLogs((prev) => [...prev, ...data.logs]);
       setCursor(data.nextCursor);
     } catch {
-      setMoreError("이력을 더 불러오지 못했습니다.");
+      setMoreError("기록을 더 불러오지 못했어요.");
     } finally {
       setIsLoadingMore(false);
     }
@@ -85,7 +85,7 @@ export function HistoryClient() {
 
         {status === "error" && (
           <div className="flex flex-col items-center gap-4 py-16 text-center">
-            <p role="alert" className="text-sm text-destructive">이력을 불러오지 못했습니다.</p>
+            <p role="alert" className="text-sm text-destructive">기록을 불러오지 못했어요.</p>
             <button
               type="button"
               onClick={() => void loadInitial()}

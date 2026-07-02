@@ -37,7 +37,7 @@ export function SessionComplete({
   const ratio = Math.min(current / target, 1);
 
   return (
-    <div className="flex w-full flex-col items-center text-center">
+    <div className="mx-auto flex w-full max-w-[524px] flex-col items-center py-6 text-center">
       <SessionBuddy
         slug={buddySlug}
         name={buddyName}
@@ -83,11 +83,11 @@ export function SessionComplete({
         </p>
       </div>
 
-      <div className="mt-6 flex w-full flex-col gap-2.5">
+      <div className="mt-6 flex w-full flex-col gap-2.5 sm:flex-row">
         <button
           type="button"
           onClick={onRestart}
-          className="flex h-13 w-full items-center justify-center rounded-[14px] py-3.5 text-base font-bold text-primary-foreground shadow-[0_8px_20px_rgba(212,149,106,.4)] transition-transform hover:scale-[1.01]"
+          className="flex h-13 w-full items-center justify-center rounded-[14px] py-3.5 text-base font-bold text-primary-foreground shadow-[0_8px_20px_rgba(212,149,106,.4)] transition-transform hover:scale-[1.01] sm:flex-1"
           style={{ background: "var(--primary-gradient)" }}
         >
           한 판 더 집중
@@ -95,7 +95,7 @@ export function SessionComplete({
         <button
           type="button"
           onClick={onHome}
-          className="h-12 w-full rounded-[14px] border border-border bg-card text-[15px] font-semibold text-foreground transition-colors hover:bg-surface-2"
+          className="h-12 w-full rounded-[14px] border border-border bg-card text-[15px] font-semibold text-foreground transition-colors hover:bg-surface-2 sm:h-13 sm:flex-1"
         >
           홈으로
         </button>

@@ -3,8 +3,8 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { PageContainer } from "@/components/layout/page-container";
 import { BirdCard } from "@/components/character/bird-card";
+import { LockCard } from "@/components/collection/lock-card";
 import { setMainCharacter } from "@/lib/api/characters";
 import { getRarityMeta } from "@/lib/rarity";
 import { cn } from "@/lib/utils";
@@ -57,6 +57,14 @@ export function SelectClient({
 }) {
   const router = useRouter();
   const cards = useMemo(() => buildCards(collection, currentMainId), [collection, currentMainId]);
+  const lockedRarities = useMemo(
+    () =>
+      collection.types
+        .filter((t) => !t.owned)
+        .map((t) => t.rarity)
+        .sort((a, b) => (RARITY_ORDER[a] ?? 99) - (RARITY_ORDER[b] ?? 99)),
+    [collection],
+  );
 
   const initial = cards.find((c) => c.instanceId === currentMainId) ?? cards[0] ?? null;
   const [selectedId, setSelectedId] = useState<number | null>(initial?.instanceId ?? null);
@@ -82,7 +90,7 @@ export function SelectClient({
 
   return (
     <main className="relative z-10 flex flex-1 flex-col py-6">
-      <PageContainer className="flex flex-col">
+      <div className="mx-auto flex w-full max-w-[1000px] flex-col px-4 sm:px-6 lg:px-8">
         <div className="mb-6">
           <p className="font-pixel text-[10px] tracking-[1.5px] text-primary">PARTNER</p>
           <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-foreground">함께할 친구</h1>
@@ -172,6 +180,15 @@ export function SelectClient({
                   </button>
                 );
               })}
+              {lockedRarities.map((rarity, i) => (
+                <div
+                  key={`locked-${i}`}
+                  className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border p-2.5 opacity-70"
+                >
+                  <LockCard rarity={rarity} />
+                  <span className="text-[13px] font-bold text-muted-foreground">???</span>
+                </div>
+              ))}
             </div>
             <Link
               href="/shop"
@@ -185,7 +202,7 @@ export function SelectClient({
             </Link>
           </section>
         </div>
-      </PageContainer>
+      </div>
     </main>
   );
 }

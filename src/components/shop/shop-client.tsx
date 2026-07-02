@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { PageContainer } from "@/components/layout/page-container";
 import { EggReveal } from "@/components/character/egg-reveal";
 import { LockCard } from "@/components/collection/lock-card";
 import { drawGacha } from "@/lib/api/gacha";
@@ -66,11 +65,12 @@ export function ShopClient({ balance: initialBalance, gachaCost, weights }: Shop
 
   if (revealing) {
     return (
-      <main className="relative z-10 flex flex-1 flex-col py-5">
-        <PageContainer className="flex flex-col">
-          <EggReveal onReveal={handleReveal} onError={handleRevealError} onConfirm={handleConfirm} />
-        </PageContainer>
-      </main>
+      <EggReveal
+        variant="immersive"
+        onReveal={handleReveal}
+        onError={handleRevealError}
+        onConfirm={handleConfirm}
+      />
     );
   }
 

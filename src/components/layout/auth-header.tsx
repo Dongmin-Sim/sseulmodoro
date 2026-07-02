@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/layout/page-container";
 import {
@@ -101,7 +102,7 @@ function NavTabs({ variant }: { variant: "desktop" | "mobile" }) {
 export function AuthHeader({ nickname, balance }: AuthHeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isSessionActive } = usePomodoroSession();
+  const { isSessionActive, exitSession, timerHeader, requestStop } = usePomodoroSession();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
@@ -117,7 +118,7 @@ export function AuthHeader({ nickname, balance }: AuthHeaderProps) {
       await logout();
       router.replace("/login");
     } catch {
-      setLogoutError("로그아웃에 실패했습니다. 다시 시도해주세요.");
+      setLogoutError("로그아웃에 실패했어요. 다시 시도해주세요.");
       setIsLoggingOut(false);
     }
   };
@@ -126,6 +127,86 @@ export function AuthHeader({ nickname, balance }: AuthHeaderProps) {
     if (isTimerView) setShowLogoutDialog(true);
     else void doLogout();
   };
+
+  // 타이머 흐름 헤더 — 시안: 완료는 헤더 없음, 준비/집중/휴식 단계별 변형
+  if (timerHeader === "complete") return null;
+
+  if (timerHeader === "prep") {
+    return (
+      <header className="sticky top-0 z-50 border-b border-border bg-card">
+        <PageContainer>
+          <div className="flex h-14 items-center lg:h-[66px]">
+            <button
+              type="button"
+              onClick={exitSession}
+              className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <span className="text-lg leading-none">←</span>
+              <span className="hidden sm:inline">뒤로</span>
+            </button>
+            <div className="mx-auto flex items-center gap-2">
+              <LogoChip />
+              <span className="font-pixel text-sm tracking-wide text-foreground">세션 준비</span>
+            </div>
+            <span aria-hidden className="w-12" />
+          </div>
+        </PageContainer>
+      </header>
+    );
+  }
+
+  if (timerHeader === "focus" || timerHeader === "break") {
+    const isBreak = timerHeader === "break";
+    return (
+      <header
+        className="sticky top-0 z-50 border-b bg-card/70 backdrop-blur-sm"
+        style={{ borderColor: isBreak ? "#CFE1D6" : "#EAE1D6" }}
+      >
+        <PageContainer>
+          <div className="flex h-14 items-center lg:h-[66px]">
+            {/* 좌: 흐린 로고 (데스크톱) */}
+            <div className="flex flex-1 items-center">
+              <div className="hidden items-center gap-2 opacity-55 lg:flex">
+                <LogoChip />
+                <span className="font-pixel text-sm tracking-wide text-foreground">쓸모도로</span>
+              </div>
+            </div>
+            {/* 중앙: 모드 알약 */}
+            <div
+              className="flex items-center gap-2 rounded-full border px-4 py-1.5"
+              style={
+                isBreak
+                  ? { backgroundColor: "#E3EFE7", borderColor: "#C9DDCF" }
+                  : { backgroundColor: "#FBEEE8", borderColor: "#E6C9BC" }
+              }
+            >
+              {isBreak ? (
+                <Image src="/icons/coffee.png" alt="" width={16} height={16} unoptimized className="pixelated" />
+              ) : (
+                <span className="h-2 w-2 rounded-full bg-primary-deep shadow-[0_0_0_4px_rgba(196,114,92,.18)]" />
+              )}
+              <span
+                className="font-pixel text-[10px] tracking-[1px] lg:text-[11px]"
+                style={{ color: isBreak ? "#5E8A72" : "var(--primary-deep)" }}
+              >
+                {isBreak ? "BREAK TIME" : "FOCUS MODE"}
+              </span>
+            </div>
+            {/* 우: 세션 종료 (데스크톱) — 본문 '중지'와 동일 확인 흐름 */}
+            <div className="flex flex-1 items-center justify-end">
+              <button
+                type="button"
+                onClick={requestStop}
+                className="hidden text-[13px] font-semibold text-muted-foreground opacity-55 transition-opacity hover:opacity-100 lg:block"
+              >
+                {isBreak ? "세션 종료" : "집중 종료"}
+              </button>
+            </div>
+          </div>
+        </PageContainer>
+      </header>
+    );
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card">
@@ -193,8 +274,8 @@ export function AuthHeader({ nickname, balance }: AuthHeaderProps) {
           <DialogHeader>
             <DialogTitle>로그아웃할까요?</DialogTitle>
             <DialogDescription>
-              진행 중인 포모도로 세션이 있습니다. 로그아웃하면 현재 진행 상황이
-              저장되지 않을 수 있습니다.
+              진행 중인 포모도로 세션이 있어요. 로그아웃하면 현재 진행 상황이
+              저장되지 않을 수 있어요.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
