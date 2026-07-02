@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BirdCard } from "@/components/character/bird-card";
@@ -53,12 +56,34 @@ function useReducedMotion() {
 
 type Stage = "egg" | "cracking" | "revealed";
 
+const DARK_BG = "radial-gradient(circle at 50% 42%, #4A3F4E 0%, #2C2630 55%, #1E1A22 100%)";
+const CONIC_RAYS =
+  "conic-gradient(from 0deg, rgba(224,177,94,.18) 0deg, transparent 24deg, rgba(224,177,94,.18) 48deg, transparent 72deg, rgba(224,177,94,.18) 96deg, transparent 120deg, rgba(224,177,94,.18) 144deg, transparent 168deg, rgba(224,177,94,.18) 192deg, transparent 216deg, rgba(224,177,94,.18) 240deg, transparent 264deg, rgba(224,177,94,.18) 288deg, transparent 312deg, rgba(224,177,94,.18) 336deg, transparent 360deg)";
+type SparklePos = {
+  left?: string;
+  right?: string;
+  top?: string;
+  bottom?: string;
+  size: number;
+  color: string;
+  delay: string;
+};
+
+const IMMERSIVE_SPARKLES: SparklePos[] = [
+  { left: "24%", top: "18%", size: 22, color: "#E0B15E", delay: "0s" },
+  { right: "26%", top: "23%", size: 16, color: "#D4956A", delay: ".4s" },
+  { left: "30%", bottom: "22%", size: 18, color: "#7BA68E", delay: ".8s" },
+  { right: "28%", bottom: "26%", size: 14, color: "#E0B15E", delay: "1.1s" },
+  { left: "38%", top: "13%", size: 12, color: "#fff", delay: ".6s" },
+];
+
 type EggRevealProps = {
   // 알을 깨는 동안(cracking) 결과를 resolve — 그동안 연출이 대기를 가린다.
   onReveal: () => Promise<RevealResult>;
   onConfirm: () => void;
   onError?: (msg: string) => void;
   confirmLabel?: string;
+  variant?: "inline" | "immersive";
 };
 
 export function EggReveal({
@@ -66,7 +91,9 @@ export function EggReveal({
   onConfirm,
   onError,
   confirmLabel = "확인",
+  variant = "inline",
 }: EggRevealProps) {
+  const immersive = variant === "immersive";
   const [stage, setStage] = useState<Stage>("egg");
   const [crackStep, setCrackStep] = useState(0); // 0 흔들 · 1 금조금 · 2 금더
   const [result, setResult] = useState<RevealResult | null>(null);
@@ -108,8 +135,46 @@ export function EggReveal({
   const leakScale = stage === "egg" ? 0.6 : ([0.72, 0.86, 1.05][crackStep] ?? 1.05);
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-6 py-8">
-      <div className="relative flex h-[220px] w-[220px] items-center justify-center">
+    <div
+      className={cn(
+        immersive
+          ? "fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden px-6 text-center text-white"
+          : "flex flex-1 flex-col items-center justify-center gap-6 py-8",
+      )}
+      style={immersive ? { background: DARK_BG } : undefined}
+    >
+      {immersive &&
+        IMMERSIVE_SPARKLES.map((s, i) => (
+          <span
+            key={i}
+            aria-hidden
+            className="animate-sparkle-pulse pointer-events-none absolute"
+            style={{ left: s.left, right: s.right, top: s.top, bottom: s.bottom, fontSize: s.size, color: s.color, animationDelay: s.delay }}
+          >
+            ✦
+          </span>
+        ))}
+
+      {immersive && stage === "revealed" && result && (
+        <p className="font-pixel mb-2 text-[13px] tracking-[2px] text-gold">
+          {(RARITY_LABEL[result.rarity] ?? result.rarity).toUpperCase()}!
+        </p>
+      )}
+
+      <div
+        className={cn(
+          "relative flex items-center justify-center",
+          immersive ? "h-[300px] w-[300px]" : "h-[220px] w-[220px]",
+        )}
+      >
+        {/* 광선 (immersive 공개) */}
+        {immersive && stage === "revealed" && (
+          <div
+            aria-hidden
+            className="animate-sparkle-pulse absolute"
+            style={{ width: 420, height: 420, borderRadius: "50%", background: CONIC_RAYS }}
+          />
+        )}
         {/* 빛 레이어 */}
         <div
           aria-hidden
@@ -156,11 +221,26 @@ export function EggReveal({
             );
           })}
 
-        {/* 카드 (공개) */}
+        {/* 공개 — immersive: 대형 스프라이트 / inline: 카드 */}
         {stage === "revealed" && result && (
-          <div className="animate-in fade-in zoom-in-95 duration-500">
-            <BirdCard slug={result.slug} rarity={result.rarity} name={result.name} />
-          </div>
+          immersive ? (
+            <div className="animate-in fade-in zoom-in-95 relative z-10 flex flex-col items-center duration-500">
+              <Image
+                src={`/characters/${result.slug}.png`}
+                alt={result.name}
+                width={210}
+                height={210}
+                unoptimized
+                className="pixelated animate-buddy-bob"
+                style={{ filter: "drop-shadow(0 12px 24px rgba(0,0,0,.4))" }}
+              />
+              <div className="mt-1 h-4 w-40 rounded-full bg-black/30 blur-[5px]" />
+            </div>
+          ) : (
+            <div className="animate-in fade-in zoom-in-95 duration-500">
+              <BirdCard slug={result.slug} rarity={result.rarity} name={result.name} />
+            </div>
+          )
         )}
 
         {/* 알 — egg(탭 대기) / cracking(흔들→금→금) */}
@@ -197,14 +277,47 @@ export function EggReveal({
 
       {/* 안내 / 결과 */}
       {stage === "egg" && (
-        <p className="text-sm font-medium text-muted-foreground">알을 탭해서 깨보세요!</p>
+        <p className={cn("text-sm font-medium", immersive ? "mt-2 text-white/70" : "text-muted-foreground")}>
+          알을 탭해서 깨보세요!
+        </p>
       )}
       {stage === "cracking" && (
-        <p className="text-sm font-medium text-muted-foreground">
+        <p className={cn("text-sm font-medium", immersive ? "mt-2 text-white/70" : "text-muted-foreground")}>
           {crackStep === 0 ? "두근두근..." : crackStep === 1 ? "조금만 더..." : "거의 다 됐어!"}
         </p>
       )}
-      {stage === "revealed" && result && (
+
+      {/* immersive 공개 결과 */}
+      {immersive && stage === "revealed" && result && (
+        <div className="mt-5 flex flex-col items-center">
+          <h1 className="text-3xl font-extrabold tracking-tight">{result.name}</h1>
+          <div className="mt-3.5 inline-flex items-center gap-2 rounded-full border border-gold/45 bg-gold/15 px-4 py-1.5">
+            <span className="text-gold">✦</span>
+            <span className="font-pixel text-[11px] tracking-[1px] text-gold">
+              {(RARITY_LABEL[result.rarity] ?? result.rarity)} · {result.isNew ? "새로운 친구" : "이미 함께한 친구"}
+            </span>
+          </div>
+          <div className="mt-7 flex w-full max-w-sm flex-col gap-3 sm:w-auto sm:flex-row">
+            <Link
+              href="/collection"
+              className="flex h-13 min-w-[150px] items-center justify-center rounded-[14px] border border-white/25 bg-white/10 px-6 text-[15px] font-semibold text-white transition-colors hover:bg-white/15"
+            >
+              도감에서 보기
+            </Link>
+            <button
+              type="button"
+              onClick={onConfirm}
+              className="flex h-13 min-w-[170px] items-center justify-center rounded-[14px] px-6 text-[15px] font-bold text-primary-foreground shadow-[0_8px_24px_rgba(212,149,106,.5)] transition-transform hover:scale-[1.01]"
+              style={{ background: "var(--primary-gradient)" }}
+            >
+              한 번 더 뽑기
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* inline 공개 결과 */}
+      {!immersive && stage === "revealed" && result && (
         <>
           <div className="flex flex-col items-center gap-2.5">
             <h1 className="text-[22px] font-bold tracking-tight text-foreground">

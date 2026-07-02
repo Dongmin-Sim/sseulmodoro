@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { EggReveal } from "@/components/character/egg-reveal";
 import { completeOnboarding, NicknameTakenError } from "@/lib/api/onboarding";
@@ -112,8 +113,8 @@ export function OnboardingFlow({ starter, onDone }: OnboardingFlowProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background bg-grid">
-      <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-7 py-8">
+    <div className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-background bg-grid">
+      <div className={cn("mx-auto flex w-full flex-1 flex-col px-7 py-8", step === 1 ? "max-w-4xl" : "max-w-md")}>
         {/* 진행 인디케이터 */}
         <div className="mb-9 flex justify-center gap-2">
           {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
@@ -150,25 +151,28 @@ export function OnboardingFlow({ starter, onDone }: OnboardingFlowProps) {
         {/* 1. 메인 기능 소개 */}
         {step === 1 && (
           <div className="flex flex-1 flex-col">
-            <div className="mb-6 text-center">
+            <div className="mb-6 text-center lg:mb-9">
               <p className="font-pixel text-[10px] tracking-[1.5px] text-primary">HOW IT WORKS</p>
-              <h1 className="mt-2.5 text-xl font-extrabold tracking-tight text-foreground">집중하고, 모으고, 키워요</h1>
+              <h1 className="mt-2.5 text-xl font-extrabold tracking-tight text-foreground lg:text-3xl">집중하고, 모으고, 키워요</h1>
             </div>
-            <div className="flex flex-1 flex-col justify-center gap-3">
+            <div className="grid flex-1 content-center gap-3 lg:grid-cols-3 lg:gap-6">
               {FEATURES.map((f) => (
-                <div key={f.title} className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow)]">
-                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border ${TINT_BG[f.tint]}`}>
-                    <Image src={f.icon} alt="" width={26} height={26} unoptimized className="pixelated" />
+                <div
+                  key={f.title}
+                  className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow)] lg:flex-col lg:items-start lg:gap-3 lg:p-6"
+                >
+                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border ${TINT_BG[f.tint]} lg:h-16 lg:w-16`}>
+                    <Image src={f.icon} alt="" width={26} height={26} unoptimized className="pixelated lg:h-8 lg:w-8" />
                   </div>
                   <div className="flex flex-col">
                     <p className="font-pixel text-[9px] tracking-[1px] text-primary">STEP {f.step}</p>
-                    <span className="mt-0.5 text-sm font-bold text-foreground">{f.title}</span>
-                    <span className="mt-0.5 text-xs text-text-secondary">{f.desc}</span>
+                    <span className="mt-0.5 text-sm font-bold text-foreground lg:text-base">{f.title}</span>
+                    <span className="mt-0.5 text-xs leading-relaxed text-text-secondary lg:mt-1.5">{f.desc}</span>
                   </div>
                 </div>
               ))}
             </div>
-            <div className="mt-5">
+            <div className="mt-6 w-full lg:mx-auto lg:max-w-sm">
               <GradientButton onClick={goNext}>다음</GradientButton>
             </div>
           </div>
