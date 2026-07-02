@@ -6,6 +6,7 @@ import Link from "next/link";
 import { BirdCard } from "@/components/character/bird-card";
 import { LockCard } from "@/components/collection/lock-card";
 import { setMainCharacter } from "@/lib/api/characters";
+import { useToast } from "@/components/feedback/toast";
 import { getRarityMeta } from "@/lib/rarity";
 import { cn } from "@/lib/utils";
 import type { CollectionResponse, CollectionOwnedType } from "@/lib/types/api";
@@ -56,6 +57,7 @@ export function SelectClient({
   currentMainId: number | null;
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const cards = useMemo(() => buildCards(collection, currentMainId), [collection, currentMainId]);
   const lockedRarities = useMemo(
     () =>
@@ -69,7 +71,6 @@ export function SelectClient({
   const initial = cards.find((c) => c.instanceId === currentMainId) ?? cards[0] ?? null;
   const [selectedId, setSelectedId] = useState<number | null>(initial?.instanceId ?? null);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const selected = cards.find((c) => c.instanceId === selectedId) ?? null;
   const rarity = selected ? getRarityMeta(selected.rarity) : null;
@@ -77,13 +78,12 @@ export function SelectClient({
   const handleConfirm = async () => {
     if (!selected) return;
     setIsSaving(true);
-    setError(null);
     try {
       await setMainCharacter(selected.instanceId);
       router.push("/home");
       router.refresh();
     } catch {
-      setError("대표 친구를 바꾸지 못했어요. 다시 시도해주세요.");
+      toast({ title: "대표 친구를 바꾸지 못했어요", description: "잠시 후 다시 시도해 주세요." });
       setIsSaving(false);
     }
   };
@@ -141,11 +141,6 @@ export function SelectClient({
                 >
                   {isSaving ? "바꾸는 중..." : "이 친구와 집중하기"}
                 </button>
-                {error && (
-                  <p role="alert" className="mt-2 text-xs text-destructive">
-                    {error}
-                  </p>
-                )}
               </>
             ) : (
               <div className="flex flex-1 flex-col items-center justify-center gap-3 py-12 text-center">
