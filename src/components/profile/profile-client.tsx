@@ -64,20 +64,26 @@ export function ProfileClient({
 
   // 설정 (localStorage / 브라우저 권한)
   const [notify, setNotify] = useState(false);
+  const [notifyDenied, setNotifyDenied] = useState(false);
   const [sound, setSound] = useState(true);
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if ("Notification" in window) setNotify(Notification.permission === "granted");
+    if ("Notification" in window) {
+      setNotify(Notification.permission === "granted");
+      setNotifyDenied(Notification.permission === "denied");
+    }
     setSound(localStorage.getItem("sm-sound") !== "off");
     setDark(localStorage.getItem("sm-theme") === "dark");
   }, []);
 
   const handleNotify = async (next: boolean) => {
     if (next && "Notification" in window) {
+      // denied면 브라우저가 재요청을 즉시 거부 — 팝업 없이 denied가 그대로 반환된다.
       const perm = await Notification.requestPermission();
       setNotify(perm === "granted");
+      setNotifyDenied(perm === "denied");
     } else {
       setNotify(false);
     }
@@ -192,7 +198,15 @@ export function ProfileClient({
             </section>
 
             <section className="rounded-3xl border border-border bg-card px-6 shadow-[var(--shadow)]">
-              <SettingRow icon="/icons/bell.png" label="집중 종료 알림">
+              <SettingRow
+                icon="/icons/bell.png"
+                label="집중 종료 알림"
+                hint={
+                  notifyDenied
+                    ? "브라우저에서 이 사이트의 알림이 차단돼 있어요. 주소창의 사이트 설정에서 알림을 '허용'으로 바꾼 뒤 새로고침하면 켜집니다."
+                    : undefined
+                }
+              >
                 <Toggle checked={notify} onChange={handleNotify} />
               </SettingRow>
               <SettingRow icon="/icons/speaker.png" label="완료 효과음">
@@ -259,20 +273,25 @@ function SettingRow({
   icon,
   label,
   last,
+  hint,
   children,
 }: {
   icon: string;
   label: string;
   last?: boolean;
+  hint?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
-    <div className={`flex items-center justify-between py-[18px] ${last ? "" : "border-b border-border"}`}>
-      <span className="flex items-center gap-3">
-        <Image src={icon} alt="" width={20} height={20} unoptimized className="pixelated" />
-        <span className="text-sm font-semibold text-foreground">{label}</span>
-      </span>
-      {children}
+    <div className={`py-[18px] ${last ? "" : "border-b border-border"}`}>
+      <div className="flex items-center justify-between">
+        <span className="flex items-center gap-3">
+          <Image src={icon} alt="" width={20} height={20} unoptimized className="pixelated" />
+          <span className="text-sm font-semibold text-foreground">{label}</span>
+        </span>
+        {children}
+      </div>
+      {hint && <p className="mt-2 pl-8 text-xs leading-relaxed text-muted-foreground">{hint}</p>}
     </div>
   );
 }
