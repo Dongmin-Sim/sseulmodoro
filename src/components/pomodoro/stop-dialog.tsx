@@ -41,12 +41,14 @@ export function StopDialog({
             />
           </div>
           <DialogTitle className="mt-5 text-xl font-extrabold tracking-tight text-foreground">
-            집중을 그만둘까요?
+            {isFocusing ? "집중을 그만둘까요?" : "세션을 끝낼까요?"}
           </DialogTitle>
           <DialogDescription className="mt-3 text-sm leading-relaxed text-text-secondary">
             {isFocusing ? (
               <>
                 지금 멈추면 <b className="font-semibold text-focus">이번 포모도로는 기록되지 않아요.</b>
+                <br />
+                조금만 더 하면 한 판이 완성돼요.
               </>
             ) : (
               <>지금 멈추면 세션이 종료돼요.</>
@@ -60,7 +62,7 @@ export function StopDialog({
               className="h-13 w-full rounded-[14px] text-[15px] font-bold text-primary-foreground shadow-[0_8px_20px_rgba(212,149,106,.4)] transition-transform hover:scale-[1.01]"
               style={{ background: "var(--primary-gradient)" }}
             >
-              계속 집중하기
+              {isFocusing ? "계속 집중하기" : "휴식 계속하기"}
             </button>
             <button
               type="button"

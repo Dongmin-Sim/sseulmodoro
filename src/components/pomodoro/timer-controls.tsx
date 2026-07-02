@@ -33,12 +33,20 @@ export function TimerControls({
   if (status === "running") {
     return (
       <div className="flex gap-3">
-        <Button size="lg" variant="secondary" className="w-28 h-11" onClick={onPause}>
+        <button
+          type="button"
+          onClick={onPause}
+          className="h-12 rounded-[13px] border border-border bg-card px-8 text-sm font-bold text-foreground shadow-[0_4px_12px_rgba(45,42,38,.06)] transition-transform hover:scale-[1.02]"
+        >
           일시정지
-        </Button>
-        <Button size="lg" variant="destructive" className="w-28 h-11" onClick={onStop}>
+        </button>
+        <button
+          type="button"
+          onClick={onStop}
+          className="h-12 rounded-[13px] bg-focus/12 px-8 text-sm font-bold text-focus transition-colors hover:bg-focus/20 lg:hidden"
+        >
           중지
-        </Button>
+        </button>
       </div>
     );
   }
@@ -46,12 +54,21 @@ export function TimerControls({
   if (status === "paused") {
     return (
       <div className="flex gap-3">
-        <Button size="lg" className="w-28 h-11" onClick={onResume}>
+        <button
+          type="button"
+          onClick={onResume}
+          className="h-12 rounded-[13px] px-8 text-sm font-bold text-primary-foreground shadow-[0_8px_20px_rgba(212,149,106,.4)] transition-transform hover:scale-[1.02]"
+          style={{ background: "var(--primary-gradient)" }}
+        >
           이어하기
-        </Button>
-        <Button size="lg" variant="destructive" className="w-28 h-11" onClick={onStop}>
+        </button>
+        <button
+          type="button"
+          onClick={onStop}
+          className="h-12 rounded-[13px] bg-focus/12 px-8 text-sm font-bold text-focus transition-colors hover:bg-focus/20 lg:hidden"
+        >
           중지
-        </Button>
+        </button>
       </div>
     );
   }
