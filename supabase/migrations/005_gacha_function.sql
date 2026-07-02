@@ -140,3 +140,48 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.gacha() TO authenticated;
+
+
+-- =============================================================
+-- 3. set_main_character() — 대표 캐릭터 교체
+-- =============================================================
+-- 유저당 is_main=true 1개(uniq_character_instances_main_per_user) 제약 때문에
+-- 기존 대표 해제 → 신규 대표 설정을 한 함수(트랜잭션) 안에서 처리한다.
+--   1) 인증 가드 + 소유권 검증 (auth.uid 기준, 클라이언트 user_id 불신뢰)
+--   2) 기존 is_main=true 해제
+--   3) 대상 인스턴스 is_main=true 설정
+CREATE OR REPLACE FUNCTION public.set_main_character(p_instance_id INTEGER)
+RETURNS JSON
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_user_id UUID := auth.uid();
+  v_owns    BOOLEAN;
+BEGIN
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'unauthorized' USING ERRCODE = '42501';
+  END IF;
+
+  SELECT EXISTS (
+    SELECT 1 FROM public.character_instances
+    WHERE id = p_instance_id AND user_id = v_user_id
+  ) INTO v_owns;
+
+  IF NOT v_owns THEN
+    RAISE EXCEPTION 'instance_not_found' USING ERRCODE = 'P0002';
+  END IF;
+
+  UPDATE public.character_instances
+    SET is_main = false
+    WHERE user_id = v_user_id AND is_main = true;
+
+  UPDATE public.character_instances
+    SET is_main = true
+    WHERE id = p_instance_id;
+
+  RETURN json_build_object('instance_id', p_instance_id);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.set_main_character(INTEGER) TO authenticated;

@@ -58,7 +58,7 @@ export function TimerDisplay({ display, progress, status, label, progressColor }
       <div className="absolute flex flex-col items-center gap-1">
         <span
           className={cn(
-            "font-mono text-5xl font-bold tracking-wider",
+            "font-mono text-6xl font-bold tabular-nums tracking-tight",
             status === "completed" && "text-success"
           )}
         >

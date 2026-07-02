@@ -110,3 +110,48 @@ BEGIN
   );
 END;
 $$;
+
+
+-- -------------------------------------------------------------
+-- 3. get_focus_heatmap — 최근 N일 일별 완료 포모도로 수 (히트맵용)
+-- -------------------------------------------------------------
+-- KST 기준 하루 단위로 버킷팅. 기록 없는 날도 count 0으로 채워
+-- 정확히 p_days개(기본 84=12주)를 날짜 오름차순으로 반환한다.
+CREATE OR REPLACE FUNCTION public.get_focus_heatmap(p_days INTEGER DEFAULT 84)
+RETURNS JSON
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_user_id   UUID := auth.uid();
+  v_start_day DATE;
+  v_result    JSON;
+BEGIN
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'unauthorized' USING ERRCODE = '42501';
+  END IF;
+
+  v_start_day := (NOW() AT TIME ZONE 'Asia/Seoul')::date - (p_days - 1);
+
+  WITH days AS (
+    SELECT generate_series(v_start_day, (NOW() AT TIME ZONE 'Asia/Seoul')::date, INTERVAL '1 day')::date AS day
+  ),
+  counts AS (
+    SELECT (p.completed_at AT TIME ZONE 'Asia/Seoul')::date AS day, COUNT(*) AS cnt
+    FROM public.pomodoros p
+    WHERE p.user_id = v_user_id
+      AND p.status = 'completed'
+      AND p.completed_at IS NOT NULL
+      AND p.completed_at >= (v_start_day::timestamp AT TIME ZONE 'Asia/Seoul')
+    GROUP BY 1
+  )
+  SELECT json_agg(
+    json_build_object('date', d.day, 'count', COALESCE(c.cnt, 0)) ORDER BY d.day
+  )
+  INTO v_result
+  FROM days d
+  LEFT JOIN counts c ON c.day = d.day;
+
+  RETURN COALESCE(v_result, '[]'::json);
+END;
+$$;

@@ -2,10 +2,12 @@
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
+import { GoogleIcon } from "@/components/auth/google-icon";
+
+const SAMPLE_BIRDS = ["glaucousgull", "crane", "godwit"] as const;
 
 function SignupContent() {
   const searchParams = useSearchParams();
@@ -37,67 +39,85 @@ function SignupContent() {
   };
 
   return (
-    <Card
-      className="w-full max-w-sm rounded-2xl"
-      style={{
-        boxShadow:
-          "0 4px 6px rgba(45,42,38,0.07), 0 2px 4px rgba(45,42,38,0.04)",
-      }}
-    >
-      <CardContent className="pt-8 pb-6 px-6">
-        <div className="flex flex-col items-center gap-6">
-          {/* 캐릭터 */}
-          <div
-            className="w-16 h-16 relative"
-            style={{
-              backgroundColor: "#E8D5C0",
-              borderRadius: "50% 50% 50% 50% / 60% 60% 40% 40%",
-              boxShadow: "0 2px 8px rgba(210,170,130,0.3)",
-            }}
-          >
-            <span
-              className="absolute w-1.5 h-1.5 rounded-full bg-foreground"
-              style={{ top: "38%", left: "32%" }}
-            />
-            <span
-              className="absolute w-1.5 h-1.5 rounded-full bg-foreground"
-              style={{ top: "38%", right: "32%" }}
-            />
-          </div>
+    <div className="flex min-h-screen flex-col-reverse lg:grid lg:grid-cols-[.9fr_1.1fr]">
+      {/* 폼 패널 */}
+      <div className="flex flex-col justify-center bg-card px-6 py-12 lg:px-16">
+        <div className="mx-auto w-full max-w-sm">
+          <p className="font-pixel text-[11px] tracking-[1.5px] text-primary">GET STARTED</p>
+          <h1 className="mt-2.5 text-2xl font-extrabold tracking-tight text-foreground lg:text-[28px]">첫 친구가 기다려요</h1>
+          <p className="mt-3 text-sm leading-relaxed text-text-secondary">
+            Google 계정으로 3초 만에 시작하고 알 1개를 무료로 받으세요.
+          </p>
 
-          {/* 타이틀 */}
-          <div className="text-center">
-            <h1 className="text-2xl font-bold">쓸모도로</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              집중하면 캐릭터가 자라요
-            </p>
-          </div>
+          {error && <p role="alert" className="mt-5 text-sm text-destructive">{error}</p>}
 
-          {/* 에러 메시지 */}
-          {error && (
-            <p className="text-sm text-destructive text-center">{error}</p>
-          )}
-
-          {/* Google 가입 버튼 */}
-          <Button
+          <button
             type="button"
             onClick={handleGoogleSignup}
             disabled={isLoading}
-            className="w-full h-11 rounded-[10px] font-semibold"
+            className="mt-6 flex h-14 w-full items-center justify-center gap-3 rounded-[14px] border border-border bg-card text-[15px] font-semibold text-foreground shadow-[var(--shadow-md)] transition-colors hover:bg-surface-2 disabled:opacity-60"
           >
-            {isLoading ? "이동 중..." : "Google로 시작하기"}
-          </Button>
+            <GoogleIcon size={22} />
+            {isLoading ? "이동 중..." : "Google로 가입하기"}
+          </button>
 
-          {/* 로그인 링크 (로그인 OAuth 전환은 TASK-71) */}
-          <Link
-            href="/login"
-            className="text-sm font-medium text-primary hover:underline"
-          >
-            이미 계정이 있으신가요? 로그인
-          </Link>
+          <div className="mt-5 flex items-center gap-2.5 rounded-2xl border border-border-warm bg-surface-3 px-4 py-3.5">
+            <Image src="/icons/gift.png" alt="선물" width={22} height={22} unoptimized className="pixelated" />
+            <span className="text-[13px] font-medium text-text-secondary">
+              가입 즉시 <span className="font-bold text-focus">알 1개 + 200P</span>를 드려요
+            </span>
+          </div>
+
+          <p className="mt-5 text-xs leading-relaxed text-text-faint">
+            가입 시 <span className="font-semibold text-muted-foreground">서비스 이용약관</span> 및{" "}
+            <span className="font-semibold text-muted-foreground">개인정보 처리방침</span>에 동의하게 됩니다
+          </p>
+
+          <p className="mt-6 text-center text-sm text-text-secondary">
+            이미 계정이 있으신가요?{" "}
+            <Link href="/login" className="font-bold text-focus hover:underline">로그인</Link>
+          </p>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* 리워드 패널 */}
+      <div
+        className="relative flex flex-col items-center justify-center px-6 py-14 lg:py-12"
+        style={{
+          backgroundColor: "#F3ECE4",
+          backgroundImage:
+            "radial-gradient(circle at 56% 44%, rgba(123,166,142,.2), rgba(123,166,142,0) 56%), linear-gradient(rgba(45,42,38,.04) 1px,transparent 1px), linear-gradient(90deg,rgba(45,42,38,.04) 1px,transparent 1px)",
+          backgroundSize: "auto, 26px 26px, 26px 26px",
+        }}
+      >
+        <span className="animate-sparkle-pulse absolute left-1/4 top-1/4 text-base text-gold">✦</span>
+        <span className="animate-sparkle-pulse absolute bottom-1/4 right-1/4 text-xs text-primary" style={{ animationDelay: ".5s" }}>✦</span>
+        <div className="relative flex items-center justify-center">
+          <div
+            className="absolute h-56 w-56 rounded-full"
+            style={{ background: "radial-gradient(circle, rgba(224,177,94,.26), rgba(224,177,94,0) 62%)" }}
+          />
+          <Image src="/icons/egg-smooth.png" alt="알" width={150} height={150} unoptimized priority className="pixelated animate-buddy-bob" />
+        </div>
+        <div className="mt-6 text-center">
+          <p className="text-xl font-extrabold text-foreground lg:text-[22px]">웰컴 기프트</p>
+          <p className="mt-2 text-sm text-text-secondary">가입 즉시 알 1개 · 200포인트 지급</p>
+        </div>
+        <div className="mt-6 flex gap-3.5">
+          {SAMPLE_BIRDS.map((slug) => (
+            <Image
+              key={slug}
+              src={`/characters/${slug}.png`}
+              alt=""
+              width={60}
+              height={60}
+              unoptimized
+              className="pixelated opacity-85"
+            />
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 

@@ -14,18 +14,20 @@ export type RevealResult = {
 };
 
 const RARITY_LABEL: Record<string, string> = {
-  common: "커먼",
+  common: "일반",
   rare: "레어",
   epic: "에픽",
-  legendary: "레전더리",
+  legendary: "전설",
+  mythic: "신화",
 };
 
-// reveal 시 적용되는 레어리티별 빛·sparkle 테마
+// reveal 시 적용되는 레어리티별 빛·sparkle 테마 (rarity.ts accent 계열과 정합)
 const RARITY_THEME: Record<string, { light: string; glow: string; sparkles: number }> = {
   common: { light: "#F4ECD9", glow: "rgba(244,236,217,0.85)", sparkles: 4 },
   rare: { light: "#7FA8D4", glow: "rgba(127,168,212,0.9)", sparkles: 4 },
-  epic: { light: "#9B7FD4", glow: "rgba(155,127,212,0.9)", sparkles: 8 },
-  legendary: { light: "#E8C45A", glow: "rgba(232,196,90,0.95)", sparkles: 12 },
+  epic: { light: "#B79BE0", glow: "rgba(156,111,203,0.9)", sparkles: 8 },
+  legendary: { light: "#E8C45A", glow: "rgba(224,177,94,0.95)", sparkles: 12 },
+  mythic: { light: "#DCC0E8", glow: "rgba(201,168,214,0.95)", sparkles: 16 },
 };
 
 // 단계적 크랙 타임라인 (기대감 증폭): 흔들 → 금1 → 금2 → 팡

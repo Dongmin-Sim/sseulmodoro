@@ -2,39 +2,33 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { getRarityCard } from "@/lib/rarity";
 
-const DEFAULT_SIZE = 160;
-const EGG_RATIO = 0.44; // 미보유 알 아이콘 크기 (28% inset · 44%)
-
 type LockCardProps = {
   rarity: string;
-  size?: number;
+  size?: number; // 생략 시 컨테이너를 채우는 반응형(aspect-square)
   className?: string;
 };
 
 // 미보유 종 카드 — 카드 프레임을 흐리게(desaturate) 깔고 알 아이콘으로 가린다.
-export function LockCard({ rarity, size = DEFAULT_SIZE, className }: LockCardProps) {
-  const eggSize = Math.round(size * EGG_RATIO);
+export function LockCard({ rarity, size, className }: LockCardProps) {
+  const fixed = size != null;
 
   return (
-    <div className={cn("relative", className)} style={{ width: size, height: size }}>
+    <div
+      className={cn("relative", !fixed && "aspect-square w-full", className)}
+      style={fixed ? { width: size, height: size } : undefined}
+    >
       <Image
         src={getRarityCard(rarity)}
         alt=""
         fill
         unoptimized
-        sizes={`${size}px`}
+        sizes={fixed ? `${size}px` : "160px"}
         className="pixelated"
         style={{ filter: "saturate(.45) opacity(.82)" }}
       />
-      <Image
-        src="/icons/egg-smooth.png"
-        alt="미보유"
-        width={eggSize}
-        height={eggSize}
-        unoptimized
-        className="pixelated absolute opacity-80"
-        style={{ top: "28%", left: "28%" }}
-      />
+      <div className="absolute opacity-80" style={{ top: "28%", left: "28%", width: "44%", height: "44%" }}>
+        <Image src="/icons/egg-smooth.png" alt="미보유" fill unoptimized className="pixelated object-contain" />
+      </div>
     </div>
   );
 }
