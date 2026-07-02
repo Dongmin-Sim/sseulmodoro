@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
+import { Input } from "@/components/ui/input";
 import { GoogleIcon } from "@/components/auth/google-icon";
 
 export function LoginForm() {
@@ -97,7 +98,52 @@ export function LoginForm() {
             아직 계정이 없으신가요?{" "}
             <Link href="/signup" className="font-bold text-focus hover:underline">회원가입</Link>
           </p>
+
+          {process.env.NODE_ENV !== "production" && <DevLogin />}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// 로컬 QA 전용 — 프로덕션 빌드에서는 트리쉐이킹으로 제거된다(NODE_ENV 가드).
+// seed.sql의 dev@sseulmodoro.local / password123 계정으로 즉시 로그인.
+function DevLogin() {
+  const router = useRouter();
+  const [email, setEmail] = useState("dev@sseulmodoro.local");
+  const [password, setPassword] = useState("password123");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleDevLogin = async () => {
+    setError(null);
+    setIsLoading(true);
+    const supabase = createClient();
+    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    if (authError) {
+      setError(`개발 로그인 실패: ${authError.message}`);
+      setIsLoading(false);
+      return;
+    }
+    router.push("/home");
+    router.refresh();
+  };
+
+  return (
+    <div className="mt-8 rounded-2xl border border-dashed border-border-warm bg-surface-3 p-4">
+      <p className="font-pixel text-[9px] tracking-[1.5px] text-gold-deep">DEV LOGIN · 로컬 전용</p>
+      <div className="mt-3 flex flex-col gap-2">
+        <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="이메일" aria-label="개발용 이메일" className="h-10" />
+        <Input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="비밀번호" aria-label="개발용 비밀번호" className="h-10" />
+        <button
+          type="button"
+          onClick={handleDevLogin}
+          disabled={isLoading}
+          className="h-10 rounded-[12px] bg-foreground text-sm font-semibold text-background disabled:opacity-60"
+        >
+          {isLoading ? "로그인 중..." : "개발용 로그인"}
+        </button>
+        {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
       </div>
     </div>
   );
