@@ -1,14 +1,15 @@
 from google.cloud import bigquery
 
-RAW_ACTIVITY_LOG_TABLE_DDL = """
-CREATE TABLE IF NOT EXISTS `{project_id}.raw.activity_log`(
-    id             INT64 NOT NULL,
-    user_id        STRING,
-    event_category STRING NOT NULL,
-    event_type     STRING NOT NULL,
-    metadata       JSON,
-    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP() NOT NULL)
-"""
+RAW_ACTIVITY_LOG_TABLE_SCHEMA = [
+    bigquery.SchemaField("id", bigquery.enums.SqlTypeNames.INT64, mode="NULLABLE"),
+    bigquery.SchemaField("user_id", bigquery.enums.SqlTypeNames.STRING, mode="NULLABLE"),
+    bigquery.SchemaField("event_category", bigquery.enums.SqlTypeNames.STRING, mode="NULLABLE"),
+    bigquery.SchemaField("event_type", bigquery.enums.SqlTypeNames.STRING, mode="NULLABLE"),
+    bigquery.SchemaField("metadata", bigquery.enums.SqlTypeNames.STRING, mode="NULLABLE"),
+    bigquery.SchemaField("created_at", bigquery.enums.SqlTypeNames.TIMESTAMP, mode="NULLABLE"),
+    bigquery.SchemaField("loaded_at", bigquery.enums.SqlTypeNames.TIMESTAMP, mode="REQUIRED"),
+]
+
 
 RAW_POMODORO_SESSIONS_TABLE_SCHEMA = [
     bigquery.SchemaField("id", bigquery.enums.SqlTypeNames.INT64, mode="NULLABLE"),

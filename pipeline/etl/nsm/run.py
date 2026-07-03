@@ -1,20 +1,18 @@
 import os
 
 from config import SQL_DIR
-from utils.gcp import get_bigquery_client, create_dataset, create_table_from_ddl, create_table_from_ddl_file
-from ddl.raw import RAW_ACTIVITY_LOG_TABLE_DDL
 from utils.logger import get_logger
+from utils.gcp import get_bigquery_client, create_dataset, create_table_from_ddl_file
+from ddl.raw import RAW_POMODORO_SESSIONS_TABLE_SCHEMA, RAW_ACTIVITY_LOG_TABLE_SCHEMA
 
-from .extract import extract_activity_log, extract_pomodoro_sessions
-from .load import load_to_raw, load_pomodoro_sessions, preprocess_pomodoro_sessions
+from .extract import extract_table
+from .load import load_to_raw, converts_user_id_to_str
 from .transform import transform
 
 logger = get_logger(__name__)
 
 def prepare_schema(bq_client):
     create_dataset(bq_client, 'raw')
-    create_table_from_ddl(bq_client, 'activity_log', RAW_ACTIVITY_LOG_TABLE_DDL)
-
     create_dataset(bq_client, 'stage')
     create_table_from_ddl_file(bq_client, 'activity_log_app_visited', 'stage_activity_log_app_visited.sql')
 
@@ -31,18 +29,15 @@ def run_nsm() -> None:
     project_id = bq_client.project
     prepare_schema(bq_client)
 
-    # extract from Supabase activiti_log
-    activity_log_df = extract_activity_log(database_url=database_url)
-    pomodoro_session_df = extract_pomodoro_sessions(database_url=database_url)
+    extract_target_tables = ['activity_log', 'pomodoro_sessions']
+    extracted_df = [extract_table(database_url, table) for table in extract_target_tables]
 
-    # load to bigquery raw.activiti_log
-    load_to_raw(bq_client, 'activity_log', activity_log_df)
+    bigquery_raw_schemas = [RAW_ACTIVITY_LOG_TABLE_SCHEMA, RAW_POMODORO_SESSIONS_TABLE_SCHEMA]
+    for target_table, schema, df in zip(extract_target_tables, bigquery_raw_schemas, extracted_df):
+        proc_df = converts_user_id_to_str(df)
+        load_to_raw(bq_client, target_table, proc_df, schema)
 
-    processed_pomodoro_session_df = preprocess_pomodoro_sessions(pomodoro_session_df)
-    load_pomodoro_sessions(bq_client, 'pomodoro_sessions', processed_pomodoro_session_df)
-
-    # transform to fact, mart
-    # TODO: 개선필요 의존성 개선 파일 순서에 따라 실행 의존성을 가짐, 문자열 기반이라 실수 발생 가능 높음
+    # TODO: 실행 순서가 리스트 순서에 암묵 의존 — 문자열 기반이라 순서 실수에 취약. 의존성 명시화 필요
     tables = [
         (SQL_DIR / "stages/activity_log_app_visited.sql", f'{project_id}.stage.activity_log_app_visited'),
 
