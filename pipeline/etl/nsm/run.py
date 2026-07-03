@@ -24,6 +24,7 @@ def prepare_schema(bq_client):
     create_table_from_ddl(bq_client, 'weekly_nsm', MART_WEEKLY_NSM_TABLE_DDL)
 
     create_table_from_ddl_file(bq_client, 'fact_pomodoro_sessions', 'mart_fact_pomodoro_sessions.sql')
+    create_table_from_ddl_file(bq_client, 'fact_active_user_daily', 'mart_fact_active_user_daily.sql')
     create_table_from_ddl_file(bq_client, 'agg_nsm_weekly', 'mart_agg_nsm_weekly.sql')
 
 def run_nsm() -> None:
@@ -47,11 +48,13 @@ def run_nsm() -> None:
         SQL_DIR / "raw_to_fact.sql",
         SQL_DIR / "fact_to_mart.sql",
         SQL_DIR / "marts/fact_pomodoro_sessions.sql",
+        SQL_DIR / "marts/fact_active_user_daily.sql",
         SQL_DIR / "marts/agg_nsm_weekly.sql"]
     table_names = [
         f'{project_id}.fact.daily_user_pomodoro_completions',
         f'{project_id}.mart.weekly_nsm',
         f'{project_id}.mart.fact_pomodoro_sessions',
+        f'{project_id}.mart.fact_active_user_daily',
         f'{project_id}.mart.agg_nsm_weekly']
 
     transform(bq_client, file_paths, table_names)
