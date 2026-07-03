@@ -70,5 +70,5 @@ Render in Korean via [templates/status-report.md](templates/status-report.md). G
 
 ## Notes
 
-- Frontmatter fields: `status·branch·pr·start_date·end_date·milestone·session`
+- Frontmatter fields: `status·branch·pr·start_date·end_date·milestone·track` (`track`: APP | DE)
 - Under git worktrees the canonical `workspace/` lives in the primary repo (gitignored, not shared). Run from there, or pass `--workspace`.

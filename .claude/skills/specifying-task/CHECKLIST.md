@@ -1,15 +1,15 @@
-# Ready 체크리스트 — task 상세화
+# Ready checklist — task refinement
 
-구현 시작 전 아래가 spec에 있어야 한다. 하나라도 실제 코드로 확인 안 되면 채우지 말고 사용자에게 확인한다.
+Before implementing, the spec must contain the following. If any can't be confirmed against real code, don't fill it — ask the user.
 
-- [ ] **구현 접근** — 어떻게 만들 것인가 (한 문단, 실제 코드 기준)
-- [ ] **영향 파일** — 생성·수정할 파일 목록 (`파일:섹션`)
-- [ ] **API 계약** — 요청/응답 타입 (있으면 `src/lib/types/api.ts` 기준)
-- [ ] **엣지 케이스** — 실패·경계 조건
-- [ ] **테스트** — 무엇을 어떻게 검증할 것인가 (`route.test.ts` 등)
-- [ ] **완료 조건 재확인** — 스켈레톤의 완료조건이 여전히 유효한가
+- [ ] **구현 접근** — how to build it (one paragraph, grounded in real code)
+- [ ] **영향 파일** — files to create/modify (`file:section`)
+- [ ] **API 계약** — request/response types (from `src/lib/types/api.ts` if any)
+- [ ] **엣지 케이스** — failure / boundary conditions
+- [ ] **테스트** — what to verify and how (`route.test.ts` etc.)
+- [ ] **완료 조건 재확인** — is the skeleton's done-condition still valid
 
-## 상세 섹션 형식 (spec 본문에 추가)
+## Spec body sections to append (written in Korean, into the spec)
 
 ```markdown
 ## 구현 접근

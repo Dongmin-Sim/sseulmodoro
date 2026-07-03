@@ -1,22 +1,23 @@
-# 분해 휴리스틱 — feature → milestone → task
+# Decomposition heuristics — feature → milestone → task
 
-## 계층 정의
-- **기능(feature)**: 사용자·비즈니스 관점의 한 덩어리 가치. WHAT / why.
-- **마일스톤(milestone)**: 기능을 향한 출하 가능한 중간 목표. 여러 task를 묶는다.
-- **task**: 한 세션(BE/FE/DE)이 한 번에 잡을 수 있는 작업 단위.
+## Hierarchy
+- **feature**: one chunk of user/business value. WHAT / why.
+- **milestone**: a shippable step toward a feature; groups tasks.
+- **task**: a unit one work session can finish.
 
-## 좋은 분해
-- task는 **한 세션·한 관심사**로. BE/FE/DE가 섞이면 쪼갠다.
-- 마일스톤은 **독립적으로 확인 가능한**(데모·검증 가능한) 단위로.
-- 의존은 명시한다: "A가 B의 선행." 순환 금지.
-- 처음부터 완벽히 쪼개지 않는다 — 가까운 마일스톤만 task까지, 먼 것은 마일스톤 수준으로 두고 후보(candidate)로.
+## Good decomposition
+- One task = one concern. Split if app work and data work mix.
+- A milestone should be independently verifiable (demoable).
+- State dependencies explicitly ("A precedes B"). No cycles.
+- Don't fully decompose up front — decompose to tasks only for the near milestone; keep far ones at milestone level as candidates.
 
-## 세션 라우팅
-- API·DB·인증·인프라 → **BE**
-- 페이지·컴포넌트·UX → **FE**
-- 파이프라인·지표·이벤트·mart → **DE**
+## Track routing (task `track`)
+- App work (API · DB · auth · pages · components · UX) → **APP** — Claude implements
+- Data engineering (pipeline · metrics · events · mart) → **DE** — user implements, Claude reviews
 
-## 안티패턴
-- 한 task에 여러 세션 → 쪼갠다.
-- "기타/잡다" 마일스톤 → 목표가 불명확하다는 신호.
-- task가 하루 이상 걸릴 규모 → 더 쪼갤 여지.
+(Within APP, api vs ui is decided by the task's nature, not a label.)
+
+## Anti-patterns
+- One task mixing APP + DE → split.
+- A "misc / other" milestone → the goal is unclear.
+- A task larger than a day → room to split further.

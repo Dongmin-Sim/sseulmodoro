@@ -191,12 +191,12 @@ def render_board(features, milestones, tasks, issues, metrics, events, source_mt
         )
 
     lines += ["", "## Tasks", "",
-              "| id | status | session | milestone | branch | pr |",
+              "| id | status | track | milestone | branch | pr |",
               "| --- | --- | --- | --- | --- | --- |"]
     for t in tasks:
         f = t["fields"]
         lines.append(
-            f"| {t['id']} | {_cell(f.get('status'))} | {_cell(f.get('session'))} "
+            f"| {t['id']} | {_cell(f.get('status'))} | {_cell(f.get('track'))} "
             f"| {_cell(f.get('milestone'))} | {_cell(f.get('branch'))} "
             f"| {_cell(f.get('pr'))} |"
         )

@@ -13,3 +13,11 @@ Audit a skill against the guide + checklist.
 - No argument → audit the skills changed in the working tree.
 
 Follow the skill-reviewer agent's checklist and method, and produce its Korean report.
+
+## Reference (criteria + examples)
+- [reference/descriptions.md](reference/descriptions.md)
+- [reference/conciseness-and-freedom.md](reference/conciseness-and-freedom.md)
+- [reference/structure.md](reference/structure.md)
+- [reference/workflows-and-content.md](reference/workflows-and-content.md)
+- [reference/scripts.md](reference/scripts.md)
+- [reference/evaluation.md](reference/evaluation.md)

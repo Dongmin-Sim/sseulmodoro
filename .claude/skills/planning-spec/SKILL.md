@@ -29,7 +29,7 @@ Copy and check off:
 Read `workspace/board.md` (rebuild via `.claude/skills/status/scripts/build_board.py` if stale) to know existing features/milestones/tasks. Never plan blind.
 
 ### 2. Intake
-Clarify the goal: purpose (why), rough scope, which session(s) (BE/FE/DE). Brainstorm — discuss trade-offs, don't just transcribe. See [DECOMPOSITION.md](DECOMPOSITION.md) for the hierarchy definitions and heuristics.
+Clarify the goal: purpose (why), rough scope, which track(s) (APP/DE). Brainstorm — discuss trade-offs, don't just transcribe. See [DECOMPOSITION.md](DECOMPOSITION.md) for the hierarchy definitions and heuristics.
 
 ### 3. Locate in the hierarchy
 Decide the entry level and new-vs-change:
@@ -39,7 +39,7 @@ Decide the entry level and new-vs-change:
 - restructuring (rename, re-scope, split/merge milestone, move task)
 
 ### 4. Decompose / restructure
-Break the goal into feature → milestone → task, or work out the restructure. Discuss ordering, dependencies, per-task session. See [EXAMPLE.md](EXAMPLE.md) for a worked decomposition. Keep tasks **skeleton-level** (title + one-line purpose) — detail is `specifying-task`, later.
+Break the goal into feature → milestone → task, or work out the restructure. Discuss ordering, dependencies, per-task track. See [EXAMPLE.md](EXAMPLE.md) for a worked decomposition. Keep tasks **skeleton-level** (title + one-line purpose) — detail is `specifying-task`, later.
 
 **Enforce the hierarchy**: never create a task without a milestone, or a milestone without a feature. If a parent is missing, offer to create it first.
 

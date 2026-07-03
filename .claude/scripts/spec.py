@@ -29,13 +29,13 @@ from pathlib import Path
 TYPES = {
     "task": {
         "dir": "tasks", "layout": "subdir",
-        "fm": ["status", "branch", "pr", "start_date", "end_date", "milestone", "session"],
+        "fm": ["status", "branch", "pr", "start_date", "end_date", "milestone", "track"],
         "defaults": {"status": "backlog", "branch": None, "pr": None,
                      "start_date": None, "end_date": None},
     },
     "issue": {
         "dir": "issues", "layout": "subdir",
-        "fm": ["status", "branch", "pr", "start_date", "end_date", "severity", "session"],
+        "fm": ["status", "branch", "pr", "start_date", "end_date", "severity", "track"],
         "defaults": {"status": "backlog", "branch": None, "pr": None,
                      "start_date": None, "end_date": None},
     },
