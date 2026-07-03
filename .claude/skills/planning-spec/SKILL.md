@@ -61,6 +61,11 @@ Structural changes (split/merge/move) = several writing-* calls together. Do **n
 ### 7. Verify
 Run `status` and show the user the updated board.
 
+## Must pass (eval)
+1. "새 task 하나" 요청인데 부모 마일스톤/기능이 없음 → task부터 만들지 않고 부모 생성을 먼저 제안 (계층 강제)
+2. trivial 필드 갱신(status→done, pr 추가 등) 요청 → 이 오케스트레이터를 거치지 않고 `writing-task`로 직행 안내
+3. 분해 확정 후 각 아티팩트를 대응하는 writing-* 로 위임 (feature→writing-feature, milestone→writing-milestone, task→writing-task)
+
 ## Boundaries
 - Substantive planning/restructuring → here. Trivial field updates (status→done, add pr) → call `writing-task` directly, skip this orchestrator.
 - Skeleton depth only; code-grounded detail → `specifying-task`.
