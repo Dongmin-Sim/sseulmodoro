@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { AuthHeader } from "@/components/layout/auth-header";
+import { NotificationDeniedBanner } from "@/components/feedback/notification-denied-banner";
 import { PomodoroSessionProvider } from "@/components/pomodoro/session-context";
 import { getAuthUser } from "@/lib/supabase/auth";
 import { createServerClient } from "@/lib/supabase/server";
@@ -28,6 +29,7 @@ export default async function AppLayout({
     <AppShell>
       <PomodoroSessionProvider>
         <AuthHeader nickname={data?.nickname ?? null} balance={data?.balance ?? 0} />
+        <NotificationDeniedBanner />
         {children}
       </PomodoroSessionProvider>
     </AppShell>

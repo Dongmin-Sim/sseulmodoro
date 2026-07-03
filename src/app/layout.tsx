@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Geist_Mono, Silkscreen } from "next/font/google";
 import localFont from "next/font/local";
 import { OfflineBanner } from "@/components/status/offline-banner";
+import { ToastProvider } from "@/components/feedback/toast";
 import "./globals.css";
 
 // 영문·숫자 본문/제목 (DESIGN.md)
@@ -56,7 +57,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         <OfflineBanner />
-        {children}
+        <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
   );
