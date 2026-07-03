@@ -20,11 +20,16 @@ def prepare_schema(bq_client):
     create_dataset(bq_client, 'fact')
     create_table_from_ddl(bq_client, 'daily_user_pomodoro_completions', FACT_USER_DAILY_POMODORO_TABLE_DDL)
 
+    create_dataset(bq_client, 'stage')
+    create_table_from_ddl_file(bq_client, 'activity_log_app_visited', 'stage_activity_log_app_visited.sql')
+
     create_dataset(bq_client, 'mart')
     create_table_from_ddl(bq_client, 'weekly_nsm', MART_WEEKLY_NSM_TABLE_DDL)
 
     create_table_from_ddl_file(bq_client, 'fact_pomodoro_sessions', 'mart_fact_pomodoro_sessions.sql')
-    create_table_from_ddl_file(bq_client, 'fact_active_user_daily', 'mart_fact_active_user_daily.sql')
+    create_table_from_ddl_file(bq_client, 'active_user_daily', 'mart_active_user_daily.sql')
+    create_table_from_ddl_file(bq_client, 'active_user_weekly', 'mart_active_user_weekly.sql')
+    create_table_from_ddl_file(bq_client, 'agg_pomodoro_weekly', 'mart_agg_pomodoro_weekly.sql')
     create_table_from_ddl_file(bq_client, 'agg_nsm_weekly', 'mart_agg_nsm_weekly.sql')
 
 def run_nsm() -> None:
@@ -44,11 +49,18 @@ def run_nsm() -> None:
     load_pomodoro_sessions(bq_client, 'pomodoro_sessions', processed_pomodoro_session_df)
 
     # transform to fact, mart
+    # TODO: 개선필요 의존성 개선 파일 순서에 따라 실행 의존성을 가짐, 문자열 기반이라 실수 발생 가능 높음
     tables = [
         (SQL_DIR / "raw_to_fact.sql", f'{project_id}.fact.daily_user_pomodoro_completions'),
         (SQL_DIR / "fact_to_mart.sql", f'{project_id}.mart.weekly_nsm'),
+
+        (SQL_DIR / "stages/activity_log_app_visited.sql", f'{project_id}.stage.activity_log_app_visited'),
+
         (SQL_DIR / "marts/fact_pomodoro_sessions.sql", f'{project_id}.mart.fact_pomodoro_sessions'),
-        (SQL_DIR / "marts/fact_active_user_daily.sql", f'{project_id}.mart.fact_active_user_daily'),
+        (SQL_DIR / "marts/active_user_daily.sql", f'{project_id}.mart.active_user_daily'),
+        (SQL_DIR / "marts/active_user_weekly.sql", f'{project_id}.mart.active_user_weekly'),
+
+        (SQL_DIR / "marts/agg_pomodoro_weekly.sql", f'{project_id}.mart.agg_pomodoro_weekly'),
         (SQL_DIR / "marts/agg_nsm_weekly.sql", f'{project_id}.mart.agg_nsm_weekly'),
     ]
     transform(bq_client, tables)
