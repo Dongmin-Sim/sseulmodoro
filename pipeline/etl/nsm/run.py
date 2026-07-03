@@ -3,8 +3,6 @@ import os
 from config import SQL_DIR
 from utils.gcp import get_bigquery_client, create_dataset, create_table_from_ddl, create_table_from_ddl_file
 from ddl.raw import RAW_ACTIVITY_LOG_TABLE_DDL
-from ddl.fact import FACT_USER_DAILY_POMODORO_TABLE_DDL
-from ddl.mart import MART_WEEKLY_NSM_TABLE_DDL
 from utils.logger import get_logger
 
 from .extract import extract_activity_log, extract_pomodoro_sessions
@@ -17,15 +15,10 @@ def prepare_schema(bq_client):
     create_dataset(bq_client, 'raw')
     create_table_from_ddl(bq_client, 'activity_log', RAW_ACTIVITY_LOG_TABLE_DDL)
 
-    create_dataset(bq_client, 'fact')
-    create_table_from_ddl(bq_client, 'daily_user_pomodoro_completions', FACT_USER_DAILY_POMODORO_TABLE_DDL)
-
     create_dataset(bq_client, 'stage')
     create_table_from_ddl_file(bq_client, 'activity_log_app_visited', 'stage_activity_log_app_visited.sql')
 
     create_dataset(bq_client, 'mart')
-    create_table_from_ddl(bq_client, 'weekly_nsm', MART_WEEKLY_NSM_TABLE_DDL)
-
     create_table_from_ddl_file(bq_client, 'fact_pomodoro_sessions', 'mart_fact_pomodoro_sessions.sql')
     create_table_from_ddl_file(bq_client, 'active_user_daily', 'mart_active_user_daily.sql')
     create_table_from_ddl_file(bq_client, 'active_user_weekly', 'mart_active_user_weekly.sql')
@@ -51,9 +44,6 @@ def run_nsm() -> None:
     # transform to fact, mart
     # TODO: 개선필요 의존성 개선 파일 순서에 따라 실행 의존성을 가짐, 문자열 기반이라 실수 발생 가능 높음
     tables = [
-        (SQL_DIR / "raw_to_fact.sql", f'{project_id}.fact.daily_user_pomodoro_completions'),
-        (SQL_DIR / "fact_to_mart.sql", f'{project_id}.mart.weekly_nsm'),
-
         (SQL_DIR / "stages/activity_log_app_visited.sql", f'{project_id}.stage.activity_log_app_visited'),
 
         (SQL_DIR / "marts/fact_pomodoro_sessions.sql", f'{project_id}.mart.fact_pomodoro_sessions'),
