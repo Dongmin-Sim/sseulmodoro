@@ -6,6 +6,9 @@ import Image from "next/image";
 import { getHistory } from "@/lib/api/history";
 import { getHeatmap } from "@/lib/api/heatmap";
 import { formatFocusDuration, formatRecordTimestamp } from "@/lib/format";
+import { InlineError } from "@/components/feedback/inline-error";
+import { EmptyState } from "@/components/feedback/empty-state";
+import { useToast } from "@/components/feedback/toast";
 import type { HeatmapResponse, RecordLog, RecordResponse } from "@/lib/types/api";
 
 const HISTORY_PAGE_SIZE = 10;
@@ -24,6 +27,7 @@ function heatColor(count: number): string {
 
 export function HistoryClient() {
   const router = useRouter();
+  const { toast } = useToast();
 
   const [status, setStatus] = useState<LoadStatus>("loading");
   const [summary, setSummary] = useState<RecordResponse["summary"] | null>(null);
@@ -31,7 +35,6 @@ export function HistoryClient() {
   const [heatmap, setHeatmap] = useState<HeatmapResponse>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [moreError, setMoreError] = useState<string | null>(null);
 
   const loadInitial = useCallback(async () => {
     setStatus("loading");
@@ -57,13 +60,16 @@ export function HistoryClient() {
   const handleLoadMore = async () => {
     if (!cursor || isLoadingMore) return;
     setIsLoadingMore(true);
-    setMoreError(null);
     try {
       const data = await getHistory(cursor, HISTORY_PAGE_SIZE);
       setLogs((prev) => [...prev, ...data.logs]);
       setCursor(data.nextCursor);
     } catch {
-      setMoreError("기록을 더 불러오지 못했어요.");
+      toast({
+        title: "기록을 더 불러오지 못했어요",
+        description: "잠시 후 다시 시도해 주세요.",
+        action: { label: "다시 시도", onClick: () => void handleLoadMore() },
+      });
     } finally {
       setIsLoadingMore(false);
     }
@@ -84,22 +90,14 @@ export function HistoryClient() {
         )}
 
         {status === "error" && (
-          <div className="flex flex-col items-center gap-4 py-16 text-center">
-            <p role="alert" className="text-sm text-destructive">기록을 불러오지 못했어요.</p>
-            <button
-              type="button"
-              onClick={() => void loadInitial()}
-              className="rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold hover:bg-surface-2"
-            >
-              다시 시도
-            </button>
+          <div className="mx-auto w-full max-w-md py-12">
+            <InlineError title="기록을 불러오지 못했어요" onRetry={() => void loadInitial()} />
           </div>
         )}
 
         {isEmpty && (
-          <div className="flex flex-col items-center gap-4 py-16 text-center">
-            <h2 className="text-lg font-bold text-foreground">아직 기록이 없어요</h2>
-            <p className="text-sm text-muted-foreground">포모도로를 완료하면 여기에 기록이 쌓여요.</p>
+          <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-5 py-12">
+            <EmptyState title="아직 기록이 없어요" description="포모도로를 완료하면 여기에 기록이 쌓여요." />
             <button
               type="button"
               onClick={() => router.push("/home")}
@@ -195,10 +193,6 @@ export function HistoryClient() {
                 >
                   {isLoadingMore ? "불러오는 중..." : "더 보기"}
                 </button>
-              )}
-
-              {moreError && (
-                <p role="alert" className="mt-2 text-center text-sm text-destructive">{moreError}</p>
               )}
             </section>
           </div>
