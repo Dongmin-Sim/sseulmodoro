@@ -44,17 +44,11 @@ def run_nsm() -> None:
     load_pomodoro_sessions(bq_client, 'pomodoro_sessions', processed_pomodoro_session_df)
 
     # transform to fact, mart
-    file_paths = [
-        SQL_DIR / "raw_to_fact.sql",
-        SQL_DIR / "fact_to_mart.sql",
-        SQL_DIR / "marts/fact_pomodoro_sessions.sql",
-        SQL_DIR / "marts/fact_active_user_daily.sql",
-        SQL_DIR / "marts/agg_nsm_weekly.sql"]
-    table_names = [
-        f'{project_id}.fact.daily_user_pomodoro_completions',
-        f'{project_id}.mart.weekly_nsm',
-        f'{project_id}.mart.fact_pomodoro_sessions',
-        f'{project_id}.mart.fact_active_user_daily',
-        f'{project_id}.mart.agg_nsm_weekly']
-
-    transform(bq_client, file_paths, table_names)
+    tables = [
+        (SQL_DIR / "raw_to_fact.sql", f'{project_id}.fact.daily_user_pomodoro_completions'),
+        (SQL_DIR / "fact_to_mart.sql", f'{project_id}.mart.weekly_nsm'),
+        (SQL_DIR / "marts/fact_pomodoro_sessions.sql", f'{project_id}.mart.fact_pomodoro_sessions'),
+        (SQL_DIR / "marts/fact_active_user_daily.sql", f'{project_id}.mart.fact_active_user_daily'),
+        (SQL_DIR / "marts/agg_nsm_weekly.sql", f'{project_id}.mart.agg_nsm_weekly'),
+    ]
+    transform(bq_client, tables)
