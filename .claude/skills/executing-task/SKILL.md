@@ -68,4 +68,4 @@ Mid-work needs — split/re-scope → `planning-spec`; small spec/field change �
 ## Boundaries
 - Compose, don't re-implement — call the referenced skills/agents rather than duplicating their steps.
 - Single source is `workspace/` via spec.py; there is no vault to sync.
-- Replaces be-session / fe-session (their steps live in rules/* + api-route + fe-patterns + /review + git-workflow).
+- APP-track steps (formerly the BE/FE session flows) live in rules/* + api-route + fe-patterns + /review + git-workflow.

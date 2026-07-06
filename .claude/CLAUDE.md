@@ -23,12 +23,13 @@
 ├── supabase/
 │   └── migrations/             # DB 마이그레이션
 ├── pipeline/                   # 0.2.0에서 하위 구조 추가
+├── workspace/                  # 작업 원천 (gitignore·로컬) — milestones/tasks/issues/metrics/events
 ├── .github/workflows/          # GitHub Actions
 ├── .claude/
 │   ├── CLAUDE.md
 │   ├── agents/                 # 역할별 서브에이전트
-│   ├── skills/                 # 워크플로우 절차
-│   ├── commands/               # 세션 진입점
+│   ├── skills/                 # 워크플로우 스킬 (진입점: /status·/planning-spec·/executing-task)
+│   ├── scripts/                # spec.py 등 결정적 도구
 │   └── rules/                  # 항상 적용되는 원칙
 └── package.json
 ```
@@ -45,7 +46,7 @@
 
 ## 개발 워크플로우
 
-세션별 워크플로우: `/be-session`, `/fe-session`, `/de-session` 참조.
+작업 진입점 스킬: `/status`(현재 상태 파악) · `/planning-spec`(기획·마일스톤·태스크 분해) · `/executing-task`(태스크·이슈 수행).
 
 ### 브랜치 전략 (3단계)
 
@@ -57,9 +58,9 @@ fix/*       ← 버그 수정. dev에서 분기 → 완료 후 dev에 PR.
 harness/*   ← Claude 하네스 변경. dev에서 분기 → 완료 후 dev에 PR.
 ```
 
-- 기능 개발: `feature/TASK-{N}-기능명` (`TASK-{N}`은 vault 태스크 ID — 비패딩, 예: `feature/TASK-51-etl-load`)
-- 버그 수정: `fix/ISSUE-{N}-버그명` (`ISSUE-{N}`은 vault 이슈 ID — 비패딩, 예: `fix/ISSUE-5-logout-warning-restore`)
-- 하네스 변경: `harness/설명` (`.claude/` 하위 파일 — agents, skills, rules, commands, settings)
+- 기능 개발: `feature/TASK-{N}-기능명` (`TASK-{N}`은 workspace 태스크 ID — 비패딩, 예: `feature/TASK-51-etl-load`)
+- 버그 수정: `fix/ISSUE-{N}-버그명` (`ISSUE-{N}`은 workspace 이슈 ID — 비패딩, 예: `fix/ISSUE-5-logout-warning-restore`)
+- 하네스 변경: `harness/설명` (`.claude/` 하위 파일 — agents, skills, rules, scripts, settings)
 
 > 머지된 패딩 잔재 브랜치(`fix/ISSUE-001` 등)는 그대로 두고 신규는 비패딩으로 통일.
 - main/dev 직접 커밋 금지. PR로만 머지.
@@ -78,38 +79,35 @@ feature/* → PR → dev 머지 → Vercel Preview (통합 확인)
 - **사용자 담당**: PostgreSQL 함수, ETL 스크립트, dbt 모델 설계
   - Claude Code는 스캐폴딩(시그니처 + TODO 주석)만 생성
 
-### 병렬 세션 운영
+### 병렬 세션 운영 (worktree 분리)
 
-BE/FE/DE 세션을 분리하여 병렬 개발한다. 각 세션은 독립된 Claude Code 인스턴스에서 운영.
+여러 작업을 `git worktree`로 디렉토리를 분리해 병렬로 진행한다 (충돌 방지). 각 워크트리는 독립된 Claude Code 인스턴스에서 운영.
 
-- **BE 세션** (`/be-session`): API Route, Supabase, 인증, 인프라
-- **FE 세션** (`/fe-session`): 페이지 UI, 컴포넌트, 사용자 인터랙션
-- **DE 세션** (`/de-session`): 데이터 파이프라인(`pipeline/`). **작업 방식이 BE/FE와 정반대** — 사용자가 모든 구현·결정을 하고 Claude는 리뷰·질문만 한다 (학습 목적). 상세는 de-session 참조
+작업 성격은 태스크 spec frontmatter의 `track:` 필드로 구분한다:
 
-세션 분리 규칙:
+- **APP** (Claude 구현): API Route·Supabase·인증·페이지 UI·컴포넌트. Claude가 `api-route`·`fe-patterns` 스킬로 구현. (BE=API·인프라, FE=UI는 파일 영역 구분)
+- **DE** (사용자 구현): 데이터 파이프라인(`pipeline/`). **APP과 정반대** — 사용자가 모든 구현·결정을 하고 Claude는 리뷰·질문만 한다 (학습 목적). `executing-task`의 DE 모드·`PERSONA.md` 참조.
 
-- vault 태스크 파일 frontmatter의 `session:` 필드로 BE/FE/DE 구분
-- `src/lib/types/api.ts`가 공유 인터페이스 (API 계약)
-  - BE가 타입 먼저 정의 → 커밋 → FE가 pull 후 사용
-- 파일 영역 겹침 금지 — 각 세션 지침 참조
+공통 규칙:
+
+- `src/lib/types/api.ts`가 공유 인터페이스 (API 계약) — BE가 타입 먼저 정의 → 커밋 → FE가 pull 후 사용
+- 파일 영역 겹침 금지
 - 물리적 분리: `git worktree`로 디렉토리 분리 (충돌 방지)
 
 ## 작업 출처 (태스크 + 이슈)
 
-프로젝트 작업의 단일 출처는 vault 파일시스템이다 — **두 객체**로 나뉜다:
+프로젝트 작업의 단일 원천은 `workspace/`다 (gitignore·로컬) — **두 객체**로 나뉜다:
 
-- **태스크 (기능·개선)**: `/Users/coding_min/home/oh-my-local-llm/project/tasks/TASK-{N}-{슬러그}.md`
-- **이슈 (버그 수정)**: `/Users/coding_min/home/oh-my-local-llm/project/issues/ISSUE-{N}-{슬러그}.md`
+- **태스크 (기능·개선)**: `workspace/tasks/TASK-{N}/spec.md`
+- **이슈 (버그 수정)**: `workspace/issues/ISSUE-{N}/spec.md`
+
+읽기·쓰기는 `.claude/scripts/spec.py`(create/set/show)로 한다 — frontmatter 갱신은 수작업 금지, spec.py가 결정적으로 처리하고 body는 보존한다. 조회·집계는 `/status`, 기획·분해는 `/planning-spec`.
 
 공통 규칙:
 
 - ID 비패딩 (`TASK-7`, `ISSUE-3`). TASK·ISSUE는 별도 namespace — 번호 겹쳐도 무관
 - status 어휘 영어 통일: `backlog | in-progress | in-review | done | on-hold`
-- vault 파일의 모든 쓰기(frontmatter 진척 5필드 + 본문·기획·hub.md·decisions·session-log)는 **vault project 세션 전속**
-  - vault 세션은 sseulmodoro 레포 read 권한이 있으므로 `git log` / `gh pr view`로 머지 상태·PR 링크·머지일을 직접 수집하여 진척 5필드(`status`, `branch`, `pr_link`, `start_date`, `end_date`)를 갱신한다
-  - 코드 레포 세션(여기)은 vault 파일에 쓰지 않는다 — 읽기만 가능
-- 읽기는 vault-reader 에이전트로 위임 (haiku, 읽기 전용)
-- ISSUE 작업 시 PR 생성 직후 vault-content-drafter가 본문 초안만 터미널에 출력 — vault에는 쓰지 않음
+- 진척 필드(`status`·`branch`·`pr`·`start_date`·`end_date`)는 작업 진행에 맞춰 spec.py `set`으로 갱신한다
 
 ## 작업 추적 규칙
 
@@ -126,14 +124,14 @@ BE/FE/DE 세션을 분리하여 병렬 개발한다. 각 세션은 독립된 Cla
 
 | 서브에이전트 위임 | opus 메인 직접 수행 |
 |---|---|
-| vault 태스크·이슈 조회 (vault-reader, haiku) | 아키텍처 설계 (plan 모드) |
-| ISSUE 본문 초안 (vault-content-drafter, sonnet) | 코드 리뷰 (/review) |
-| GitHub PR 확인 (github-routine, haiku) | 디버깅/에러 분석 |
-| API Route 구현 (api-developer, sonnet) | 사용자 대화/판단 |
+| 상태 집계·정합 (`/status`, fork·haiku) | 아키텍처 설계 (plan 모드) |
+| GitHub PR 확인 (github-routine, haiku) | 코드 리뷰 (/review) |
+| API Route 구현 (api-developer, sonnet) | 디버깅/에러 분석 |
+| 스킬·룰 감사 (skill-audit·rule-audit, fork) | 사용자 대화/판단 |
 
 ## UI 전략
 
-FE 디자인 시스템: `DESIGN.md` + `/fe-session` 참조. 디자인 검토: `/design-review` (`npm run dev` 필요).
+FE 디자인 시스템: `DESIGN.md` + `fe-patterns` 스킬 참조. 디자인 검토: `/design-review` (`npm run dev` 필요).
 
 ## 세부 규칙 참조
 
@@ -143,7 +141,7 @@ FE 디자인 시스템: `DESIGN.md` + `/fe-session` 참조. 디자인 검토: `/
 - **테스트 전략** → `rules/testing.md` (Vitest, route.test.ts 필수)
 - **코드 품질** → `rules/code-quality.md` (console.log 금지, 커밋 컨벤션, any 금지)
 - **보안** → `rules/security.md` (환경변수, 인증 경계, RLS, 입력 검증)
-- **이슈 진단** → `rules/issue-diagnosis.md` (vault 이슈=가설, 수정 전 현재 코드로 검증)
+- **이슈 진단** → `rules/issue-diagnosis.md` (이슈 spec=가설, 수정 전 현재 코드로 검증)
 - **작업 워크플로우** → `rules/workflow.md` (plan 게이트·검증 3종·사용자 QA·PR 초안 우선·stacked·커밋 위생)
 
 ## 공식 문서 참조
