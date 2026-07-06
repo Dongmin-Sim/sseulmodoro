@@ -5,7 +5,7 @@ agent: api-developer가 참조.
 
 ## 파일 생성 순서
 
-1. `src/lib/types/api.ts`에 요청/응답 타입 추가 → **첫 번째 커밋** (FE 세션 시작점)
+1. `src/lib/types/api.ts`에 요청/응답 타입 추가 → **첫 번째 커밋** (FE 작업 시작점)
 2. `src/app/api/<경로>/route.ts` 생성
 3. `src/app/api/<경로>/route.test.ts` 생성
 
