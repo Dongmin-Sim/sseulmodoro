@@ -118,6 +118,7 @@ def collect_flat_specs(workspace, dirname):
             "fields": parse_frontmatter(entry),
             "mtime": entry.stat().st_mtime,
         })
+    specs.sort(key=lambda s: _numeric_suffix(s["id"]))
     return specs
 
 

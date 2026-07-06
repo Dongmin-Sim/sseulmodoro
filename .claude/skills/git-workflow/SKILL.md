@@ -1,11 +1,11 @@
 ---
 name: git-workflow
-description: The git-writing lifecycle — cut a branch, commit, draft and create a PR — with consistent, readable output. The single reference other sessions/skills point to for anything git. Use when branching, committing, or opening a PR, or when the user says "브랜치 파자", "커밋하자", "PR 올리자", "PR 초안".
+description: The git-writing lifecycle — cut a branch, commit, draft and create a PR — with consistent, readable output. The single reference other skills point to for anything git. Use when branching, committing, or opening a PR, or when the user says "브랜치 파자", "커밋하자", "PR 올리자", "PR 초안".
 ---
 
 # git-workflow
 
-The git-writing lifecycle: branch → commit → PR. The single hub other sessions/skills (`executing-task`, session commands) reference for git work.
+The git-writing lifecycle: branch → commit → PR. The single hub other skills (`executing-task`, `releasing`) reference for git work.
 
 Ownership split — do not restate what these own:
 - **Conventions** (commit format, PR title, footer ban, issue-ref style) → the always-loaded `rules/code-quality`.

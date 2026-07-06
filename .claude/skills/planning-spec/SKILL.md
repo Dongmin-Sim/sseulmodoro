@@ -36,12 +36,13 @@ Decide the entry level and new-vs-change:
 - new feature → milestones + tasks under it
 - new milestone under an existing feature
 - new/changed tasks under an existing milestone
+- issue (bug) → its own spec (`writing-issue`); DE metric/event definition → `writing-metric` / `writing-event`
 - restructuring (rename, re-scope, split/merge milestone, move task)
 
 ### 4. Decompose / restructure
 Break the goal into feature → milestone → task, or work out the restructure. Discuss ordering, dependencies, per-task track. See [EXAMPLE.md](EXAMPLE.md) for a worked decomposition. Keep tasks **skeleton-level** (title + one-line purpose) — detail is `specifying-task`, later.
 
-**Enforce the hierarchy**: never create a task without a milestone, or a milestone without a feature. If a parent is missing, offer to create it first.
+**Enforce the hierarchy**: never create a task without a milestone. A feature above the milestone is optional — a milestone may stand alone (esp. DE/ops). If a required parent is missing, offer to create it first.
 
 ### 5. Confirm
 Show the proposed hierarchy (mark new vs changed) and get approval before writing anything.
@@ -70,4 +71,4 @@ Run `status` and show the user the updated board.
 ## Boundaries
 - Substantive planning/restructuring → here. Trivial field updates (status→done, add pr) → call `writing-task` directly, skip this orchestrator.
 - Skeleton depth only; code-grounded detail → `specifying-task`.
-- Reads/writes `workspace/` specs (no vault).
+- Reads `workspace/` specs; writing is delegated to writing-* (no vault).

@@ -1,6 +1,11 @@
+---
+name: fe-patterns
+description: Reusable FE code patterns for this project — component structure, API client wrapper, Supabase auth calls, route groups. Use when building a page or component, or when the user says "컴포넌트 만들자", "페이지 추가", "UI 작업".
+---
+
 # fe-patterns
 
-FE 개발에서 반복 사용되는 코드 패턴 참조.
+FE 개발에서 반복 사용되는 코드 패턴. 네이밍 컨벤션(`handleXxx`·`isXxx` 등)은 `rules/code-quality.md`가 원천.
 
 ## 컴포넌트 구조
 
@@ -17,8 +22,7 @@ src/components/
 
 - 서버 상태: API 호출 (`src/lib/api/` 래퍼)
 - 클라이언트 상태: `useState` + `useCallback`
-- 로딩/에러: `isLoading`, `isXxxing` 패턴
-- 이벤트: `handleXxx` 네이밍
+- 네이밍(로딩 `isLoading`·이벤트 `handleXxx` 등)은 `rules/code-quality.md` 참조
 
 ## API 클라이언트 래퍼 패턴
 

@@ -1,7 +1,11 @@
+---
+name: api-route
+description: Code patterns and scaffold for a new Next.js API Route — route-handler skeleton, type-first commit order, Vitest test template. Use when implementing an API endpoint, or when the user says "API 만들자", "라우트 추가", "엔드포인트 구현".
+---
+
 # api-route
 
-새 API Route 생성 시 따라야 할 코드 패턴과 체크리스트.
-agent: api-developer가 참조.
+새 API Route의 코드 패턴·스캐폴드. 인증·rpc·에러·로깅 **불변식은 규칙이 원천** — `rules/security.md`·`rules/db-design.md`·`rules/code-quality.md` 참조. 아래는 그 규칙을 API Route에 적용한 패턴·템플릿이다(재서술 아님).
 
 ## 파일 생성 순서
 
@@ -107,12 +111,9 @@ describe("POST /api/xxx", () => {
 });
 ```
 
-## 체크리스트
+## 체크리스트 (API Route 고유 — 불변식 근거는 위 규칙)
 
 - [ ] `src/lib/types/api.ts`에 응답 타입 정의 (첫 커밋 완료)
-- [ ] `getAuthUser()` 호출 (데이터 변경 Route 필수)
-- [ ] 입력값 검증 (금액/카운트 음수 방지)
-- [ ] 여러 테이블 변경 → `rpc` 사용 (순차 쿼리 금지)
-- [ ] `console.error`만 사용 (`console.log` 제거)
+- [ ] 규칙 준수: 인증(`getAuthUser`)·입력검증·rpc·`console.error` → `rules/security`·`db-design`·`code-quality` 참조
 - [ ] `route.test.ts` 작성 완료 (미인증/에러/성공 케이스)
 - [ ] `npm run build` 타입 에러 없음
