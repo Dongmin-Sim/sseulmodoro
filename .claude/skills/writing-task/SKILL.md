@@ -11,13 +11,18 @@ Create or update a task spec via `spec.py` — deterministic, idempotent. **Mech
 ```bash
 python3 .claude/scripts/spec.py create task <TASK-N> title="..." milestone=<M-S-N> track=<APP|DE>
 ```
-Then fill 설명 and 완료 조건 in the body with Edit (skeleton depth only — one-line purpose + rough conditions).
+This lays down the body from [TEMPLATE.md](TEMPLATE.md). Fill the sections with Edit at skeleton depth, following [GUIDE.md](GUIDE.md) (WHAT not HOW; deep code-grounded detail is `specifying-task`).
 
 ## Update (idempotent)
 ```bash
 python3 .claude/scripts/spec.py set task <TASK-N> status=in-review pr=83
 ```
 `set` patches only the given frontmatter keys and preserves the body. Keys: `status·branch·pr·start_date·end_date·milestone·track` (`track`: APP | DE).
+
+## Must pass (eval)
+1. `create`/`set` with a field not in the task schema → spec.py rejects it; do not invent the field.
+2. `set` on an existing task patches only the given keys and preserves the body (idempotent).
+3. A create request carrying implementation detail → keep the body skeleton-level; defer detail to `specifying-task`.
 
 ## Rules
 - Never invent field values — write only what was given or decided.

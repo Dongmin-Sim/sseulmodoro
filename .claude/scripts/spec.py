@@ -57,8 +57,9 @@ TYPES = {
     },
 }
 
-# Body skeletons (Korean). {id}/{title} are substituted; sections are left for
-# the skill to fill. Detail sections for tasks are added later by specifying-task.
+# Fallback body skeletons (Korean), used when a type has no
+# writing-<kind>/TEMPLATE.md. {id}/{title} are substituted; sections are left
+# for the skill to fill. See render_body() for the template-first lookup.
 BODIES = {
     "task": "# {id} · {title}\n\n## 설명\n\n## 완료 조건\n- \n\n"
             "<!-- 구현 상세는 specifying-task 로 채운다 -->\n",
@@ -75,18 +76,33 @@ def die(msg):
     sys.exit(1)
 
 
-def resolve_workspace():
-    """workspace/ under the git repo root (falls back to cwd)."""
+def resolve_repo_root():
+    """git repo root (falls back to cwd)."""
     try:
         root = subprocess.run(
             ["git", "rev-parse", "--show-toplevel"],
             capture_output=True, text=True, check=True,
         ).stdout.strip()
         if root:
-            return Path(root) / "workspace"
+            return Path(root)
     except (subprocess.CalledProcessError, FileNotFoundError):
         pass
-    return Path.cwd() / "workspace"
+    return Path.cwd()
+
+
+def resolve_workspace():
+    """workspace/ under the git repo root."""
+    return resolve_repo_root() / "workspace"
+
+
+def render_body(kind, item_id, title):
+    """Body skeleton for a new spec. Prefer the type's own template at
+    .claude/skills/writing-<kind>/TEMPLATE.md so templates live with their
+    skill; fall back to the built-in BODIES. Uses str.replace (not .format)
+    so literal braces in a template — e.g. LaTeX — survive untouched."""
+    tpl = resolve_repo_root() / ".claude" / "skills" / f"writing-{kind}" / "TEMPLATE.md"
+    raw = tpl.read_text(encoding="utf-8") if tpl.exists() else BODIES[kind]
+    return raw.replace("{id}", item_id).replace("{title}", title)
 
 
 def spec_path(kind, item_id):
@@ -156,7 +172,7 @@ def cmd_create(kind, item_id, kv, force):
         fm[k] = v
     # Keep declared order; unset keys default to None.
     fm_pairs = [(k, fm.get(k)) for k in cfg["fm"]]
-    body = BODIES[kind].format(id=item_id, title=title)
+    body = render_body(kind, item_id, title)
     write_spec(path, fm_pairs, body)
     print(f"[spec] created {path}")
 
