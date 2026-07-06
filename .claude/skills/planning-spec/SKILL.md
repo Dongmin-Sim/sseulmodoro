@@ -66,7 +66,7 @@ Run `status` and show the user the updated board.
 ## Must pass (eval)
 1. A "new task" request when the parent milestone is missing → do not create the task; propose creating the milestone first (a feature above the milestone is optional).
 2. A trivial field update (status→done, add pr, etc.) → skip this orchestrator; direct the user to `writing-task`.
-3. After the breakdown is settled, dispatch each artifact to its writing-* (feature→writing-feature, milestone→writing-milestone, task→writing-task).
+3. Restructuring that splits a task spanning two milestones → produce the several writing-* calls needed; don't drop or duplicate the task.
 
 ## Boundaries
 - Substantive planning/restructuring → here. Trivial field updates (status→done, add pr) → call `writing-task` directly, skip this orchestrator.

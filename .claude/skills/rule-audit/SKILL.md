@@ -13,7 +13,7 @@ Audit a rule against the guide + checklist.
 - `all` / `전체` → audit every rule under `.claude/rules/`.
 - No argument → audit the rules changed in the working tree.
 
-Follow the rule-reviewer agent's method and checklist, and produce its Korean report.
+Follow the rule-reviewer agent's checklist and method, and produce its Korean report.
 
 ## Reference (criteria + examples)
 - [reference/rules-authoring.md](reference/rules-authoring.md)

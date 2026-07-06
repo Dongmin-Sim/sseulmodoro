@@ -26,4 +26,5 @@ Keys: `title·status`.
 
 ## Rules
 - Definition only — the DE planning artifact, not the pipeline implementation.
+- After the write, confirm it: `python3 .claude/scripts/spec.py show metric <slug>`.
 - Korean body; writes `workspace/` only.

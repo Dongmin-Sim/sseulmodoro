@@ -32,7 +32,7 @@ New files under `supabase/migrations/` do **not** ship with Vercel. Apply them t
 npx supabase db push
 ```
 - Check the output for errors (fix the cause and re-run on failure).
-- Manual for now; CI automation is a separate planned task.
+- Manual for now — when CI automation lands (its own task), update or remove this step.
 - After the append-only cutover, never edit baseline migrations — add new ones only.
 
 ### 4. Verify

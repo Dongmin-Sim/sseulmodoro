@@ -28,4 +28,5 @@ python3 .claude/scripts/spec.py set task <TASK-N> status=in-review pr=83
 - Never invent field values — write only what was given or decided.
 - `status`: backlog | in-progress | in-review | done | on-hold.
 - No implementation detail here — that is `specifying-task`.
+- After the write, confirm it: `python3 .claude/scripts/spec.py show task <TASK-N>`.
 - Korean body; writes `workspace/` only.

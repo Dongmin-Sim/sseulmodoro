@@ -27,4 +27,5 @@ Keys: `title·status`.
 ## Rules
 - Feature = WHAT / why, not HOW. Milestones and tasks live in their own files.
 - Milestones reference this feature by its `title` — keep the title stable, or update the referencing milestones if it changes.
+- After the write, confirm it: `python3 .claude/scripts/spec.py show feature <slug>`.
 - Korean body; writes `workspace/` only.

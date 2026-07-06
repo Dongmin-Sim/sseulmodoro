@@ -26,4 +26,5 @@ Keys: `title·feature·status`. `status`: backlog | in-progress | candidate | do
 
 ## Rules
 - `feature` is optional; if set, point it at a real feature `title`. `status`: backlog | in-progress | candidate | done | on-hold.
+- After the write, confirm it: `python3 .claude/scripts/spec.py show milestone <M-S-N>`.
 - Korean body; writes `workspace/` only.
