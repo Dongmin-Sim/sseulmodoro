@@ -70,4 +70,4 @@ Run `status` and show the user the updated board.
 ## Boundaries
 - Substantive planning/restructuring → here. Trivial field updates (status→done, add pr) → call `writing-task` directly, skip this orchestrator.
 - Skeleton depth only; code-grounded detail → `specifying-task`.
-- Reads/writes `workspace/` specs; never touches the vault.
+- Reads/writes `workspace/` specs (no vault).

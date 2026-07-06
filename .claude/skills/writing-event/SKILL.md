@@ -26,4 +26,4 @@ Keys: `title·status`.
 
 ## Rules
 - Definition only — not the instrumentation code.
-- Korean body; never touch the vault.
+- Korean body; writes `workspace/` only.

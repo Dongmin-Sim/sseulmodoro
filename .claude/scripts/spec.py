@@ -57,18 +57,8 @@ TYPES = {
     },
 }
 
-# Fallback body skeletons (Korean), used when a type has no
-# writing-<kind>/TEMPLATE.md. {id}/{title} are substituted; sections are left
-# for the skill to fill. See render_body() for the template-first lookup.
-BODIES = {
-    "task": "# {id} · {title}\n\n## 설명\n\n## 완료 조건\n- \n\n"
-            "<!-- 구현 상세는 specifying-task 로 채운다 -->\n",
-    "issue": "# {id} · {title}\n\n## 증상\n\n## 재현\n\n## 원인\n\n## 수정\n",
-    "milestone": "# {id} · {title}\n\n(이 마일스톤이 묶는 목표를 한두 줄로.)\n",
-    "feature": "# {title}\n\n## 목적\n\n## 범위\n",
-    "metric": "# {title}\n\n## 정의\n\n## 계산\n\n## 원천\n",
-    "event": "# {title}\n\n## 정의\n\n## 속성\n- \n\n## 트리거\n",
-}
+# Body skeletons live in each skill's writing-<kind>/TEMPLATE.md, read by
+# render_body(). No built-in copies here — the template is the single source.
 
 
 def die(msg):
@@ -96,12 +86,12 @@ def resolve_workspace():
 
 
 def render_body(kind, item_id, title):
-    """Body skeleton for a new spec. Prefer the type's own template at
-    .claude/skills/writing-<kind>/TEMPLATE.md so templates live with their
-    skill; fall back to the built-in BODIES. Uses str.replace (not .format)
-    so literal braces in a template — e.g. LaTeX — survive untouched."""
+    """Body skeleton for a new spec, from the type's own template at
+    .claude/skills/writing-<kind>/TEMPLATE.md, so templates live with their
+    skill; a minimal heading is used only if that file is missing. Uses
+    str.replace (not .format) so literal braces — e.g. LaTeX — survive."""
     tpl = resolve_repo_root() / ".claude" / "skills" / f"writing-{kind}" / "TEMPLATE.md"
-    raw = tpl.read_text(encoding="utf-8") if tpl.exists() else BODIES[kind]
+    raw = tpl.read_text(encoding="utf-8") if tpl.exists() else "# {title}\n"
     return raw.replace("{id}", item_id).replace("{title}", title)
 
 

@@ -26,4 +26,4 @@ Keys: `title·status`.
 
 ## Rules
 - Definition only — the DE planning artifact, not the pipeline implementation.
-- Korean body; never touch the vault.
+- Korean body; writes `workspace/` only.

@@ -26,4 +26,4 @@ Keys: `title·feature·status`. `status`: backlog | in-progress | candidate | do
 
 ## Rules
 - `feature` is optional; if set, point it at a real feature `title`. `status`: backlog | in-progress | candidate | done | on-hold.
-- Korean body; never touch the vault.
+- Korean body; writes `workspace/` only.

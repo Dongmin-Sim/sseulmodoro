@@ -27,4 +27,4 @@ Keys: `title·status`.
 ## Rules
 - Feature = WHAT / why, not HOW. Milestones and tasks live in their own files.
 - Milestones reference this feature by its `title` — keep the title stable, or update the referencing milestones if it changes.
-- Korean body; never touch the vault.
+- Korean body; writes `workspace/` only.

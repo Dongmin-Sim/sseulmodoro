@@ -25,4 +25,4 @@ Spec sections and their format: [CHECKLIST.md](CHECKLIST.md). Set status via `py
 - Every claim references real code (`file:line`) — never speculate about files that don't exist.
 - Depth here; breadth (decomposition) is `planning-spec`.
 - Do not change scope — if the task feels wrong-sized, flag it for `planning-spec`, don't silently re-plan.
-- Korean body; never touch the vault.
+- Korean body; writes `workspace/` only.
