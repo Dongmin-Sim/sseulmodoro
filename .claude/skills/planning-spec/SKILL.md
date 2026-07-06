@@ -22,11 +22,11 @@ Copy and check off:
 - [ ] 4. Decompose / restructure
 - [ ] 5. Confirm the plan with the user
 - [ ] 6. Dispatch to writing-* (document)
-- [ ] 7. Verify — status
+- [ ] 7. Verify — reporting-status
 ```
 
 ### 1. Orient
-Read `workspace/board.md` (rebuild via `.claude/skills/status/scripts/build_board.py` if stale) to know existing features/milestones/tasks. Never plan blind.
+Read `workspace/board.md` (rebuild via `.claude/skills/reporting-status/scripts/build_board.py` if stale) to know existing features/milestones/tasks. Never plan blind.
 
 ### 2. Intake
 Clarify the goal: purpose (why), rough scope, which track(s) (APP/DE). Brainstorm — discuss trade-offs, don't just transcribe. See [DECOMPOSITION.md](DECOMPOSITION.md) for the hierarchy definitions and heuristics.
@@ -61,7 +61,7 @@ For each approved artifact, invoke the matching skill (create if new, update if 
 Structural changes (split/merge/move) = several writing-* calls together. Do **not** detail tasks here.
 
 ### 7. Verify
-Run `status` and show the user the updated board.
+Run `reporting-status` and show the user the updated board.
 
 ## Must pass (eval)
 1. A "new task" request when the parent milestone is missing → do not create the task; propose creating the milestone first (a feature above the milestone is optional).

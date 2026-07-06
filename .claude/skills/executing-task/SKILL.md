@@ -21,7 +21,7 @@ Two axes decide the flow — everything else is shared:
 Copy and check off:
 
 ```
-- [ ] 1. Orient  — status; pick a task or issue
+- [ ] 1. Orient  — reporting-status; pick a task or issue
 - [ ] 2. Ready   — task: specifying-task (if skeleton) · issue: diagnose first
 - [ ] 3. Branch  — sync dev, cut the branch
 - [ ] 4. Mode    — branch on track (MODES.md)
@@ -31,7 +31,7 @@ Copy and check off:
 ```
 
 ### 1. Orient
-Run `status`; pick the item (or the user names one). Note its `type` and `track`.
+Run `reporting-status`; pick the item (or the user names one). Note its `type` and `track`.
 
 ### 2. Ready
 - **task**, skeleton-level → run `specifying-task` (code-grounded detail).

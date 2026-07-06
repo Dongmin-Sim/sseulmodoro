@@ -1,11 +1,11 @@
 ---
-name: status
+name: reporting-status
 description: "Reports current work status — aggregates task/issue/milestone frontmatter under workspace/ into the board.md cache and reconciles it against git branches and gh PRs to surface what is in progress, what to pick up next, and any drift. Use at session start, or when the user asks for status in Korean such as '지금 상태', '어디까지 했지', '상태 보여줘', '이어서 뭐 하지'."
 context: fork
 agent: status-runner
 ---
 
-# status
+# reporting-status
 
 Aggregate and reconcile the work state under `workspace/`, then show "current state + what to pick up next".
 
@@ -28,7 +28,7 @@ Copy and check off as you go:
 Rebuild `workspace/board.md`. Spec frontmatter is the source of truth; the board is a derived cache.
 
 ```bash
-python3 .claude/skills/status/scripts/build_board.py
+python3 .claude/skills/reporting-status/scripts/build_board.py
 ```
 
 It skips when fresh (by mtime); pass `--force` to rebuild. Then read `workspace/board.md`.
@@ -60,7 +60,7 @@ Render in Korean via [templates/status-report.md](templates/status-report.md). G
 - **대기·후보**: not-started (backlog) features/tasks and candidate milestones — mark candidates "(후보)".
 - **Copy the milestone `display` line verbatim**: the board's `display` column is the ready milestone tree line (id · title · bar · done/total). Use it as-is — never re-assemble or recount `done/total`. Group by the `feature` column; place by `status`.
 - **Render every section**: if a section has nothing, print `없음` — never drop the section.
-- **다음 액션**: 1–3 context-relevant next skills, one line each (e.g. backlog present → `planning-spec`; open issues → `executing-task`; always `status`).
+- **다음 액션**: 1–3 context-relevant next skills, one line each (e.g. backlog present → `planning-spec`; open issues → `executing-task`; always `reporting-status`).
 
 ## Must pass (eval)
 

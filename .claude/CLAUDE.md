@@ -28,7 +28,7 @@
 ├── .claude/
 │   ├── CLAUDE.md
 │   ├── agents/                 # 역할별 서브에이전트
-│   ├── skills/                 # 워크플로우 스킬 (진입점: /status·/planning-spec·/executing-task)
+│   ├── skills/                 # 워크플로우 스킬 (진입점: /reporting-status·/planning-spec·/executing-task)
 │   ├── scripts/                # spec.py 등 결정적 도구
 │   └── rules/                  # 항상 적용되는 원칙
 └── package.json
@@ -46,7 +46,7 @@
 
 ## 개발 워크플로우
 
-작업 진입점 스킬: `/status`(현재 상태 파악) · `/planning-spec`(기획·마일스톤·태스크 분해) · `/executing-task`(태스크·이슈 수행).
+작업 진입점 스킬: `/reporting-status`(현재 상태 파악) · `/planning-spec`(기획·마일스톤·태스크 분해) · `/executing-task`(태스크·이슈 수행).
 
 ### 브랜치 전략 (3단계)
 
@@ -101,7 +101,7 @@ feature/* → PR → dev 머지 → Vercel Preview (통합 확인)
 - **태스크 (기능·개선)**: `workspace/tasks/TASK-{N}/spec.md`
 - **이슈 (버그 수정)**: `workspace/issues/ISSUE-{N}/spec.md`
 
-읽기·쓰기는 `.claude/scripts/spec.py`(create/set/show)로 한다 — frontmatter 갱신은 수작업 금지, spec.py가 결정적으로 처리하고 body는 보존한다. 조회·집계는 `/status`, 기획·분해는 `/planning-spec`.
+읽기·쓰기는 `.claude/scripts/spec.py`(create/set/show)로 한다 — frontmatter 갱신은 수작업 금지, spec.py가 결정적으로 처리하고 body는 보존한다. 조회·집계는 `/reporting-status`, 기획·분해는 `/planning-spec`.
 
 공통 규칙:
 
@@ -124,7 +124,7 @@ feature/* → PR → dev 머지 → Vercel Preview (통합 확인)
 
 | 서브에이전트 위임 | opus 메인 직접 수행 |
 |---|---|
-| 상태 집계·정합 (`/status`, fork·haiku) | 아키텍처 설계 (plan 모드) |
+| 상태 집계·정합 (`/reporting-status`, fork·haiku) | 아키텍처 설계 (plan 모드) |
 | API Route 구현 (api-developer, sonnet) | 이슈 진단·근본원인 분석 |
 | 코드·보안 리뷰 (reviewing-changes → code/security-reviewer) | 디버깅/에러 분석 |
 | 스킬·룰 감사 (skill-audit·rule-audit, fork) | 사용자 대화/판단 |
