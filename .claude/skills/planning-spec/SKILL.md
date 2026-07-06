@@ -63,7 +63,7 @@ Structural changes (split/merge/move) = several writing-* calls together. Do **n
 Run `status` and show the user the updated board.
 
 ## Must pass (eval)
-1. A "new task" request when the parent milestone/feature is missing → do not create the task; propose creating the parent first (hierarchy enforcement).
+1. A "new task" request when the parent milestone is missing → do not create the task; propose creating the milestone first (a feature above the milestone is optional).
 2. A trivial field update (status→done, add pr, etc.) → skip this orchestrator; direct the user to `writing-task`.
 3. After the breakdown is settled, dispatch each artifact to its writing-* (feature→writing-feature, milestone→writing-milestone, task→writing-task).
 

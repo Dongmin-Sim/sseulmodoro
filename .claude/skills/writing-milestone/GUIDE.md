@@ -7,4 +7,5 @@ Reference when filling `TEMPLATE.md`. Write declaratively — a milestone reads 
 - **진행 단계** — checkboxes on the way to reaching it.
 - **관련 Task** — the tasks grouped under this milestone (IDs).
 - **미정 사항** — what's undecided + when it will be decided.
-- **진행 메모** — decisions/adjustments/lessons accrued with dates; record big decisions inline. On reaching, add a light retro (thought it through? / learned? / what first next time? / what to improve?) — items 1 & 3 are interview material.
+
+Progress history lives in git (commits/PRs), not in a progress-log section here.

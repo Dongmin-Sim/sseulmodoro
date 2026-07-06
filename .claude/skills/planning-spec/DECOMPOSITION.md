@@ -2,7 +2,7 @@
 
 ## Hierarchy
 - **feature**: one chunk of user/business value. WHAT / why.
-- **milestone**: a shippable step toward a feature; groups tasks.
+- **milestone**: a shippable step; groups tasks. Usually under a feature, but `feature` is optional — a milestone may stand alone (esp. DE/ops work).
 - **task**: a unit one work session can finish.
 
 ## Good decomposition
