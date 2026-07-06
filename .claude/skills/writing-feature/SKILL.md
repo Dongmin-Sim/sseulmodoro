@@ -11,13 +11,18 @@ Create or update a feature spec via `spec.py` — deterministic, idempotent.
 ```bash
 python3 .claude/scripts/spec.py create feature <slug> title="..."
 ```
-Then fill 목적 and 범위 in the body with Edit.
+This lays down the body from [TEMPLATE.md](TEMPLATE.md). Fill the sections with Edit, following [GUIDE.md](GUIDE.md).
 
 ## Update
 ```bash
 python3 .claude/scripts/spec.py set feature <slug> status=archived
 ```
 Keys: `title·status`.
+
+## Must pass (eval)
+1. `create`/`set` with a field not in the feature schema → spec.py rejects it; do not invent the field.
+2. `set` on an existing feature patches only the given keys and preserves the body.
+3. Content dropped to HOW (implementation detail) → keep it WHAT / why; HOW belongs to tasks.
 
 ## Rules
 - Feature = WHAT / why, not HOW. Milestones and tasks live in their own files.

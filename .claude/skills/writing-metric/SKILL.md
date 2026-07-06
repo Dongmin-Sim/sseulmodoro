@@ -11,13 +11,18 @@ Create or update a metric definition via `spec.py` — idempotent. One metric = 
 ```bash
 python3 .claude/scripts/spec.py create metric <slug> title="..."
 ```
-Then fill 정의·계산·원천 in the body with Edit.
+This lays down the body from [TEMPLATE.md](TEMPLATE.md). Fill the sections with Edit, following [GUIDE.md](GUIDE.md).
 
 ## Update
 ```bash
 python3 .claude/scripts/spec.py set metric <slug> status=archived
 ```
 Keys: `title·status`.
+
+## Must pass (eval)
+1. `create`/`set` with a field not in the metric schema → spec.py rejects it; do not invent the field.
+2. `set` on an existing metric patches only the given keys and preserves the body.
+3. Grain (fact) and derivation (mart) collapsed into one section → separate them; they are different layers.
 
 ## Rules
 - Definition only — the DE planning artifact, not the pipeline implementation.
