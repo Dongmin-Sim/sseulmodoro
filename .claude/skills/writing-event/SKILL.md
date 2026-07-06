@@ -26,4 +26,5 @@ Keys: `title·status`.
 
 ## Rules
 - Definition only — not the instrumentation code.
+- After the write, confirm it: `python3 .claude/scripts/spec.py show event <slug>`.
 - Korean body; writes `workspace/` only.

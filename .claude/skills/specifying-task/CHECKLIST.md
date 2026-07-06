@@ -9,7 +9,7 @@ Before implementing, the spec must contain the following. If any can't be confir
 - [ ] **테스트** — what to verify and how (`route.test.ts` etc.)
 - [ ] **완료 조건 재확인** — is the skeleton's done-condition still valid
 
-## Spec body sections to append (written in Korean, into the spec)
+## Spec body sections — append, or update in place if the section already exists (중복 append 금지) — written in Korean
 
 ```markdown
 ## 구현 접근

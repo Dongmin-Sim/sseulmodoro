@@ -26,5 +26,6 @@ python3 .claude/scripts/spec.py set issue <ISSUE-N> status=in-review pr=90
 
 ## Rules
 - Never invent field values — write only what was given or confirmed.
-- `status`: backlog | in-progress | in-review | done | on-hold. `severity`: low | medium | high | critical.
+- `status`: backlog | in-progress | in-review | done | on-hold | cancelled. `severity`: low | medium | high | critical.
+- After the write, confirm it: `python3 .claude/scripts/spec.py show issue <ISSUE-N>`.
 - Korean body; writes `workspace/` only (no vault).

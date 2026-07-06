@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: PR 생성 전 코드 리뷰. 구조적 결함, 트랜잭션 누락, 타입 안전성, 엣지케이스 검토. /review 실행 시 자동 위임.
+description: PR 생성 전 코드 리뷰. 구조적 결함, 트랜잭션 누락, 타입 안전성, 엣지케이스 검토. reviewing-changes 스킬이 위임.
 model: inherit
 tools: Read, Grep, Glob, Bash
 color: red

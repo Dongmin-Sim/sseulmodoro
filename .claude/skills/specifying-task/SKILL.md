@@ -7,6 +7,8 @@ description: Refines an existing task spec into an implementation-ready state by
 
 Take a skeleton task and make it implementation-ready, grounded in the current code. This is agile refinement — do it just before implementing a task, not upfront for all tasks.
 
+**Interactive, in the main conversation** — do not fork.
+
 ## Steps
 
 Copy and check off:
@@ -20,6 +22,11 @@ Copy and check off:
 ```
 
 Spec sections and their format: [CHECKLIST.md](CHECKLIST.md). Set status via `python3 .claude/scripts/spec.py set task <id> status=in-progress`.
+
+## Must pass (eval)
+1. A detail not confirmable in current code → ask the user; never fill it speculatively (`file:line` or nothing).
+2. Re-run on an already-refined task → update the sections in place; do not duplicate-append.
+3. The task feels wrong-sized → flag it for `planning-spec`; do not silently re-scope here.
 
 ## Rules
 - Every claim references real code (`file:line`) — never speculate about files that don't exist.

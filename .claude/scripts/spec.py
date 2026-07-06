@@ -66,6 +66,14 @@ def die(msg):
     sys.exit(1)
 
 
+def _read(path, what):
+    """Read a file, or die() cleanly instead of dumping a traceback."""
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError as e:
+        die(f"cannot read {what} {path}: {e}")
+
+
 def resolve_repo_root():
     """git repo root (falls back to cwd)."""
     try:
@@ -80,8 +88,15 @@ def resolve_repo_root():
     return Path.cwd()
 
 
+_WORKSPACE_OVERRIDE = None
+
+
 def resolve_workspace():
-    """workspace/ under the git repo root."""
+    """workspace/ dir — an explicit --workspace path if given, else under the
+    git repo root. Worktrees pass --workspace to reach the primary's canonical
+    workspace (workspace/ is gitignored, so it is absent inside a worktree)."""
+    if _WORKSPACE_OVERRIDE is not None:
+        return _WORKSPACE_OVERRIDE
     return resolve_repo_root() / "workspace"
 
 
@@ -91,7 +106,7 @@ def render_body(kind, item_id, title):
     skill; a minimal heading is used only if that file is missing. Uses
     str.replace (not .format) so literal braces — e.g. LaTeX — survive."""
     tpl = resolve_repo_root() / ".claude" / "skills" / f"writing-{kind}" / "TEMPLATE.md"
-    raw = tpl.read_text(encoding="utf-8") if tpl.exists() else "# {title}\n"
+    raw = _read(tpl, "template") if tpl.exists() else "# {title}\n"
     return raw.replace("{id}", item_id).replace("{title}", title)
 
 
@@ -119,7 +134,7 @@ def fmt_value(v):
 
 def read_frontmatter_and_body(path):
     """Return (ordered [(key, value)], body_str). Empty frontmatter -> ([], text)."""
-    text = path.read_text(encoding="utf-8")
+    text = _read(path, "spec")
     lines = text.splitlines(keepends=True)
     if not lines or lines[0].strip() != "---":
         return [], text
@@ -140,8 +155,11 @@ def write_spec(path, fm_pairs, body):
     lines = ["---\n"]
     lines += [f"{k}: {fmt_value(v)}\n" for k, v in fm_pairs]
     lines += ["---\n", body if body.startswith("\n") else "\n" + body]
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("".join(lines), encoding="utf-8")
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("".join(lines), encoding="utf-8")
+    except OSError as e:
+        die(f"cannot write {path}: {e}")
 
 
 def cmd_create(kind, item_id, kv, force):
@@ -191,7 +209,7 @@ def cmd_show(kind, item_id):
     path = spec_path(kind, item_id)
     if not path.exists():
         die(f"{path} not found")
-    print(path.read_text(encoding="utf-8"), end="")
+    print(_read(path, "spec"), end="")
 
 
 def main():
@@ -203,8 +221,25 @@ def main():
         die(f"unknown type '{kind}': {list(TYPES)}")
 
     rest = argv[3:]
+    global _WORKSPACE_OVERRIDE
     force = "--force" in rest
-    kv = parse_kv([r for r in rest if r != "--force"])
+    filtered, i = [], 0
+    while i < len(rest):
+        r = rest[i]
+        if r == "--force":
+            i += 1
+        elif r == "--workspace":
+            if i + 1 >= len(rest):
+                die("--workspace needs a path")
+            _WORKSPACE_OVERRIDE = Path(rest[i + 1])
+            i += 2
+        elif r.startswith("--workspace="):
+            _WORKSPACE_OVERRIDE = Path(r.split("=", 1)[1])
+            i += 1
+        else:
+            filtered.append(r)
+            i += 1
+    kv = parse_kv(filtered)
 
     if action == "create":
         cmd_create(kind, item_id, kv, force)

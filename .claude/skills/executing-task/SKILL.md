@@ -21,7 +21,7 @@ Two axes decide the flow — everything else is shared:
 Copy and check off:
 
 ```
-- [ ] 1. Orient  — status; pick a task or issue
+- [ ] 1. Orient  — reporting-status; pick a task or issue
 - [ ] 2. Ready   — task: specifying-task (if skeleton) · issue: diagnose first
 - [ ] 3. Branch  — sync dev, cut the branch
 - [ ] 4. Mode    — branch on track (MODES.md)
@@ -31,7 +31,7 @@ Copy and check off:
 ```
 
 ### 1. Orient
-Run `status`; pick the item (or the user names one). Note its `type` and `track`.
+Run `reporting-status`; pick the item (or the user names one). Note its `type` and `track`.
 
 ### 2. Ready
 - **task**, skeleton-level → run `specifying-task` (code-grounded detail).
@@ -47,7 +47,7 @@ Branch on `track` and follow [MODES.md](MODES.md):
 - `DE` → the user implements; Claude reviews and navigates (persona in [PERSONA.md](PERSONA.md)).
 
 ### 5. Do the work
-Per mode. Verify before PR: `npm run build` + `lint` + `test` (0 errors), then `/review`.
+Per mode. Verify before PR: `npm run build` + `lint` + `test` (0 errors), then `reviewing-changes`.
 
 ### 6. Track
 ```bash
@@ -58,7 +58,7 @@ python3 .claude/scripts/spec.py set <task|issue> <id> status=... branch=... pr=.
 Follow `git-workflow` (commit → draft → approve → create). Conventions and hygiene live there and in `rules/code-quality` / `rules/workflow`.
 
 ## Re-plan loop (any time)
-Mid-work needs — split/re-scope → `planning-spec`; small spec/field change → `writing-task` / `specifying-task` — then return to where you left off.
+Mid-work needs — split/re-scope → `planning-spec`; small spec/field change → `writing-task` / `specifying-task`; a follow-up milestone worth doing later → park it as a candidate (`writing-milestone`, slug id, `status=candidate`) — then return to where you left off.
 
 ## Must pass (eval)
 1. Picking up an **issue** → confirm the root cause in current code first; do not write a fix before diagnosis (issue = hypothesis).
@@ -68,4 +68,4 @@ Mid-work needs — split/re-scope → `planning-spec`; small spec/field change �
 ## Boundaries
 - Compose, don't re-implement — call the referenced skills/agents rather than duplicating their steps.
 - Single source is `workspace/` via spec.py; there is no vault to sync.
-- Replaces be-session / fe-session (their steps live in rules/* + api-route + fe-patterns + /review + git-workflow).
+- APP-track steps (formerly the BE/FE session flows) live in rules/* + api-route + fe-patterns + reviewing-changes + git-workflow.
