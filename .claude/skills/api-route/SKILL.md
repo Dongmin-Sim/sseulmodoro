@@ -5,15 +5,15 @@ description: Code patterns and scaffold for a new Next.js API Route — route-ha
 
 # api-route
 
-새 API Route의 코드 패턴·스캐폴드. 인증·rpc·에러·로깅 **불변식은 규칙이 원천** — `rules/security.md`·`rules/db-design.md`·`rules/code-quality.md` 참조. 아래는 그 규칙을 API Route에 적용한 패턴·템플릿이다(재서술 아님).
+Code patterns and scaffold for a new API Route. Auth / rpc / error / logging **invariants are owned by the rules** — see `rules/security.md`, `rules/db-design.md`, `rules/code-quality.md`. Below are the patterns and templates that apply those rules to an API Route (not a restatement).
 
-## 파일 생성 순서
+## File creation order
 
-1. `src/lib/types/api.ts`에 요청/응답 타입 추가 → **첫 번째 커밋** (FE 작업 시작점)
-2. `src/app/api/<경로>/route.ts` 생성
-3. `src/app/api/<경로>/route.test.ts` 생성
+1. Add request/response types to `src/lib/types/api.ts` → **first commit** (the FE work's starting point)
+2. Create `src/app/api/<path>/route.ts`
+3. Create `src/app/api/<path>/route.test.ts`
 
-## Route Handler 템플릿
+## Route Handler template
 
 ```typescript
 // src/app/api/xxx/route.ts
@@ -23,7 +23,7 @@ import { getAuthUser } from "@/lib/supabase/auth";
 import type { XxxResponse, ApiError } from "@/lib/types/api";
 
 export async function POST(request: Request) {
-  // 1. 인증 확인
+  // 1. Auth check
   const user = await getAuthUser();
   if (!user) {
     return NextResponse.json<ApiError>(
@@ -32,18 +32,18 @@ export async function POST(request: Request) {
     );
   }
 
-  // 2. 입력 파싱 + 검증 (POST/PUT/PATCH)
+  // 2. Parse + validate input (POST/PUT/PATCH)
   const body = await request.json();
-  // 검증 예: if (!body.sessionId) return NextResponse.json({ error: "..." }, { status: 400 });
+  // e.g. if (!body.sessionId) return NextResponse.json({ error: "..." }, { status: 400 });
 
-  // 3. Supabase rpc 호출 (여러 테이블 변경은 반드시 rpc)
+  // 3. Supabase rpc (a multi-table change must go through rpc)
   const supabase = await createServerClient();
   const { data, error } = await supabase.rpc("function_name", {
     p_user_id: user.id,
     // ... params
   });
 
-  // 4. 에러 처리
+  // 4. Error handling
   if (error || !data) {
     console.error("rpc error:", error);
     return NextResponse.json<ApiError>(
@@ -52,14 +52,14 @@ export async function POST(request: Request) {
     );
   }
 
-  // 5. 응답
+  // 5. Response
   return NextResponse.json<XxxResponse>(data);
 }
 ```
 
-> **주의**: `getAuthUser()`는 `AuthUser | null`을 반환하며, supabase 인스턴스는 별도로 `createServerClient()`를 호출해야 한다.
+> **Note**: `getAuthUser()` returns `AuthUser | null`, and the supabase instance is obtained separately via `createServerClient()`.
 
-## 테스트 템플릿
+## Test template
 
 ```typescript
 // src/app/api/xxx/route.test.ts
@@ -87,20 +87,20 @@ function makeRequest(body: object) {
 describe("POST /api/xxx", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("미인증 요청 → 401", async () => {
+  it("returns 401 when unauthenticated", async () => {
     mockGetAuthUser.mockResolvedValue(null);
     const res = await POST(makeRequest({}));
     expect(res.status).toBe(401);
   });
 
-  it("rpc 에러 → 500", async () => {
+  it("returns 500 on rpc error", async () => {
     mockGetAuthUser.mockResolvedValue({ id: "user-1", email: "a@b.com" });
     mockRpc.mockResolvedValue({ data: null, error: { message: "db error" } });
     const res = await POST(makeRequest({ /* valid body */ }));
     expect(res.status).toBe(500);
   });
 
-  it("성공 → 200", async () => {
+  it("returns 200 on success", async () => {
     mockGetAuthUser.mockResolvedValue({ id: "user-1", email: "a@b.com" });
     mockRpc.mockResolvedValue({ data: { /* expected data */ }, error: null });
     const res = await POST(makeRequest({ /* valid body */ }));
@@ -111,9 +111,9 @@ describe("POST /api/xxx", () => {
 });
 ```
 
-## 체크리스트 (API Route 고유 — 불변식 근거는 위 규칙)
+## Checklist (API Route-specific — invariant basis is the rules above)
 
-- [ ] `src/lib/types/api.ts`에 응답 타입 정의 (첫 커밋 완료)
-- [ ] 규칙 준수: 인증(`getAuthUser`)·입력검증·rpc·`console.error` → `rules/security`·`db-design`·`code-quality` 참조
-- [ ] `route.test.ts` 작성 완료 (미인증/에러/성공 케이스)
-- [ ] `npm run build` 타입 에러 없음
+- [ ] Response type defined in `src/lib/types/api.ts` (first commit done)
+- [ ] Rules honored: auth (`getAuthUser`), input validation, rpc, `console.error` → see `rules/security` · `db-design` · `code-quality`
+- [ ] `route.test.ts` written (unauthenticated / error / success cases)
+- [ ] `npm run build` — no type errors

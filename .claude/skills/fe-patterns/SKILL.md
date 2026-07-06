@@ -5,26 +5,26 @@ description: Reusable FE code patterns for this project — component structure,
 
 # fe-patterns
 
-FE 개발에서 반복 사용되는 코드 패턴. 네이밍 컨벤션(`handleXxx`·`isXxx` 등)은 `rules/code-quality.md`가 원천.
+Reusable FE code patterns for this project. Naming conventions (`handleXxx`, `isXxx`, etc.) are owned by `rules/code-quality.md`.
 
-## 컴포넌트 구조
+## Component structure
 
 ```
 src/components/
-  ├── ui/          ← shadcn/ui 원본 (수정 최소화)
-  └── 도메인명/     ← 기능별 컴포넌트 그룹
-       ├── 메인-컴포넌트.tsx
-       ├── 하위-컴포넌트.tsx
-       └── use-커스텀훅.ts
+  ├── ui/          ← shadcn/ui originals (minimal edits)
+  └── <domain>/    ← feature component group
+       ├── main-component.tsx
+       ├── sub-component.tsx
+       └── use-custom-hook.ts
 ```
 
-## 상태 관리 패턴
+## State management patterns
 
-- 서버 상태: API 호출 (`src/lib/api/` 래퍼)
-- 클라이언트 상태: `useState` + `useCallback`
-- 네이밍(로딩 `isLoading`·이벤트 `handleXxx` 등)은 `rules/code-quality.md` 참조
+- Server state: API calls (`src/lib/api/` wrappers)
+- Client state: `useState` + `useCallback`
+- Naming (loading `isLoading`, events `handleXxx`, etc.) → see `rules/code-quality.md`
 
-## API 클라이언트 래퍼 패턴
+## API client wrapper pattern
 
 ```typescript
 // src/lib/api/xxx.ts
@@ -46,7 +46,7 @@ export async function doSomething(params: Params): Promise<XxxResponse> {
 }
 ```
 
-## Supabase Auth 직접 호출 (로그인/회원가입)
+## Supabase Auth direct calls (login / signup)
 
 ```typescript
 import { createBrowserClient } from "@supabase/ssr";
@@ -60,9 +60,9 @@ await supabase.auth.signInWithPassword({ email, password });
 await supabase.auth.signUp({ email, password });
 ```
 
-## 페이지 라우트 구조
+## Page route structure
 
 ```
-src/app/(auth)/login/page.tsx      ← 라우트 그룹으로 레이아웃 분리
-src/app/(main)/page.tsx            ← 인증 필요 페이지
+src/app/(auth)/login/page.tsx      ← route group splits the layout
+src/app/(main)/page.tsx            ← auth-required page
 ```
