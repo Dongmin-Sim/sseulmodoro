@@ -125,7 +125,8 @@ feature/* → PR → dev 머지 → Vercel Preview (통합 확인)
 | 서브에이전트 위임 | opus 메인 직접 수행 |
 |---|---|
 | 상태 집계·정합 (`/status`, fork·haiku) | 아키텍처 설계 (plan 모드) |
-| API Route 구현 (api-developer, sonnet) | 코드 리뷰 · 디버깅/에러 분석 |
+| API Route 구현 (api-developer, sonnet) | 이슈 진단·근본원인 분석 |
+| 코드·보안 리뷰 (reviewing-changes → code/security-reviewer) | 디버깅/에러 분석 |
 | 스킬·룰 감사 (skill-audit·rule-audit, fork) | 사용자 대화/판단 |
 
 ## UI 전략

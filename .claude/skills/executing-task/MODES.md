@@ -11,7 +11,7 @@ Claude writes the code. Full-stack (API + UI in one flow).
    - page / component / UX → `fe-patterns` (+ `DESIGN.md`)
 2. Implement.
 3. Verify: `npm run build` + `lint` + `test` (0 errors).
-4. Review before PR: `/review` → code-reviewer + security-reviewer.
+4. Review before PR: `reviewing-changes` (→ code-reviewer + security-reviewer).
 
 ## DE — user implements, Claude reviews
 

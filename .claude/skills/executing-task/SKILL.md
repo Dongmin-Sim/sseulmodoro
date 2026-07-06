@@ -47,7 +47,7 @@ Branch on `track` and follow [MODES.md](MODES.md):
 - `DE` → the user implements; Claude reviews and navigates (persona in [PERSONA.md](PERSONA.md)).
 
 ### 5. Do the work
-Per mode. Verify before PR: `npm run build` + `lint` + `test` (0 errors), then `/review`.
+Per mode. Verify before PR: `npm run build` + `lint` + `test` (0 errors), then `reviewing-changes`.
 
 ### 6. Track
 ```bash
@@ -68,4 +68,4 @@ Mid-work needs — split/re-scope → `planning-spec`; small spec/field change �
 ## Boundaries
 - Compose, don't re-implement — call the referenced skills/agents rather than duplicating their steps.
 - Single source is `workspace/` via spec.py; there is no vault to sync.
-- APP-track steps (formerly the BE/FE session flows) live in rules/* + api-route + fe-patterns + /review + git-workflow.
+- APP-track steps (formerly the BE/FE session flows) live in rules/* + api-route + fe-patterns + reviewing-changes + git-workflow.
