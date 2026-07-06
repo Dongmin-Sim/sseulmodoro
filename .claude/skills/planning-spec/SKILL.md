@@ -54,6 +54,7 @@ For each approved artifact, invoke the matching skill (create if new, update if 
 | feature | `writing-feature` |
 | milestone | `writing-milestone` |
 | task | `writing-task` |
+| issue (bug) | `writing-issue` |
 | metric / event (DE) | `writing-metric` / `writing-event` |
 
 Structural changes (split/merge/move) = several writing-* calls together. Do **not** detail tasks here.

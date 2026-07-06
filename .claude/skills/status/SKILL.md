@@ -60,7 +60,7 @@ Render in Korean via [templates/status-report.md](templates/status-report.md). G
 - **대기·후보**: not-started (backlog) features/tasks and candidate milestones — mark candidates "(후보)".
 - **Copy the milestone `display` line verbatim**: the board's `display` column is the ready milestone tree line (id · title · bar · done/total). Use it as-is — never re-assemble or recount `done/total`. Group by the `feature` column; place by `status`.
 - **Render every section**: if a section has nothing, print `없음` — never drop the section.
-- **다음 액션**: 1–3 context-relevant next skills, one line each (e.g. backlog present → `/spec`; open issues → `/issue`; always `/status`).
+- **다음 액션**: 1–3 context-relevant next skills, one line each (e.g. backlog present → `planning-spec`; open issues → `executing-task`; always `status`).
 
 ## Must pass (eval)
 

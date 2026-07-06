@@ -35,7 +35,7 @@ Run `status`; pick the item (or the user names one). Note its `type` and `track`
 
 ### 2. Ready
 - **task**, skeleton-level → run `specifying-task` (code-grounded detail).
-- **issue** → diagnose first per `rules/issue-diagnosis`: reproduce and confirm the root cause in the *current* code before touching anything (the workspace symptom is a hypothesis — it may be already fixed, intended, or different now). Fill the spec's 원인 section.
+- **issue** → if it has no spec yet, create one with `writing-issue`. Then diagnose first per `rules/issue-diagnosis`: reproduce and confirm the root cause in the *current* code before touching anything (the workspace symptom is a hypothesis — it may be already fixed, intended, or different now). Fill the spec's 원인 section.
 - Then set `status: in-progress`.
 
 ### 3. Branch
