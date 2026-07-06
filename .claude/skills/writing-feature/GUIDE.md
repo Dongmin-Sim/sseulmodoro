@@ -1,6 +1,6 @@
 # writing-feature — section guide
 
-Reference when filling `TEMPLATE.md`. A feature is WHAT / why, not HOW.
+Reference when filling `TEMPLATE.md`. A feature is WHAT / why, not HOW. Write declaratively — no work-log prose or section-explanation asides.
 
 - **정의** — one line: what this feature does.
 - **왜 필요한가** — tie to vision / NSM / the user problem. The anti-"why did we build this?" section — skip it and the same decision gets re-litigated later.
@@ -11,4 +11,4 @@ Reference when filling `TEMPLATE.md`. A feature is WHAT / why, not HOW.
 - **검증 기준** — checkboxes defining "done".
 - **연결 task** — tasks broken out from this spec (IDs), accrued after breakdown.
 
-Optional sections when needed: 데이터 스키마 영향 (new/changed tables — Supabase & BigQuery), 상호작용 규칙 (per-screen input→action), 의사결정/미정 (open forks — move settled ones to a decision file).
+Optional sections when needed: 데이터 스키마 영향 (new/changed tables — Supabase & BigQuery), 상호작용 규칙 (per-screen input→action), 의사결정/미정 (open forks; record the resolution inline once settled).

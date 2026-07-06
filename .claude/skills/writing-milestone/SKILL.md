@@ -1,6 +1,6 @@
 ---
 name: writing-milestone
-description: Creates or updates a milestone in workspace/milestones/<id>.md via the spec.py CLI (idempotent). Groups tasks under a feature. Usually dispatched by planning-spec. Use for milestone create, rename, re-scope, or status change.
+description: Creates or updates a milestone in workspace/milestones/<id>.md via the spec.py CLI (idempotent). Groups tasks under a feature. Usually dispatched by planning-spec. Use for "마일스톤 만들기", "마일스톤 상태 갱신", "마일스톤 재구성".
 ---
 
 # writing-milestone
@@ -25,5 +25,5 @@ Keys: `title·feature·status`. `status`: backlog | in-progress | candidate | do
 3. A field not in the milestone schema → spec.py rejects it; do not invent it.
 
 ## Rules
-- `feature` must match an existing feature's `title`. If none exists, the caller (planning-spec) creates the feature first.
+- Keep `feature` pointing at a real feature `title`. `status`: backlog | in-progress | candidate | done | on-hold.
 - Korean body; never touch the vault.

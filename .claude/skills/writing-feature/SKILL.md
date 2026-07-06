@@ -1,6 +1,6 @@
 ---
 name: writing-feature
-description: Creates or updates a feature spec in workspace/features/<slug>.md via the spec.py CLI (idempotent). A feature is the top of the hierarchy; milestones reference it by title. Usually dispatched by planning-spec. Use for feature create or scope change.
+description: Creates or updates a feature spec in workspace/features/<slug>.md via the spec.py CLI (idempotent). A feature is the top of the hierarchy; milestones reference it by title. Usually dispatched by planning-spec. Use for "기능 정의", "기능 스펙 만들기", "스코프 변경".
 ---
 
 # writing-feature
