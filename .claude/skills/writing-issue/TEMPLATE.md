@@ -13,5 +13,5 @@
 - [ ]
 
 ## 참고
-- 관련 decision:
+- 관련 task:
 - 관련 issue:
