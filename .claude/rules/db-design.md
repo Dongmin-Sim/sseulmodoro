@@ -1,3 +1,9 @@
+---
+paths:
+  - "supabase/migrations/**"
+  - "src/app/api/**"
+---
+
 # DB 설계 원칙
 
 - activity_log는 append-only. UPDATE/DELETE 금지.
