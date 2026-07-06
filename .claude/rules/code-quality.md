@@ -24,7 +24,8 @@
 
 - 형식: `type(scope): 내용` (feat/fix/refactor/style/chore/docs/test)
 - 제목은 50자 이내, 명령형으로 작성
-- 관련 이슈가 있으면 footer에 `Closes #이슈번호`
+- 이슈 참조는 PR 제목 `[ISSUE-{N}]`로 (이 레포는 GitHub Issues 미사용 → 커밋 `Closes #` 오토클로즈 구문 안 씀)
+- `Co-Authored-By: Claude ...` 트레일러·"Generated with Claude Code" 류 푸터 금지
 
 ## PR 제목 컨벤션
 
