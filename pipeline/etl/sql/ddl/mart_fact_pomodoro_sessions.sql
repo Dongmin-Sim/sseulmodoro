@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS `{project_id}.mart.fact_pomodoro_sessions` (
+CREATE OR REPLACE TABLE `{project_id}.mart.fact_pomodoro_sessions` (
     session_id          INT64,
     user_id             STRING,
     started_at          TIMESTAMP

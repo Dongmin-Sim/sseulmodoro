@@ -1,3 +1,4 @@
+from typing import List
 from google.cloud import bigquery
 from utils.logger import get_logger
 
@@ -20,8 +21,8 @@ def execute_sql_query(client, file_path, table_name) -> None:
     rows = query_job.result()
     logger.info(f"transformed {rows.total_rows} rows into {table_name}: state={query_job.state}, errors={query_job.errors}")
 
-def transform(bq_client, file_paths, table_names) -> None:
+def transform(bq_client, tables: List[tuple]) -> None:
     logger.info(f"starting transformation for project: {bq_client.project}")
 
-    for file, table in zip(file_paths, table_names):
+    for file, table in tables:
         execute_sql_query(bq_client, file, table)
