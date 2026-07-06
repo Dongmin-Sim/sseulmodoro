@@ -58,7 +58,7 @@ python3 .claude/scripts/spec.py set <task|issue> <id> status=... branch=... pr=.
 Follow `git-workflow` (commit → draft → approve → create). Conventions and hygiene live there and in `rules/code-quality` / `rules/workflow`.
 
 ## Re-plan loop (any time)
-Mid-work needs — split/re-scope → `planning-spec`; small spec/field change → `writing-task` / `specifying-task` — then return to where you left off.
+Mid-work needs — split/re-scope → `planning-spec`; small spec/field change → `writing-task` / `specifying-task`; a follow-up milestone worth doing later → park it as a candidate (`writing-milestone`, slug id, `status=candidate`) — then return to where you left off.
 
 ## Must pass (eval)
 1. Picking up an **issue** → confirm the root cause in current code first; do not write a fix before diagnosis (issue = hypothesis).

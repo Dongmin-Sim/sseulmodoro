@@ -17,7 +17,10 @@ python3 .claude/scripts/spec.py create milestone <M-S-N> title="..." feature="<p
 ```bash
 python3 .claude/scripts/spec.py set milestone <M-S-N> status=in-progress
 ```
-Keys: `title·feature·status`. `status`: backlog | in-progress | candidate | done | on-hold (`candidate` = 후보).
+Keys: `title·feature·status`. `status`: backlog | in-progress | candidate | done | on-hold | cancelled (`candidate` = 후보).
+
+## Candidate (🔭 unnumbered)
+For a milestone idea not yet started, don't squat a number — use a descriptive **slug** id (not `M-{T}-{N}`) with `status=candidate`. It surfaces in the board's 대기·후보. Promotion (slug → numbered) happens when it starts and is `planning-spec`'s job: the number = execution order, assigned when the milestone actually rolls.
 
 ## Must pass (eval)
 1. If `feature` is given, it must match an existing feature title — otherwise omit it (a milestone may stand alone).
@@ -25,6 +28,6 @@ Keys: `title·feature·status`. `status`: backlog | in-progress | candidate | do
 3. A field not in the milestone schema → spec.py rejects it; do not invent it.
 
 ## Rules
-- `feature` is optional; if set, point it at a real feature `title`. `status`: backlog | in-progress | candidate | done | on-hold.
+- `feature` is optional; if set, point it at a real feature `title`. `status`: backlog | in-progress | candidate | done | on-hold | cancelled.
 - After the write, confirm it: `python3 .claude/scripts/spec.py show milestone <M-S-N>`.
 - Korean body; writes `workspace/` only.

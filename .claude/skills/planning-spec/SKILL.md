@@ -44,6 +44,8 @@ Break the goal into feature → milestone → task, or work out the restructure.
 
 **Enforce the hierarchy**: never create a task without a milestone. A feature above the milestone is optional — a milestone may stand alone (esp. DE/ops). If a required parent is missing, offer to create it first.
 
+**Promote a 🔭 candidate**: a candidate milestone (slug id, `status: candidate`) holds no number until it starts. Promote = next `M-{track}-{N}` (that track's max + 1) → `mv` the slug file to `<M-id>.md` → set `status` (candidate → in-progress/backlog) → detail it. Number = execution order; only started milestones hold numbers.
+
 ### 5. Confirm
 Show the proposed hierarchy (mark new vs changed) and get approval before writing anything.
 

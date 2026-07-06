@@ -93,6 +93,7 @@ feature/* → PR → dev 머지 → Vercel Preview (통합 확인)
 - `src/lib/types/api.ts`가 공유 인터페이스 (API 계약) — BE가 타입 먼저 정의 → 커밋 → FE가 pull 후 사용
 - 파일 영역 겹침 금지
 - 물리적 분리: `git worktree`로 디렉토리 분리 (충돌 방지)
+- 워크트리엔 gitignore인 `workspace/`가 없음 → primary의 것을 symlink: `ln -s <primary-repo>/workspace workspace` (또는 `spec.py`·`/reporting-status`에 `--workspace <primary>/workspace` 전달)
 
 ## 작업 출처 (태스크 + 이슈)
 
@@ -106,7 +107,7 @@ feature/* → PR → dev 머지 → Vercel Preview (통합 확인)
 공통 규칙:
 
 - ID 비패딩 (`TASK-7`, `ISSUE-3`). TASK·ISSUE는 별도 namespace — 번호 겹쳐도 무관
-- status 어휘 영어 통일: `backlog | in-progress | in-review | done | on-hold`
+- status 어휘 영어 통일: `backlog | in-progress | in-review | done | on-hold | cancelled` (마일스톤은 `in-review` 대신 `candidate`)
 - 진척 필드(`status`·`branch`·`pr`·`start_date`·`end_date`)는 작업 진행에 맞춰 spec.py `set`으로 갱신한다
 
 ## 작업 추적 규칙
