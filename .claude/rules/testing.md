@@ -1,3 +1,8 @@
+---
+paths:
+  - "**/*.test.ts"
+---
+
 # 테스트 전략
 
 - API Route 테스트: Vitest로 트랜잭션/정합성 검증 (UI 테스트는 생략)
@@ -5,50 +10,11 @@
 - TypeScript 변경 후 `npm run build`로 type check
 - Supabase 마이그레이션 후 `npm run db:reset`으로 동작 확인
 
-## 테스트 작성 패턴
+## 작성 원칙
 
-### AAA 구조
-
-모든 테스트는 Arrange → Act → Assert 순서로 작성:
-
-```typescript
-it("should return 401 when user is not authenticated", async () => {
-  // Arrange
-  vi.mocked(getAuthUser).mockResolvedValue(null);
-  const request = new NextRequest("http://localhost/api/sessions", { method: "POST" });
-
-  // Act
-  const response = await POST(request);
-
-  // Assert
-  expect(response.status).toBe(401);
-});
-```
-
-### 테스트 네이밍
-
-`it("should [동작] when [조건]")` 형식:
-- `it("should return 401 when user is not authenticated")`
-- `it("should return 400 when session_id is missing")`
-- `it("should return 201 with session data when request is valid")`
-
-### 단일 검증 원칙
-
-하나의 `it` 블록에서 하나의 시나리오만 검증. 여러 독립 시나리오는 별도 `it`으로 분리.
-
-## Mock 패턴
-
-```typescript
-import { vi } from "vitest";
-
-const mockRpc = vi.fn();
-vi.mock("@/lib/supabase/server", () => ({
-  createServerClient: () => Promise.resolve({ rpc: mockRpc }),
-}));
-vi.mock("@/lib/supabase/auth", () => ({
-  getAuthUser: vi.fn(),
-}));
-```
+- **AAA**: 각 `it`은 Arrange → Act → Assert 순서.
+- **네이밍**: `it("should [동작] when [조건]")` (예: `should return 401 when user is not authenticated`).
+- **단일 검증**: 한 `it`에 한 시나리오. 독립 시나리오는 별도 `it`으로 분리.
 
 ## 필수 테스트 케이스
 
@@ -57,3 +23,5 @@ vi.mock("@/lib/supabase/auth", () => ({
 - 잘못된 입력 → 400 (입력 검증이 있는 경우)
 - rpc 에러 → 500
 - 성공 → 200/201 + 응답 타입 검증
+
+> 구체 템플릿·Mock 패턴은 `api-route` 스킬 참조.
