@@ -5,8 +5,9 @@ from config import DDL_DIR
 
 logger = get_logger(__name__)
 
-def get_bigquery_client():
-    return bigquery.Client()
+def get_bigquery_client(bq_project):
+    if not bq_project: raise RuntimeError("BQ_PROJECT not set")
+    return bigquery.Client(project=bq_project)
 
 def create_dataset(client, dataset_id, location='US'):
     """Bigquery 데이터 셋 생성 함수

@@ -33,6 +33,8 @@ fact/mart 결과가 아래 기대값과 일치하는지 대조 (TASK-55).
     2026-05-11   5.0   10                  2     # (alice 6 + dave 4) / 2
 """
 
+import os
+
 from google.cloud import bigquery
 from utils.gcp import get_bigquery_client
 from utils.env import load_env
@@ -77,7 +79,8 @@ TEST_RECORDS = [
 
 
 def load_test_data():
-    client = get_bigquery_client()
+    bq_project = os.getenv("BQ_PROJECT")
+    client = get_bigquery_client(bq_project)
     project_id = f'{client.project}'
 
     table_id = f'{project_id}.raw.activity_log'

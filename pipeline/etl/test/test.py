@@ -30,7 +30,8 @@ def test_list_resources():
      - 각 데이터셋과 해당 데이터셋의 테이블을 나열합니다.
      - 이 예제는 BigQuery 클라이언트가 올바르게 인증되고 프로젝트에 액세스할 수 있는지
     """
-    client = bigquery.Client()
+    bq_project = os.getenv("BQ_PROJECT")
+    client = bigquery.Client(bq_project)
     print(f"project: {client.project}")
 
     datasets = list(client.list_datasets())
