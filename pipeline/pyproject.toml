@@ -17,6 +17,7 @@ dependencies = [
 [tool.pyrefly]
 search-path = ["etl"]
 python-version = "3.12"
+project-excludes = ["etl/test/**"]
 
 [dependency-groups]
 dev = [
