@@ -25,7 +25,8 @@ def prepare_schema(bq_client):
 
 def run_nsm() -> None:
     database_url = os.getenv("DATABASE_URL")
-    bq_client = get_bigquery_client()
+    bq_project = os.getenv("BQ_PROJECT")
+    bq_client = get_bigquery_client(bq_project)
     project_id = bq_client.project
     prepare_schema(bq_client)
 

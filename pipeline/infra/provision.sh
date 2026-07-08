@@ -8,8 +8,9 @@ case "$ENV" in dev|prod) ;; *) echo "unknown env: $ENV"; exit 1 ;; esac
 
 source "$(dirname "$0")/env.$ENV.sh"
 
-SA_JOB="etl-job-runner"          # SA that runs the job (reads/writes BigQuery)
-SA_SCHEDULER="etl-scheduler"     # SA the scheduler uses to invoke the job
+SA_JOB="nsm-runner"          # SA that runs the job (reads/writes BigQuery)
+SA_SCHEDULER="nsm-scheduler"     # SA the scheduler uses to invoke the job
+SA_DEPLOYER="nsm-deployer"
 
 step() { printf '\n=== %s ===\n' "$1"; }
 
@@ -48,7 +49,7 @@ create_artifact_repo() {
     gcloud artifacts repositories create "$REPOSITORY" \
       --repository-format=docker \
       --location="$LOCATION" \
-      --description="ELT images" \
+      --description="Pipeline images" \
       --project="$PROJECT_ID" >/dev/null
     echo "artifact repository $REPOSITORY created"
   fi
@@ -59,7 +60,7 @@ create_service_accounts() {
     echo "service account $SA_JOB exists, skip"
   else
     gcloud iam service-accounts create "$SA_JOB" \
-      --display-name="ELT Cloud Job Runner - BigQuery" \
+      --display-name="NSM Job Runner (BigQuery)" \
       --project="$PROJECT_ID" >/dev/null
     echo "service account $SA_JOB created"
   fi
@@ -68,9 +69,18 @@ create_service_accounts() {
     echo "service account $SA_SCHEDULER exists, skip"
   else
     gcloud iam service-accounts create "$SA_SCHEDULER" \
-      --display-name="ELT Cloud Scheduler trigger" \
+      --display-name="NSM Scheduler Invoker" \
       --project="$PROJECT_ID" >/dev/null
     echo "service account $SA_SCHEDULER created"
+  fi
+
+  if gcloud iam service-accounts describe "$SA_DEPLOYER@$PROJECT_ID.iam.gserviceaccount.com" --project="$PROJECT_ID" >/dev/null 2>&1; then
+    echo "service account $SA_DEPLOYER exists, skip"
+  else
+    gcloud iam service-accounts create "$SA_DEPLOYER" \
+      --display-name="NSM Deployer (CI/CD)" \
+      --project="$PROJECT_ID" >/dev/null
+    echo "service account $SA_DEPLOYER created"
   fi
 }
 
@@ -81,7 +91,26 @@ bind_iam() {
   gcloud projects add-iam-policy-binding "$PROJECT_ID" \
     --member="serviceAccount:$SA_JOB@$PROJECT_ID.iam.gserviceaccount.com" \
     --role="roles/bigquery.dataEditor" >/dev/null
-  echo "bound bigquery.jobUser + bigquery.dataEditor to $SA_JOB"
+  echo "bound bigquery.jobUser / bigquery.dataEditor to $SA_JOB"
+
+  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="serviceAccount:$SA_SCHEDULER@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/run.invoker" >/dev/null
+  echo "bound run.invoker to $SA_SCHEDULER"
+
+  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="serviceAccount:$SA_DEPLOYER@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/run.developer" >/dev/null
+  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="serviceAccount:$SA_DEPLOYER@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/artifactregistry.writer" >/dev/null
+  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="serviceAccount:$SA_DEPLOYER@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/logging.logWriter" >/dev/null
+  gcloud iam service-accounts add-iam-policy-binding "$SA_JOB@$PROJECT_ID.iam.gserviceaccount.com" \
+  --member="serviceAccount:$SA_DEPLOYER@$PROJECT_ID.iam.gserviceaccount.com" \
+  --role="roles/iam.serviceAccountUser" --project="$PROJECT_ID" >/dev/null
+  echo "bound run.developer / artifactregistry.writer / logging.logWriter / iam.serviceAccountUser to $SA_DEPLOYER"
 }
 
 # check existence only (never read the value) — stop if missing
