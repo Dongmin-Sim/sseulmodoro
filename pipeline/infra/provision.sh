@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# usage: ./provision.sh <dev|prod>
-# per-env values live in env.<ENV>.sh; shared logic in the functions below
+# usage: ./provision.sh <dev|prod|sandbox>
+# per-env values live in env.<ENV>.sh; shared logic in the functions below.
+#   dev|prod = full topology (Cloud Run job / scheduler / Artifact Registry / SAs / secret)
+#   sandbox  = BQ-only isolated project for local synthetic-data runs
 
-ENV="${1:?usage: provision.sh <dev|prod>}"
-case "$ENV" in dev|prod) ;; *) echo "unknown env: $ENV"; exit 1 ;; esac
+ENV="${1:?usage: provision.sh <dev|prod|sandbox>}"
+case "$ENV" in dev|prod|sandbox) ;; *) echo "unknown env: $ENV"; exit 1 ;; esac
 
 source "$(dirname "$0")/env.$ENV.sh"
 
@@ -28,6 +30,11 @@ create_project() {
     gcloud projects create "$PROJECT_ID" --name="$PROJECT_NAME" >/dev/null
     echo "project $PROJECT_ID created"
   fi
+}
+
+link_billing() {
+  gcloud billing projects link "$PROJECT_ID" --billing-account="$BILLING_ACCOUNT" >/dev/null
+  echo "billing linked"
 }
 
 # enable/binding-type: idempotent, just run
@@ -127,15 +134,15 @@ require_secret() {
   echo "granted secretAccessor on DATABASE_URL to $SA_JOB"
 }
 
-main() {
+# dev|prod: full topology
+main_full() {
   echo "▶ provisioning [$ENV] project=$PROJECT_ID"
 
   step "1/7 project"
   create_project
 
   step "2/7 billing"
-  gcloud billing projects link "$PROJECT_ID" --billing-account="$BILLING_ACCOUNT" >/dev/null
-  echo "billing linked"
+  link_billing
 
   step "3/7 services"
   enable_services
@@ -155,4 +162,26 @@ main() {
   echo ""
   echo "✔ [$ENV] provisioning complete"
 }
-main
+
+# sandbox: BQ-only isolated project for local synthetic-data runs
+main_sandbox() {
+  echo "▶ provisioning [sandbox] project=$PROJECT_ID"
+
+  step "1/3 project"
+  create_project
+
+  step "2/3 billing"
+  link_billing
+
+  step "3/3 bigquery api"
+  gcloud services enable bigquery.googleapis.com --project="$PROJECT_ID" >/dev/null
+  echo "bigquery enabled"
+
+  echo ""
+  echo "✔ [sandbox] provisioning complete: $PROJECT_ID"
+}
+
+case "$ENV" in
+  sandbox) main_sandbox ;;
+  *)       main_full ;;
+esac
