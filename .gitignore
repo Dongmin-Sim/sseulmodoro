@@ -75,3 +75,7 @@ tools/bird-card-gen/preview.png
 
 # 디자인 핸드오프 번들 — 리디자인 참조용(시안 HTML·에셋 원본), 레포에 커밋하지 않음
 desing_handoff/
+
+# 합성 시드 (로컬 전용 — 시나리오 설정·생성 산출물)
+pipeline/seeds/scenarios/
+supabase/seeds/synthetic.sql
