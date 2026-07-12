@@ -3,7 +3,7 @@ import json
 from google.cloud import bigquery
 import pandas as pd
 
-from utils.logger import get_logger
+from utils.logger import get_logger, timed
 
 logger = get_logger(__name__)
 
@@ -20,16 +20,17 @@ def load_to_raw(client, table_name, df, schema):
         :param df: 적재 대상 데이터프레임
         :param schema: BigQuery schema
     """
-    if table_name == 'activity_log':
-        df["metadata"] = df["metadata"].apply(lambda x: json.dumps(x) if x is not None else None)
+    with timed(logger, "load", "load", target=table_name) as t:
+        if table_name == 'activity_log':
+            df["metadata"] = df["metadata"].apply(lambda x: json.dumps(x) if x is not None else None)
 
-    df["loaded_at"] = pd.Timestamp.now(tz='UTC')
+        df["loaded_at"] = pd.Timestamp.now(tz='UTC')
 
-    table_id = f'{client.project}.raw.{table_name}'
-    job_config = bigquery.LoadJobConfig(
-        schema=schema,
-        write_disposition="WRITE_TRUNCATE"
-    )
-    load_job = client.load_table_from_dataframe(df, table_id, job_config=job_config)
-    load_job.result()
-    logger.info(f"loaded {load_job.output_rows} rows into {table_id}")
+        table_id = f'{client.project}.raw.{table_name}'
+        job_config = bigquery.LoadJobConfig(
+            schema=schema,
+            write_disposition="WRITE_TRUNCATE"
+        )
+        load_job = client.load_table_from_dataframe(df, table_id, job_config=job_config)
+        load_job.result()
+        t.add(rows=load_job.output_rows)
