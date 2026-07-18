@@ -1,0 +1,23 @@
+sources:
+  - name: test_app
+    type: postgres
+    tables:
+      - name: test_log
+        columns:
+          - id
+          - user_id
+          - created_at
+        primary_key: id
+        load_mode: incremental
+        incremental_key: id
+
+      - name: test_session
+        columns:
+          - id
+          - user_id
+          - status
+          - started_at
+          - ended_at
+          - created_at
+        primary_key: id
+        load_mode: full
