@@ -1,9 +1,10 @@
 import os
 
-from config import SQL_DIR
+from config import SQL_DIR, SOURCE_CONFIG_DIR
 from utils.logger import get_logger, timed
 from utils.gcp import get_bigquery_client, create_dataset, create_table_from_ddl_file
 from ddl.raw import RAW_POMODORO_SESSIONS_TABLE_SCHEMA, RAW_ACTIVITY_LOG_TABLE_SCHEMA
+from schema.sources import load_source_config
 
 from .extract import extract_table
 from .load import load_to_raw, converts_user_id_to_str
@@ -24,20 +25,25 @@ def prepare_schema(bq_client):
     create_table_from_ddl_file(bq_client, 'agg_nsm_weekly', 'mart_agg_nsm_weekly.sql')
 
 def run_nsm() -> None:
+    database_url = os.getenv("DATABASE_URL")
+    bq_project = os.getenv("BQ_PROJECT")
+    bq_client = get_bigquery_client(bq_project)
+    project_id = bq_client.project
+
+    source = load_source_config("app")
+
     with timed(logger, "run", "run"):
-        database_url = os.getenv("DATABASE_URL")
-        bq_project = os.getenv("BQ_PROJECT")
-        bq_client = get_bigquery_client(bq_project)
-        project_id = bq_client.project
         prepare_schema(bq_client)
 
-        extract_target_tables = ['activity_log', 'pomodoro_sessions']
-        extracted_df = [extract_table(database_url, table) for table in extract_target_tables]
+        extracted_df = [
+            extract_table(database_url, t.name, t.columns)
+            for t in source.tables
+        ]
 
         bigquery_raw_schemas = [RAW_ACTIVITY_LOG_TABLE_SCHEMA, RAW_POMODORO_SESSIONS_TABLE_SCHEMA]
-        for target_table, schema, df in zip(extract_target_tables, bigquery_raw_schemas, extracted_df):
+        for src_tbl_name, bq_schema, df in zip(source.table_names, bigquery_raw_schemas, extracted_df):
             proc_df = converts_user_id_to_str(df)
-            load_to_raw(bq_client, target_table, proc_df, schema)
+            load_to_raw(bq_client, src_tbl_name, proc_df, bq_schema)
 
         # TODO: 실행 순서가 리스트 순서에 암묵 의존 — 문자열 기반이라 순서 실수에 취약. 의존성 명시화 필요
         tables = [
