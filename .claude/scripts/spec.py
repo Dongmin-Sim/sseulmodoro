@@ -8,8 +8,8 @@ are created as skeletons; skills fill prose afterward with Edit.
 Artifact types and their layout under workspace/:
   task      → milestones/<M-ID>/<id>.md   when its milestone is numbered (M-X-N)
               tasks/<id>.md               otherwise (queue: milestone unset or candidate)
-  milestone → milestones/<M-ID>/<M-ID>.md when it holds tasks
-              milestones/<id>.md          otherwise (candidate, slug id)
+  milestone → milestones/<M-ID>/<M-ID>.md when numbered (holds its tasks)
+              milestones/<id>.md          when a candidate (slug id)
   issue, feature, metric, event → <type>s/<id>.md
 
 Usage:
@@ -133,8 +133,9 @@ def spec_path(kind, item_id, milestone=None):
             return ws / "milestones" / str(milestone) / f"{item_id}.md"
         return ws / "tasks" / f"{item_id}.md"
     if kind == "milestone":
-        owned = ws / "milestones" / item_id / f"{item_id}.md"
-        return owned if owned.exists() else ws / "milestones" / f"{item_id}.md"
+        if is_numbered_milestone(item_id):
+            return ws / "milestones" / item_id / f"{item_id}.md"
+        return ws / "milestones" / f"{item_id}.md"
     return ws / TYPES[kind]["dir"] / f"{item_id}.md"
 
 
@@ -256,6 +257,7 @@ def relocate_task(item_id, path, milestone):
     path.replace(dest)
     print(f"[spec] moved {path} -> {dest}")
 
+    # A milestone numbered while still a flat file follows its tasks into the folder.
     if is_numbered_milestone(milestone):
         flat = resolve_workspace() / "milestones" / f"{milestone}.md"
         if flat.exists():
