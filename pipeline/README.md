@@ -59,6 +59,31 @@
 > - [분석 지표](docs/metric.md)에 필요한 소스 테이블 2개를 full refresh 배치 
 > - BigQuery raw에 적재 
 
+
+
+```mermaid
+flowchart LR
+  subgraph pg["① 소스 (Postgres)"]
+    AL[(activity_log)]
+    PS[(pomodoro_sessions)]
+  end
+
+  subgraph gcs["② 랜딩 존 (GCS) — 추출 결과"]
+    LZ[/"date=YYYY-MM-DD"/]
+  end
+
+  subgraph bq["③ 웨어하우스 (BigQuery) — 적재 결과"]
+    RAL[("raw.activity_log")]
+    RPS[("raw.pomodoro_sessions")]
+  end
+
+  AL -->|"Extract · WHERE id > since"| LZ
+  PS -->|"Extract · WHERE updated_at >= since"| LZ
+  LZ -->|"Load · APPEND"| RAL
+  LZ -->|"Load · MERGE"| RPS
+```
+
+
 - 문제정의
   - 웹 서비스 소스 DB(Postgres)에서 지표 산출을 위한 데이터를 수집 필요
 - 데이터 수집 파이프라인 설계
