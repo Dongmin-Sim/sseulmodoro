@@ -34,8 +34,8 @@ Stacked branches / rebase-on-merge → see `rules/workflow`.
 3. **Noun-ending, bullet form (개조식·명사형)** — no conversational/explanatory endings.
 4. **One PR = one topic** — split off side changes.
 
-### Body — follow `.github/pull_request_template.md`
-Sections, in order: **Summary** (the problem this PR solves, 1–2 lines; for a defect, one line each of symptom·cause) · **작업 내용** (what was done, per module/topic, plainly — no rationale/tradeoffs) · **선행 PR** (dependency PR # or "없음") · **관련 태스크** (`TASK-{N}`/`ISSUE-{N}` numbers only) · **후속 작업** (undone/known limits; delete the section if none) · **Test plan** (`build`/`lint`/`test` + manual checkboxes).
+### Body
+`.github/pull_request_template.md` is the single source for the sections and what each one holds — follow the file, do not restate it here.
 
 Internal meta (ops/infra config state) goes to the handoff channel, not the PR.
 

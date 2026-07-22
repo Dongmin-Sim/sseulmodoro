@@ -155,12 +155,8 @@ FE 디자인 시스템: `DESIGN.md` + `fe-patterns` 스킬 참조. 디자인 검
 - **Supabase Auth (Next.js + SSR)**: https://supabase.com/docs/guides/auth/server-side/nextjs
 - **React 19**: https://react.dev/reference/react
 
-| 패키지 | 버전 |
-|--------|------|
-| next | 16.2.1 |
-| react | 19.2.4 |
-| @supabase/ssr | ^0.10.0 |
-| @supabase/supabase-js | ^2.101.1 |
+설치 버전은 `package.json`이 단일 원천 — 여기에 옮겨 적지 않는다.
+Next.js 16은 지식 컷오프 이후 릴리즈이므로 새 API는 추측하지 말고 위 문서로 확인한다.
 
 ## 환경변수
 
