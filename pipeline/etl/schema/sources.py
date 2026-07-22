@@ -1,7 +1,13 @@
 from dataclasses import dataclass
+from enum import Enum
+
 import yaml
 
 from config import SOURCE_CONFIG_DIR
+
+class LoadMode(Enum):
+    FULL = "full"
+    INCREMENTAL = "incremental"
 
 @dataclass(frozen=True)
 class SourceTable:
@@ -27,6 +33,7 @@ def load_source_config(name:str, path=SOURCE_CONFIG_DIR) -> Source:
     with open(path, "r") as f:
         src_schema_config = yaml.safe_load(f)
 
+    # TODO: Source & SourceTable 유효성 검사
     for s in src_schema_config["sources"]:
         if s["name"] == name:
             return Source(
