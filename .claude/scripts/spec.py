@@ -6,9 +6,11 @@ is written the same way every time (no model-side arithmetic or typos). Bodies
 are created as skeletons; skills fill prose afterward with Edit.
 
 Artifact types and their layout under workspace/:
-  task, issue   → <type>s/<id>/spec.md   (subdir layout)
-  milestone     → milestones/<id>.md     (flat layout)
-  feature, metric, event → <type>s/<id>.md (flat layout)
+  task      → milestones/<M-ID>/<id>.md   when its milestone is numbered (M-X-N)
+              tasks/<id>.md               otherwise (queue: milestone unset or candidate)
+  milestone → milestones/<M-ID>/<M-ID>.md when it holds tasks
+              milestones/<id>.md          otherwise (candidate, slug id)
+  issue, feature, metric, event → <type>s/<id>.md
 
 Usage:
   spec.py create <type> <id> [key=value ...] [--force]   create from skeleton
@@ -18,23 +20,28 @@ Usage:
 Stdlib only.
 """
 
+import re
 import subprocess
 import sys
 from pathlib import Path
 
+# A milestone gets a number (M-D-9) when it is picked up; candidates keep a slug.
+NUMBERED_MILESTONE = re.compile(r"^M-[A-Z]-\d+$")
+
 # --- Per-type config -------------------------------------------------------
-# dir: workspace subdirectory. layout: "subdir" → <dir>/<id>/spec.md, "flat" → <dir>/<id>.md.
+# dir: workspace subdirectory. All types are flat files <dir>/<id>.md; a task
+# additionally lives inside its milestone folder once that milestone is numbered.
 # fm: frontmatter keys in order. defaults: values used when not supplied on create.
 
 TYPES = {
     "task": {
-        "dir": "tasks", "layout": "subdir",
+        "dir": "tasks", "layout": "flat",
         "fm": ["status", "branch", "pr", "start_date", "end_date", "milestone", "track"],
         "defaults": {"status": "backlog", "branch": None, "pr": None,
                      "start_date": None, "end_date": None},
     },
     "issue": {
-        "dir": "issues", "layout": "subdir",
+        "dir": "issues", "layout": "flat",
         "fm": ["status", "branch", "pr", "start_date", "end_date", "severity", "track"],
         "defaults": {"status": "backlog", "branch": None, "pr": None,
                      "start_date": None, "end_date": None},
@@ -110,10 +117,39 @@ def render_body(kind, item_id, title):
     return raw.replace("{id}", item_id).replace("{title}", title)
 
 
-def spec_path(kind, item_id):
-    cfg = TYPES[kind]
-    base = resolve_workspace() / cfg["dir"]
-    return base / item_id / "spec.md" if cfg["layout"] == "subdir" else base / f"{item_id}.md"
+def is_numbered_milestone(milestone):
+    """A milestone that has been picked up gets a number (M-D-9); candidates keep
+    a slug (metric-expansion). Only numbered ones own a folder with their tasks."""
+    return bool(milestone) and bool(NUMBERED_MILESTONE.match(str(milestone)))
+
+
+def spec_path(kind, item_id, milestone=None):
+    """Where a spec belongs. A task sits in its milestone's folder once that
+    milestone is numbered, otherwise in the tasks/ queue. A milestone moves into
+    its own folder once it holds tasks."""
+    ws = resolve_workspace()
+    if kind == "task":
+        if is_numbered_milestone(milestone):
+            return ws / "milestones" / str(milestone) / f"{item_id}.md"
+        return ws / "tasks" / f"{item_id}.md"
+    if kind == "milestone":
+        owned = ws / "milestones" / item_id / f"{item_id}.md"
+        return owned if owned.exists() else ws / "milestones" / f"{item_id}.md"
+    return ws / TYPES[kind]["dir"] / f"{item_id}.md"
+
+
+def find_spec(kind, item_id):
+    """Locate an existing spec wherever it currently sits. Falls back to the
+    default location so callers can report a clean 'not found'."""
+    if kind == "task":
+        queued = resolve_workspace() / "tasks" / f"{item_id}.md"
+        if queued.exists():
+            return queued
+        owned = sorted(resolve_workspace().glob(f"milestones/*/{item_id}.md"))
+        if owned:
+            return owned[0]
+        return queued
+    return spec_path(kind, item_id)
 
 
 def parse_kv(pairs):
@@ -164,7 +200,8 @@ def write_spec(path, fm_pairs, body):
 
 def cmd_create(kind, item_id, kv, force):
     cfg = TYPES[kind]
-    path = spec_path(kind, item_id)
+    path = spec_path(kind, item_id, kv.get("milestone"))
+    path.parent.mkdir(parents=True, exist_ok=True)
     if path.exists() and not force:
         die(f"{path} exists (use --force to overwrite, or `set` to patch)")
 
@@ -187,7 +224,7 @@ def cmd_create(kind, item_id, kv, force):
 
 def cmd_set(kind, item_id, kv):
     cfg = TYPES[kind]
-    path = spec_path(kind, item_id)
+    path = find_spec(kind, item_id)
     if not path.exists():
         die(f"{path} not found (use `create` first)")
     for k in kv:
@@ -204,9 +241,30 @@ def cmd_set(kind, item_id, kv):
     write_spec(path, fm, body)
     print(f"[spec] set {path}: {', '.join(f'{k}={fmt_value(v)}' for k, v in kv.items())}")
 
+    # A task's folder is derived from its milestone, so changing one relocates it.
+    if kind == "task" and "milestone" in kv:
+        relocate_task(item_id, path, kv["milestone"])
+
+
+def relocate_task(item_id, path, milestone):
+    """Move a task to the folder its (new) milestone implies, promoting the
+    milestone spec into that folder the first time it gains a task."""
+    dest = spec_path("task", item_id, milestone)
+    if dest == path:
+        return
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    path.replace(dest)
+    print(f"[spec] moved {path} -> {dest}")
+
+    if is_numbered_milestone(milestone):
+        flat = resolve_workspace() / "milestones" / f"{milestone}.md"
+        if flat.exists():
+            flat.replace(dest.parent / f"{milestone}.md")
+            print(f"[spec] moved {flat} -> {dest.parent / f'{milestone}.md'}")
+
 
 def cmd_show(kind, item_id):
-    path = spec_path(kind, item_id)
+    path = find_spec(kind, item_id)
     if not path.exists():
         die(f"{path} not found")
     print(_read(path, "spec"), end="")

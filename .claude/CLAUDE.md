@@ -103,8 +103,21 @@ feature/* → PR → dev 머지 → Vercel Preview (통합 확인)
 
 프로젝트 작업의 단일 원천은 `workspace/`다 (gitignore·로컬) — **두 객체**로 나뉜다:
 
-- **태스크 (기능·개선)**: `workspace/tasks/TASK-{N}/spec.md`
-- **이슈 (버그 수정)**: `workspace/issues/ISSUE-{N}/spec.md`
+- **태스크 (기능·개선)**: 소속 마일스톤 폴더 안 `workspace/milestones/{M-ID}/TASK-{N}.md`. 마일스톤이 아직 없으면 대기열 `workspace/tasks/TASK-{N}.md`
+- **이슈 (버그 수정)**: `workspace/issues/ISSUE-{N}.md`
+
+```
+workspace/
+├── milestones/
+│   ├── M-D-9/              번호 받은 마일스톤 — 자기 문서와 태스크를 함께 둔다
+│   │   ├── M-D-9.md
+│   │   └── TASK-122.md
+│   └── metric-expansion.md 후보(candidate) — 번호 없이 평파일
+├── tasks/TASK-{N}.md       마일스톤 미정 대기열
+└── issues/ISSUE-{N}.md
+```
+
+태스크의 위치는 `milestone` 값이 정한다 — `spec.py set task <id> milestone=<M-ID>`가 파일을 옮긴다. 수작업으로 옮기지 않는다.
 
 읽기·쓰기는 `.claude/scripts/spec.py`(create/set/show)로 한다 — frontmatter 갱신은 수작업 금지, spec.py가 결정적으로 처리하고 body는 보존한다. 조회·집계는 `/reporting-status`, 기획·분해는 `/planning-spec`.
 
@@ -113,6 +126,8 @@ feature/* → PR → dev 머지 → Vercel Preview (통합 확인)
 - ID 비패딩 (`TASK-7`, `ISSUE-3`). TASK·ISSUE는 별도 namespace — 번호 겹쳐도 무관
 - status 어휘 영어 통일: `backlog | in-progress | in-review | done | on-hold | cancelled` (마일스톤은 `in-review` 대신 `candidate`)
 - 진척 필드(`status`·`branch`·`pr`·`start_date`·`end_date`)는 작업 진행에 맞춰 spec.py `set`으로 갱신한다
+- **태스크는 착수할 때 만든다.** 마일스톤을 세울 때 그 안의 태스크를 미리 다 만들지 않는다 — 진행하다 보면 합쳐지거나 새로 끼는 것이 정상이라, 미리 만들면 계획 변경 때마다 정리 비용이 든다
+- **번호는 다시 매기지 않는다.** 번호는 식별자일 뿐 순서를 뜻하지 않는다. 취소된 태스크는 번호를 비우지 말고 `status=cancelled`로 남긴다 (브랜치명·PR 제목·커밋에 이미 박힌 번호가 어긋난다)
 
 ## 작업 추적 규칙
 

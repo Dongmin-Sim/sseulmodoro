@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Build workspace/board.md — a cached summary of task/issue/milestone status.
 
-The source of truth is each spec's YAML frontmatter (workspace/tasks/<id>/spec.md,
-workspace/issues/<id>/spec.md, workspace/milestones/<id>.md). This script scans
+The source of truth is each spec's YAML frontmatter (workspace/milestones/<M-ID>/,
+workspace/tasks/<id>.md, workspace/issues/<id>.md). This script scans
 that frontmatter and materializes board.md as a read cache (like a DB view).
 board.md is never hand-edited — rerun this script to refresh it.
 
@@ -23,8 +23,8 @@ from pathlib import Path
 
 # --- Constants (documented so values are not "voodoo") ---------------------
 
-# Tasks and issues live in <id>/spec.md subdirs; milestones are flat files.
-SPEC_FILENAME = "spec.md"
+# Every spec is a flat <id>.md file. Tasks additionally sit inside their
+# milestone's folder once that milestone is numbered.
 DIR_TASKS = "tasks"
 DIR_ISSUES = "issues"
 DIR_MILESTONES = "milestones"
@@ -87,27 +87,39 @@ def _numeric_suffix(item_id):
     return int(tail) if tail.isdigit() else 0
 
 
-def collect_subdir_specs(workspace, dirname):
-    """Collect <workspace>/<dirname>/<id>/spec.md entries (tasks, issues)."""
-    base = workspace / dirname
-    specs = []
-    if not base.is_dir():
-        return specs
-    for entry in sorted(base.iterdir()):
-        spec = entry / SPEC_FILENAME
-        if entry.is_dir() and spec.is_file():
-            specs.append({
-                "id": entry.name,
-                "fields": parse_frontmatter(spec),
-                "mtime": spec.stat().st_mtime,
-            })
+def collect_task_specs(workspace):
+    """Tasks live in their milestone's folder once that milestone is numbered,
+    and in the tasks/ queue until then. Collect both."""
+    paths = list((workspace / DIR_TASKS).glob("*.md"))
+    paths += [p for p in (workspace / DIR_MILESTONES).glob("*/*.md")
+              if p.stem != p.parent.name]
+    specs = [{
+        "id": p.stem,
+        "fields": parse_frontmatter(p),
+        "mtime": p.stat().st_mtime,
+    } for p in paths]
     specs.sort(key=lambda s: _numeric_suffix(s["id"]))
+    return specs
+
+
+def collect_milestone_specs(workspace):
+    """A milestone owning tasks lives in its own folder as <M-ID>/<M-ID>.md;
+    a candidate stays a flat file. Collect both."""
+    base = workspace / DIR_MILESTONES
+    paths = list(base.glob("*.md")) + [p for p in base.glob("*/*.md")
+                                       if p.stem == p.parent.name]
+    specs = [{
+        "id": p.stem,
+        "fields": parse_frontmatter(p),
+        "mtime": p.stat().st_mtime,
+    } for p in paths]
+    specs.sort(key=lambda s: s["id"])
     return specs
 
 
 def collect_flat_specs(workspace, dirname):
     """Collect <workspace>/<dirname>/<id>.md entries (flat files:
-    milestones, features, metrics, events)."""
+    issues, features, metrics, events)."""
     base = workspace / dirname
     specs = []
     if not base.is_dir():
@@ -286,9 +298,9 @@ def main():
         return
 
     features = collect_flat_specs(workspace, DIR_FEATURES)
-    milestones = collect_flat_specs(workspace, DIR_MILESTONES)
-    tasks = collect_subdir_specs(workspace, DIR_TASKS)
-    issues = collect_subdir_specs(workspace, DIR_ISSUES)
+    milestones = collect_milestone_specs(workspace)
+    tasks = collect_task_specs(workspace)
+    issues = collect_flat_specs(workspace, DIR_ISSUES)
     metrics = collect_flat_specs(workspace, DIR_METRICS)
     events = collect_flat_specs(workspace, DIR_EVENTS)
 

@@ -1,6 +1,6 @@
 ---
 name: writing-issue
-description: Creates or updates an issue (bug) spec in workspace/issues/<id>/spec.md via the spec.py CLI (idempotent). Created and filled during the executing-task bug flow (diagnosis-first), or dispatched by planning-spec. Use for "이슈 만들기", "버그 등록", "이슈 상태 갱신".
+description: Creates or updates an issue (bug) spec in workspace/issues/<id>.md via the spec.py CLI (idempotent). Created and filled during the executing-task bug flow (diagnosis-first), or dispatched by planning-spec. Use for "이슈 만들기", "버그 등록", "이슈 상태 갱신".
 ---
 
 # writing-issue
