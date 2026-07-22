@@ -52,18 +52,22 @@
 
 ```
 main        ← 프로덕션. Vercel Production 배포. dev에서 PR로만 머지.
-dev         ← 통합 확인. Vercel Preview 배포. feature/fix/harness에서 PR로만 머지.
+dev         ← 통합 확인. Vercel Preview 배포. feature/fix에서 PR로 머지, harness/docs는 PR 없이 머지.
 feature/*   ← 기능 개발. dev에서 분기 → 완료 후 dev에 PR.
 fix/*       ← 버그 수정. dev에서 분기 → 완료 후 dev에 PR.
-harness/*   ← Claude 하네스 변경. dev에서 분기 → 완료 후 dev에 PR.
+harness/*   ← Claude 하네스 변경. dev에서 분기 → 완료 후 dev에 머지 (PR 없음).
+docs/*      ← 문서 변경. dev에서 분기 → 완료 후 dev에 머지 (PR 없음).
 ```
 
 - 기능 개발: `feature/TASK-{N}-기능명` (`TASK-{N}`은 workspace 태스크 ID — 비패딩, 예: `feature/TASK-51-etl-load`)
 - 버그 수정: `fix/ISSUE-{N}-버그명` (`ISSUE-{N}`은 workspace 이슈 ID — 비패딩, 예: `fix/ISSUE-5-logout-warning-restore`)
-- 하네스 변경: `harness/설명` (`.claude/` 하위 파일 — agents, skills, rules, scripts, settings)
+- 하네스 변경: `harness/설명` (`.claude/` 하위 + `.github/` 템플릿 — agents, skills, rules, scripts, settings, PR 템플릿)
+- 문서 변경: `docs/설명` (`*.md` — README, 아키텍처 문서, 정책 문서)
 
 > 머지된 패딩 잔재 브랜치(`fix/ISSUE-001` 등)는 그대로 두고 신규는 비패딩으로 통일.
-- main/dev 직접 커밋 금지. PR로만 머지.
+- main/dev 직접 커밋 금지 — 브랜치를 거친다.
+- PR은 feature/fix만. harness/docs는 변경이 잦고 앱 동작/배포에 영향이 없어 브랜치 머지로 끝낸다.
+- 앱/파이프라인 코드가 한 줄이라도 섞이면 harness/docs가 아니라 feature/fix로 분류한다.
 
 ### 배포 흐름
 

@@ -9,7 +9,7 @@ The git-writing lifecycle: branch → commit → PR. The single hub other skills
 
 Ownership split — do not restate what these own:
 - **Conventions** (commit format, PR title, footer ban, issue-ref style) → the always-loaded `rules/code-quality`.
-- **Strategy** (3-tier main/dev/feature, PR-only merge) → `.claude/CLAUDE.md`.
+- **Strategy** (3-tier main/dev/feature, which branch types need a PR) → `.claude/CLAUDE.md`.
 - **Procedure** (this skill).
 
 Concrete good examples for every case → [EXAMPLES.md](EXAMPLES.md).
@@ -35,7 +35,7 @@ Stacked branches / rebase-on-merge → see `rules/workflow`.
 4. **One PR = one topic** — split off side changes.
 
 ### Body — follow `.github/pull_request_template.md`
-Sections, in order: **Summary** (What·Why bullets; for a defect, one line each of symptom·cause) · **작업 내용** (what was done, per module/topic, plainly — no rationale/tradeoffs) · **선행 PR** (dependency PR # or "없음") · **관련 태스크** (`TASK-{N}`/`ISSUE-{N}` numbers only) · **후속 작업** (undone/known limits; delete the section if none) · **Test plan** (`build`/`lint`/`test` + manual checkboxes).
+Sections, in order: **Summary** (the problem this PR solves, 1–2 lines; for a defect, one line each of symptom·cause) · **작업 내용** (what was done, per module/topic, plainly — no rationale/tradeoffs) · **선행 PR** (dependency PR # or "없음") · **관련 태스크** (`TASK-{N}`/`ISSUE-{N}` numbers only) · **후속 작업** (undone/known limits; delete the section if none) · **Test plan** (`build`/`lint`/`test` + manual checkboxes).
 
 Internal meta (ops/infra config state) goes to the handoff channel, not the PR.
 
