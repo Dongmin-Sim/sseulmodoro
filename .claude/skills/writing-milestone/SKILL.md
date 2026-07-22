@@ -1,6 +1,6 @@
 ---
 name: writing-milestone
-description: Creates or updates a milestone in workspace/milestones/<id>.md via the spec.py CLI (idempotent). Groups tasks under a feature. Usually dispatched by planning-spec. Use for "마일스톤 만들기", "마일스톤 상태 갱신", "마일스톤 재구성".
+description: Creates or updates a milestone via the spec.py CLI (idempotent) — a candidate is a flat file, a numbered milestone owns a folder holding its tasks. Usually dispatched by planning-spec. Use for "마일스톤 만들기", "마일스톤 상태 갱신", "마일스톤 재구성".
 ---
 
 # writing-milestone
@@ -20,7 +20,7 @@ python3 .claude/scripts/spec.py set milestone <M-S-N> status=in-progress
 Keys: `title·feature·status`. `status`: backlog | in-progress | candidate | done | on-hold | cancelled (`candidate` = 후보).
 
 ## Candidate (🔭 unnumbered)
-For a milestone idea not yet started, don't squat a number — use a descriptive **slug** id (not `M-{T}-{N}`) with `status=candidate`. It surfaces in the board's 대기·후보. Promotion (slug → numbered) happens when it starts and is `planning-spec`'s job: the number = execution order, assigned when the milestone actually rolls.
+For a milestone idea not yet started, don't squat a number — use a descriptive **slug** id (not `M-{T}-{N}`) with `status=candidate`. It surfaces in the board's 대기·후보. Promotion (slug → numbered) happens when it starts and is `planning-spec`'s job: the number = execution order, assigned when the milestone actually rolls. On promotion the file moves into `milestones/<M-id>/<M-id>.md`; its tasks are cut into that folder afterwards.
 
 ## Must pass (eval)
 1. If `feature` is given, it must match an existing feature title — otherwise omit it (a milestone may stand alone).

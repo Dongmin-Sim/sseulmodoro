@@ -10,4 +10,4 @@ Principle: declarative, WHAT-focused. Don't write HOW (implementation, files, ca
 - **작업 결과** — filled after the PR merges; home of the design decisions (HOW) alongside the PR body — PR summary + link + updated completion checks.
 - **참고** — related feature·milestone·predecessor task. Use workspace relative paths / IDs (not Obsidian wikilinks).
 
-Deep detail (implementation approach, affected files, API contract, edge cases) belongs in `specifying-task`.
+Deep detail (implementation approach, affected files, API contract, edge cases) is filled by `executing-task` right after this file is created.

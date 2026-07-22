@@ -37,7 +37,7 @@ Stacked branches / rebase-on-merge → see `rules/workflow`.
 ### Body
 `.github/pull_request_template.md` is the single source for the sections and what each one holds — follow the file, do not restate it here.
 
-Internal meta (ops/infra config state) goes to the handoff channel, not the PR.
+Internal meta (ops/infra config state) goes in the task spec, not the PR.
 
 ### Create flow
 1. **Print the draft** — title + body to the terminal first. Never create directly.

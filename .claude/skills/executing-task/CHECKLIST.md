@@ -1,6 +1,7 @@
-# Ready checklist — task refinement
+# Ready checklist — the task spec before implementing
 
-Before implementing, the spec must contain the following. If any can't be confirmed against real code, don't fill it — ask the user.
+Fill this right after cutting the ticket (SKILL.md step 2). If any item can't be
+confirmed against real code, don't fill it — ask the user.
 
 - [ ] **구현 접근** — how to build it (one paragraph, grounded in real code)
 - [ ] **영향 파일** — files to create/modify (`file:section`)

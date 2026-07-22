@@ -3,15 +3,15 @@
 ## Hierarchy
 - **feature**: one chunk of user/business value. WHAT / why.
 - **milestone**: a shippable step; groups tasks. Usually under a feature, but `feature` is optional — a milestone may stand alone (esp. DE/ops work).
-- **task**: a unit one work session can finish.
+- **task**: a unit one work session can finish. Cut at pickup (`executing-task`), not planned here.
 
 ## Good decomposition
 - One task = one concern. Split if app work and data work mix.
 - A milestone should be independently verifiable (demoable).
 - State dependencies explicitly ("A precedes B"). No cycles.
-- Don't fully decompose up front — decompose to tasks only for the near milestone; keep far ones at milestone level as candidates.
+- Decompose to milestones only. Tasks are cut one at a time against the code, because what the next piece should be changes as earlier pieces land.
 
-## Track routing (task `track`)
+## Track routing (`track`)
 - App work (API · DB · auth · pages · components · UX) → **APP** — Claude implements
 - Data engineering (pipeline · metrics · events · mart) → **DE** — user implements, Claude reviews
 
