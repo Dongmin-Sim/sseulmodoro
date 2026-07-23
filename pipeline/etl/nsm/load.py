@@ -3,12 +3,12 @@ import json
 from google.cloud import bigquery
 import pandas as pd
 
-from schema.sources import LoadMode
+from schema.sources import SourceTable
 from utils.logger import get_logger, timed
 
 logger = get_logger(__name__)
 
-def preprocessing(df, table_name):
+def preprocessing(df: pd.DataFrame, table_name: str) -> pd.DataFrame:
     df = df.assign(user_id=df['user_id'].astype(str))
 
     if table_name == 'activity_log':
@@ -18,30 +18,53 @@ def preprocessing(df, table_name):
     return df
 
 
-def load_to_raw(client, table_name, df, schema, mode=LoadMode.FULL):
-    """supabase로부터 추출된 테이블 레코드를 bigquery raw 데이터 셋에 업로드
+def _load_df(
+    client: bigquery.Client,
+    tbl_name: str,
+    df: pd.DataFrame,
+    schema: list[bigquery.SchemaField],
+    write_disposition: str,
+) -> bigquery.LoadJob:
+    job_config = bigquery.LoadJobConfig(
+        schema=schema,
+        write_disposition=write_disposition
+    )
+    load_job = client.load_table_from_dataframe(
+        df,
+        f'{client.project}.raw.{tbl_name}',
+        job_config=job_config
+    )
+    return load_job
 
-    Args:
-        df (_type_): Pandas Dataframe
-        :param client: BigQuery client
-        :param table_name: 적재할 테이블 명
-        :param df: 적재 대상 데이터프레임
-        :param schema: BigQuery schema
-    """
-    with timed(logger, "load", "load", target=table_name) as t:
-        df = preprocessing(df, table_name)
 
-        if mode == LoadMode.FULL:
-            job_config = bigquery.LoadJobConfig(
-                schema=schema,
-                write_disposition="WRITE_TRUNCATE"
-            )
-        else:
-            # TODO: 현재 placeholder 멱등하게 작성 필요, 재적재시 현재 처리 파티션 삭제 코드 필요
-            job_config = bigquery.LoadJobConfig(
-                schema=schema,
-                write_disposition="WRITE_APPEND"
-            )
-        load_job = client.load_table_from_dataframe(df, f'{client.project}.raw.{table_name}', job_config=job_config)
+def load_full(
+    client: bigquery.Client,
+    src_tbl: SourceTable,
+    schema: list[bigquery.SchemaField],
+    df: pd.DataFrame,
+) -> None:
+    with timed(logger, "load", "full-load", target=src_tbl.name) as t:
+        load_job = _load_df(client, src_tbl.name, df, schema, "WRITE_TRUNCATE")
+        load_job.result()
+        t.add(rows=load_job.output_rows)
+
+
+def load_incremental(
+    client: bigquery.Client,
+    src_tbl: SourceTable,
+    schema: list[bigquery.SchemaField],
+    df: pd.DataFrame,
+    since: int,
+) -> None:
+    with timed(logger, "load", "incremental-load", target=src_tbl.name) as t:
+        query = f"""
+        DELETE FROM `{client.project}.raw.{src_tbl.name}` 
+        WHERE {src_tbl.required_incremental_key} > @since
+        """
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[bigquery.ScalarQueryParameter("since", "INT64", since)]
+        )
+        client.query(query, job_config=job_config).result()
+        load_job = _load_df(client, src_tbl.name, df, schema, "WRITE_APPEND")
         load_job.result()
         t.add(rows=load_job.output_rows)

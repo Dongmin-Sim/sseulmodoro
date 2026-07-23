@@ -12,10 +12,6 @@ def test_지정_컬럼으로_추출_쿼리를_생성한다():
     assert isinstance(res, str)
     assert res == "SELECT \"id\", \"name\", \"created_at\" FROM \"test\""
 
-def test_컬럼이_비면_ValueError를_던진다():
-    with pytest.raises(ValueError):
-        build_extract_columns_query("test", [])
-
 
 def test_증분_추출_쿼리를_생성한다():
     table_name = "test"

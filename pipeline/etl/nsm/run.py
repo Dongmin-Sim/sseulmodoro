@@ -1,19 +1,22 @@
 import os
 
+from google.cloud import bigquery
+
 from config import SQL_DIR
+from watermark import read_watermark, update_watermark
 from utils.logger import get_logger, timed
 from utils.gcp import get_bigquery_client, create_dataset, create_table_from_ddl_file
-from ddl.raw import RAW_POMODORO_SESSIONS_TABLE_SCHEMA, RAW_ACTIVITY_LOG_TABLE_SCHEMA
-from schema.sources import load_source_config, LoadMode
+from ddl.raw import RAW_SCHEMAS
+from schema.sources import load_source_config
 
-from .extract import extract_table
-from .load import load_to_raw
+from .extract import extract_full, extract_incremental
+from .load import load_full, load_incremental, preprocessing
 from .transform import transform
 
 logger = get_logger(__name__)
 
 
-def prepare_schema(bq_client):
+def prepare_schema(bq_client: bigquery.Client) -> None:
     create_dataset(bq_client, 'raw')
     create_dataset(bq_client, 'meta')
     create_table_from_ddl_file(bq_client, 'watermark_store', 'meta_watermark_store.sql')
@@ -28,28 +31,47 @@ def prepare_schema(bq_client):
     create_table_from_ddl_file(bq_client, 'agg_pomodoro_weekly', 'mart_agg_pomodoro_weekly.sql')
     create_table_from_ddl_file(bq_client, 'agg_nsm_weekly', 'mart_agg_nsm_weekly.sql')
 
+def require_database_url(database_url: str | None) -> str:
+    if database_url is None:
+        logger.error(
+            "DATABASE_URL not set",
+            extra={"stage": "extract", "event": "extract_error", "status": "fail"},
+        )
+        raise RuntimeError("DATABASE_URL not set")
+
+    return database_url
 
 def run_nsm() -> None:
-    database_url = os.getenv("DATABASE_URL")
+    database_url = require_database_url(os.getenv("DATABASE_URL"))
     bq_project = os.getenv("BQ_PROJECT")
     bq_client = get_bigquery_client(bq_project)
-    project_id = bq_client.project
 
     source = load_source_config("app")
 
     with timed(logger, "run", "run"):
         prepare_schema(bq_client)
 
-        extracted_df = [
-            extract_table(database_url, src_tbl)
-            for src_tbl in source.tables
-        ]
+        for src_tbl in source.tables:
+            bq_schema = RAW_SCHEMAS[src_tbl.name]
 
-        bigquery_raw_schemas = [RAW_ACTIVITY_LOG_TABLE_SCHEMA, RAW_POMODORO_SESSIONS_TABLE_SCHEMA]
-        for src_tbl_name, bq_schema, df in zip(source.table_names, bigquery_raw_schemas, extracted_df):
-            load_to_raw(bq_client, src_tbl_name, df, bq_schema, LoadMode.FULL) # TODO: mode는 소스 테이블 설정에 맞게 변경 필요
+            if src_tbl.is_incremental:
+                since = read_watermark(bq_client, src_tbl.name) or 0
+                df = extract_incremental(database_url, src_tbl, since)
+                if df.empty: continue
+
+                preproc_df = preprocessing(df, src_tbl.name)
+                load_incremental(bq_client, src_tbl, bq_schema, preproc_df, since)
+
+                new_since = int(preproc_df[src_tbl.required_incremental_key].max())
+                update_watermark(bq_client, src_tbl.name, new_since)
+            else:
+                df = extract_full(database_url, src_tbl)
+                preproc_df = preprocessing(df, src_tbl.name)
+                load_full(bq_client, src_tbl, bq_schema, preproc_df)
+
 
         # TODO: 실행 순서가 리스트 순서에 암묵 의존 — 문자열 기반이라 순서 실수에 취약. 의존성 명시화 필요
+        project_id = bq_client.project
         tables = [
             (SQL_DIR / "stages/activity_log_app_visited.sql", f'{project_id}.stage.activity_log_app_visited'),
 

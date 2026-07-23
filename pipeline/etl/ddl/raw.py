@@ -26,3 +26,8 @@ RAW_POMODORO_SESSIONS_TABLE_SCHEMA = [
     bigquery.SchemaField("created_at", bigquery.enums.SqlTypeNames.TIMESTAMP, mode="NULLABLE"),
     bigquery.SchemaField("loaded_at", bigquery.enums.SqlTypeNames.TIMESTAMP, mode="REQUIRED"),
 ]
+
+RAW_SCHEMAS = {
+    "activity_log": RAW_ACTIVITY_LOG_TABLE_SCHEMA,
+    "pomodoro_sessions": RAW_POMODORO_SESSIONS_TABLE_SCHEMA,
+}
