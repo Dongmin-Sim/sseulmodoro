@@ -1,6 +1,6 @@
 import os
 
-from config import SQL_DIR, SOURCE_CONFIG_DIR
+from config import SQL_DIR
 from utils.logger import get_logger, timed
 from utils.gcp import get_bigquery_client, create_dataset, create_table_from_ddl_file
 from ddl.raw import RAW_POMODORO_SESSIONS_TABLE_SCHEMA, RAW_ACTIVITY_LOG_TABLE_SCHEMA
@@ -12,8 +12,12 @@ from .transform import transform
 
 logger = get_logger(__name__)
 
+
 def prepare_schema(bq_client):
     create_dataset(bq_client, 'raw')
+    create_dataset(bq_client, 'meta')
+    create_table_from_ddl_file(bq_client, 'watermark_store', 'meta_watermark_store.sql')
+
     create_dataset(bq_client, 'stage')
     create_table_from_ddl_file(bq_client, 'activity_log_app_visited', 'stage_activity_log_app_visited.sql')
 
@@ -23,6 +27,7 @@ def prepare_schema(bq_client):
     create_table_from_ddl_file(bq_client, 'active_user_weekly', 'mart_active_user_weekly.sql')
     create_table_from_ddl_file(bq_client, 'agg_pomodoro_weekly', 'mart_agg_pomodoro_weekly.sql')
     create_table_from_ddl_file(bq_client, 'agg_nsm_weekly', 'mart_agg_nsm_weekly.sql')
+
 
 def run_nsm() -> None:
     database_url = os.getenv("DATABASE_URL")
