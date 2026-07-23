@@ -53,56 +53,35 @@
 
 ## 데이터 엔지니어링
 
-### 수집/적재 (E/L)
+### 데이터 수집·적재 (Extract / Load)
 
-> 분석에 필요한 데이터를 어떻게 가져와 쌓을까?
-> - [분석 지표](docs/metric.md)에 필요한 소스 테이블 2개를 full refresh 배치 
-> - BigQuery raw에 적재 
+> [분석에 필요한 데이터](docs/metric.md)를 운영 DB에서 추출하여 BigQuery Raw 레이어에 적재합니다.
 
+**가정 (Assumptions)**
+- 데이터 규모는 지속적으로 증가한다.
+- 분석 지표는 주 1회에서 일 1회 이상 등으로 갱신 주기가 늘어날 수 있다.
 
+위와 같은 운영 환경을 가정하고, Full Load의 비용과 부하가 커지므로,   
+소스 테이블의 데이터 변경 패턴(Append-only / Mutable)을 기준으로 적재 전략을 분리하여 파이프라인을 설계/구현했습니다.
 
-```mermaid
-flowchart LR
-  subgraph pg["① 소스 (Postgres)"]
-    AL[(activity_log)]
-    PS[(pomodoro_sessions)]
-  end
+| 소스 테이블 | 변경 패턴       | 추출 전략        | 적재 전략                                                                | 증분 키        | 비고 |
+| --- |-------------|--------------|----------------------------------------------------------------------|-------------|---|
+| `activity_log` | append-only | incremental  | [delete > insert](docs/blog/el_1_incremental_append_only.md#새로운-아키텍처) | `id`        | |
+| `pomodoro_sessions` | mutable     | full extract | [full refresh](docs/blog/el_0_baseline.md#새로운-아키텍처)                  | `updated_at` | 증분 전환 예정 |
 
-  subgraph gcs["② 랜딩 존 (GCS) — 추출 결과"]
-    LZ[/"date=YYYY-MM-DD"/]
-  end
+- **소스 스키마 정의**: `etl/schema/source_schema.yaml`컬럼, PK, 추출·적재 전략, 증분 키 선언, 설정 별 테이블 적재 수행
+- **배치 실행**: 데이터 사용 목적과 Freshness 요구사항이 높지 않다고 가정하여 배치 방식 선택
+- **구현 방식**
+  - **Append-only**: 워터마크 기반 Incremental Extract 후 Delete + Insert 방식으로 적재
+  - **Mutable**: 현재는 Full Refresh를 사용하며, 향후 Incremental + MERGE로 개선 예정
+- **워터마크 관리**: `meta.watermark_store`에 Append-only 형태로 저장하여 실행 이력을 보존
 
-  subgraph bq["③ 웨어하우스 (BigQuery) — 적재 결과"]
-    RAL[("raw.activity_log")]
-    RPS[("raw.pomodoro_sessions")]
-  end
-
-  AL -->|"Extract · WHERE id > since"| LZ
-  PS -->|"Extract · WHERE updated_at >= since"| LZ
-  LZ -->|"Load · APPEND"| RAL
-  LZ -->|"Load · MERGE"| RPS
-```
-
-
-- 문제정의
-  - 웹 서비스 소스 DB(Postgres)에서 지표 산출을 위한 데이터를 수집 필요
-- 데이터 수집 파이프라인 설계
-  - 데이터 Latency/Freshness 요구사항이 낮다고 가정. 배치 방식으로 결정
-  - 소스데이터의 변경분 식별이 가능하지만(증분키 후보 존재), 서비스 초기 데이터의 양이 적다는 것을 가정  
-  - 위 사항 및 복잡도를 고려하여 **Full Refresh** 방식 결정 (전체 추출 + overwrite 적재)
-- 추출 방법
-  - psycopg로 소스 데이터베이스 테이블 전체 조회
-  - pandas.DataFrame 변환하여 메모리 임시 적재
-- 적재 방법
-  - 적재 전 컬럼 타입 일치를 위한 전처리 수행 (벌크 적재 시 bq 내부 df -> parquet 변환 동작 때문)
-  - BigQuery `WRITE_TRUNCATE` Job 옵션으로 overwrite 벌크 적재
-    - 동작 방식: 단일 load job의 커밋 시점에 truncate+append가 원자적으로 반영
-    - 실패 시 기존 데이터 유지(원자성) + 재실행 시 동일 결과(멱등성)로 재실행 안전
-
-현재 한계점
-- 소스 DB 전체 조회 방식
-  - 데이터가 커질수록 Job 수행 인스턴스 메모리 가용량에 따라 OOM 발생 가능, 전체 재적재 시간 증가
-  - 소스 DB 풀스캔으로 운영 시 부하. 규모 커지면 read replica, 증분 추출로 스캔 범위 축소 고려
+아키텍처 개선 과정
+- [1. Full Load 기반 베이스라인 구축](docs/blog/el_0_baseline.md)
+- [2. Append-only 테이블 Incremental Load 적용](docs/blog/el_1_incremental_append_only.md)
+- [3. 멱등성을 보장하는 Backfill 구현(진행중)](docs/blog/el_2_backfill.md)
+- [4. Mutable 테이블 증분 업데이트 전략(진행중)](docs/blog/el_3_incremental_mutable.md)
+- [5. GCS Bulk Load를 활용한 ELT 성능 최적화(진행중)](docs/blog/el_4_gcs_bulk_load.md)
 
 <br>
 
