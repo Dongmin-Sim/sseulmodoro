@@ -49,6 +49,14 @@ def load_full(
         t.add(rows=load_job.output_rows)
 
 
+def build_load_query(client: bigquery.Client, src_tbl: SourceTable) -> str:
+    query = f"""
+        DELETE FROM `{client.project}.raw.{src_tbl.name}` 
+        WHERE {src_tbl.required_incremental_key} > @since
+        """
+    return query
+
+
 def load_incremental(
     client: bigquery.Client,
     src_tbl: SourceTable,
@@ -57,10 +65,7 @@ def load_incremental(
     since: int,
 ) -> None:
     with timed(logger, "load", "incremental-load", target=src_tbl.name) as t:
-        query = f"""
-        DELETE FROM `{client.project}.raw.{src_tbl.name}` 
-        WHERE {src_tbl.required_incremental_key} > @since
-        """
+        query = build_load_query(client, src_tbl)
         job_config = bigquery.QueryJobConfig(
             query_parameters=[bigquery.ScalarQueryParameter("since", "INT64", since)]
         )
