@@ -64,13 +64,42 @@ nit: etl/nsm/load.py · preprocessing · line 12
 praise: 이 부분의 코드는 매우 깔끔하고 이해하기 쉽네요! 좋은 작업입니다.
 ```
 
+Several `nit`s in one comment — grouped by kind, one line per location:
+
+```
+nit: 스타일 5건 묶음
+
+타입 힌트 누락
+  run.py:74        · run_backfill · target_table
+  transform.py:26  · transform · bq_client
+
+콜론 뒤 공백
+  extract.py:62    · start:str, end:str
+  sources.py:49    · type:str
+
+줄 끝 공백
+  load.py:53
+```
+
 ## Rules
 
 - **Fixes belong to the user.** Edit only items explicitly delegated, e.g. "사소한 건 처리해줘".
 - At most one `question` per finding, and it never contains the answer — no question flooding.
-- `nit`s are batched into a single comment, not listed individually.
+- `nit`s are batched into a single comment — but never as one dense paragraph. Group them by kind, one line per location, so the reader can scan and fix them one at a time.
 - At least one `praise` — name the pattern that was done well to reinforce it.
-- Findings outside the current lens are not dropped — close the report with `다른 관점: <lens> 후보 N건 (one-line summary)`.
+- Findings outside the current lens are not dropped — close the report with a `다른 관점` section. Group by lens, one line per candidate, never a single running sentence:
+
+  ```
+  다른 관점
+
+  리팩토링 후보 4건
+    run.py:44,75         부트스트랩 5줄이 run_nsm/run_backfill에 복제
+    load.py:85,104       삭제→append 실행부 복제
+
+  테스트 후보 2건
+    run.py:74            run_backfill 미커버
+    load.py:96           load_backfill의 APPEND 모드/삭제 선행 검증 부재
+  ```
 - Tone: a senior engineer commenting on a PR — suggestive, reason first, clear and concise.
 - Test naming in this repo: Korean descriptive form `test_<대상>_<동작>한다`.
 
@@ -79,7 +108,7 @@ praise: 이 부분의 코드는 매우 깔끔하고 이해하기 쉽네요! 좋�
 1. `/review-py code` → every finding carries a `type: file · function · line N` anchor, and not a single line of code is modified.
 2. A `question` comment contains no answer and no fix code — the question only.
 3. A code defect found during `/review-py refactor` → not mixed into the body; handed off via the closing `다른 관점:` line.
-4. Three or more `nit`s → batched into one comment, not listed individually.
+4. Three or more `nit`s → one comment, grouped by kind with one line per location — not a running paragraph.
 5. No finding is fixed by Claude until the user explicitly delegates it (e.g. "사소한 건 처리해줘").
 
 ## Distinction from reviewing-changes
