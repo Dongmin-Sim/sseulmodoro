@@ -49,15 +49,19 @@ Conventional comments, most severe first:
 Every comment is anchored: `type: file · function · line N`. Then the reason (why it is a problem) → the expected direction (never the answer code).
 
 ```
-issue: etl/nsm/load.py · load_backfill · line 108
-  count와 delete의 WHERE 조건이 복제입니다. 한쪽만 수정되면 건수 대조
-  가드가 조용히 어긋납니다. 두 쿼리가 조건을 한 곳에서 가져오게 해주세요.
+issue: etl/nsm/load.py · load_incremental · line 62
+  이 로직은 null 값을 처리하지 않습니다. null 값을 처리하는 로직을 추가해 주세요.
 
-question: etl/nsm/run.py · run_backfill · line 91
-  건수 대조에서 빈 구간(넣을 행 0)은 어떤 동작이 의도인가요?
+suggestion: etl/nsm/run.py · run_nsm · line 44
+  이 함수는 더 작은 함수로 분리할 수 있을 것 같아요. 이렇게 하면 더 이해하기 쉬울 거예요.
 
-praise: run_backfill이 run_nsm을 건드리지 않는 별도 경로로 선 것 —
-  실행 경로 격리가 spec의 결정 그대로 실현됐습니다.
+question: etl/nsm/extract.py · extract_incremental · line 40
+  이 부분에서 왜 이 접근 방식을 사용했는지 설명해 주실 수 있나요?
+
+nit: etl/nsm/load.py · preprocessing · line 12
+  여기에 공백이 하나 더 필요해요.
+
+praise: 이 부분의 코드는 매우 깔끔하고 이해하기 쉽네요! 좋은 작업입니다.
 ```
 
 ## Rules
