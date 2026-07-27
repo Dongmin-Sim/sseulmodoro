@@ -33,6 +33,7 @@ def make_source_table_incremental():
           primary_key="id",
           load_mode=LoadMode.INCREMENTAL,
           incremental_key="id",
+          backfill_key="created_at",
       )
       # pyrefly: ignore [bad-argument-type]
       return SourceTable(**{**base, **overrides})

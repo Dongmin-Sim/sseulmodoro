@@ -29,6 +29,19 @@ def build_extract_incremental_query(table_name: str, columns: list[str], increme
     ).as_string()
 
 
+def build_extract_backfill_query(table_name: str, columns: list[str], backfill_key: str) -> str:
+    return (sql.SQL(
+        """SELECT {cols}
+           FROM {tbl}
+           WHERE {backfill_key} >= %(start)s::timestamp AND {backfill_key} < %(end)s::timestamp + INTERVAL '1 DAY'
+        """
+    ).format(
+        cols=sql.SQL(", ").join(map(sql.Identifier, columns)),
+        tbl=sql.Identifier(table_name),
+        backfill_key=sql.Identifier(backfill_key),
+    ).as_string())
+
+
 def extract_full(database_url: str, src_tbl: SourceTable) -> pd.DataFrame:
     with timed(logger, "extract", "extract", target=src_tbl.name) as t:
         query = build_extract_columns_query(src_tbl.name, src_tbl.columns)

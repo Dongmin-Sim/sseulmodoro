@@ -16,12 +16,15 @@ class SourceTable:
     primary_key: str
     load_mode: LoadMode
     incremental_key: str | None = None
+    backfill_key: str | None = None
 
     def __post_init__(self):
         if not self.columns:
             raise ValueError(f"{self.name} columns cannot be empty")
         if self.load_mode is LoadMode.INCREMENTAL and not self.incremental_key:
             raise ValueError(f"{self.name} incremental_key required for incremental")
+        if self.load_mode is LoadMode.INCREMENTAL and not self.backfill_key:
+            raise ValueError(f"{self.name} backfill_key required for incremental")
 
     @property
     def is_incremental(self) -> bool:
@@ -32,6 +35,12 @@ class SourceTable:
         if self.incremental_key is None:
             raise ValueError(f"{self.name} incremental_key required for incremental")
         return self.incremental_key
+
+    @property
+    def required_backfill_key(self) -> str:
+        if self.backfill_key is None:
+            raise ValueError(f"{self.name} backfill_key required for incremental")
+        return self.backfill_key
 
 
 @dataclass(frozen=True)
@@ -67,6 +76,7 @@ def to_source_tables(tables: list[dict]) -> list[SourceTable]:
             primary_key=t["primary_key"],
             load_mode=LoadMode(t["load_mode"]),
             incremental_key=t.get("incremental_key"),
+            backfill_key=t.get("backfill_key"),
         )
         for t in tables
     ]

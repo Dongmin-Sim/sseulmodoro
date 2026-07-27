@@ -13,6 +13,7 @@ sources:
         primary_key: id
         load_mode: incremental
         incremental_key: id
+        backfill_key: created_at
 
       - name: pomodoro_sessions
         columns:

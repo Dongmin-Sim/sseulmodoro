@@ -37,6 +37,7 @@ class TestSourceTable:
             primary_key="id",
             load_mode=LoadMode.FULL,
             incremental_key=None,
+            backfill_key=None,
         )
         # pyrefly: ignore [bad-argument-type]
         return SourceTable(**{**base, **overrides})
@@ -51,4 +52,13 @@ class TestSourceTable:
             self._valid(
                 load_mode=LoadMode.INCREMENTAL,
                 incremental_key=None,
+                backfill_key="created_at",
+            )
+
+    def test_load_mode가_incremental인데_backfill_key가_없으면_ValueError를_던진다(self):
+        with pytest.raises(ValueError):
+            self._valid(
+                load_mode=LoadMode.INCREMENTAL,
+                incremental_key="id",
+                backfill_key=None,
             )

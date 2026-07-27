@@ -1,6 +1,6 @@
 import pandas as pd
 
-from nsm.load import preprocessing, load_full, load_incremental
+from nsm.load import preprocessing, load_full, load_incremental, build_incremental_delete_query, build_backfill_delete_query
 
 
 def _minimal_df() -> pd.DataFrame:
@@ -74,3 +74,29 @@ class TestLoadIncremental:
         load_incremental(gcp_client, make_source_table_incremental(), [], _minimal_df(), 1)
         call_seq = [mc[0] for mc in gcp_client.mock_calls]
         assert call_seq.index("query") < call_seq.index("load_table_from_dataframe")
+
+class TestBuildLoadQuery:
+    def test_증분적재_쿼리를_생성한다(self, gcp_client, make_source_table_incremental):
+        source_table = make_source_table_incremental(
+            name = 'test_table',
+            incremental_key="id",
+        )
+        res = build_incremental_delete_query(gcp_client, source_table)
+
+        assert isinstance(res, str)
+        assert "DELETE FROM `test.raw.test_table`" in res
+        assert "WHERE id > @since" in res
+
+
+    def test_백필적재_쿼리를_생성한다(self, gcp_client, make_source_table_incremental):
+        source_table = make_source_table_incremental(
+            name = 'test_table',
+            incremental_key="id",
+            backfill_key="created_at",
+        )
+        res = build_backfill_delete_query(gcp_client, source_table)
+
+        assert isinstance(res, str)
+        assert "DELETE FROM `test.raw.test_table`" in res
+        assert "WHERE created_at >= @start" in res
+        assert "AND created_at < @end + INTERVAL 1 DAY" in res
