@@ -29,4 +29,5 @@ dev = [
 testpaths = ["tests"]
 pythonpath = ["etl"]
 addopts = "-v"
+disable_test_id_escaping_and_forfeit_all_rights_to_community_support = true
 
