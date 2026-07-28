@@ -41,4 +41,5 @@ WORKDIR /app/etl
 
 USER app
 
-CMD ["python", "main.py"]
+ENTRYPOINT ["python", "main.py"]
+CMD ["run"]
