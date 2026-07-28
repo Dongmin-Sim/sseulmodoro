@@ -43,7 +43,7 @@ Conventional comments, most severe first:
 | `issue` | Defect or consistency risk — must be fixed |
 | `suggestion` | Alternative approach or improvement |
 | `question` | Intent check; a question that leads the user to find the answer |
-| `nit` | Minor points (batched into one comment) |
+| `nit` | Minor points (grouped into one comment) |
 | `praise` | A pattern done well — named explicitly |
 
 Every comment is anchored: `type: file · function · line N`. Then the reason (why it is a problem) → the expected direction (never the answer code).
@@ -83,9 +83,9 @@ nit: 스타일 5건 묶음
 
 ## Rules
 
-- **Fixes belong to the user.** Edit only items explicitly delegated, e.g. "사소한 건 처리해줘".
+- **Fixes belong to the user.** Edit only findings explicitly delegated, e.g. "사소한 건 처리해줘".
 - At most one `question` per finding, and it never contains the answer — no question flooding.
-- `nit`s are batched into a single comment — but never as one dense paragraph. Group them by kind, one line per location, so the reader can scan and fix them one at a time.
+- `nit`s are grouped into a single comment — never one dense paragraph — by kind, one line per location, so the reader can scan and fix them one at a time.
 - At least one `praise` — name the pattern that was done well to reinforce it.
 - Findings outside the current lens are not dropped — close the report with a `다른 관점` section. Group by lens, one line per candidate, never a single running sentence:
 
@@ -105,7 +105,7 @@ nit: 스타일 5건 묶음
 
 ## Must pass (eval)
 
-1. `/review-py code` → every finding carries a `type: file · function · line N` anchor, and not a single line of code is modified.
+1. `/review-py code` → every comment carries a `type: file · function · line N` anchor, and not a single line of code is modified.
 2. A `question` comment contains no answer and no fix code — the question only.
 3. A code defect found during `/review-py refactor` → not mixed into the body; handed off via the closing `다른 관점:` line.
 4. Three or more `nit`s → one comment, grouped by kind with one line per location — not a running paragraph.
