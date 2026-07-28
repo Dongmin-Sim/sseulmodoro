@@ -1,6 +1,14 @@
 import pandas as pd
-
-from nsm.load import preprocessing, load_full, load_incremental, build_incremental_delete_query, build_backfill_delete_query
+from nsm.load import (
+    build_backfill_delete_query,
+    build_count_rows_query,
+    build_incremental_delete_query,
+    count_backfill_target_rows,
+    load_backfill,
+    load_full,
+    load_incremental,
+    preprocessing,
+)
 
 
 def _minimal_df() -> pd.DataFrame:
@@ -75,6 +83,38 @@ class TestLoadIncremental:
         call_seq = [mc[0] for mc in gcp_client.mock_calls]
         assert call_seq.index("query") < call_seq.index("load_table_from_dataframe")
 
+class TestLoadBackfill:
+    def test_백필적재는_write_append로_적재한다(self, gcp_client, make_source_table_incremental):
+        load_backfill(gcp_client, make_source_table_incremental(), [], _minimal_df(), "2026-01-01", "2026-01-02")
+
+        _, kwargs = gcp_client.load_table_from_dataframe.call_args
+        assert kwargs['job_config'].write_disposition == "WRITE_APPEND"
+
+    def test_삭제쿼리를_적재보다_먼저_실행한다(self, gcp_client, make_source_table_incremental):
+        load_backfill(gcp_client, make_source_table_incremental(), [], _minimal_df(), "2026-01-01", "2026-01-02")
+
+        call_seq = [mc[0] for mc in gcp_client.mock_calls]
+        assert call_seq.index("query") < call_seq.index("load_table_from_dataframe")
+
+
+class TestCountBackfillTargetRows:
+    def test_카운트_결과의_첫_행_첫_컬럼을_정수로_반환한다(self, gcp_client, make_source_table_incremental):
+        gcp_client.query.return_value.result.return_value = iter([[5]])
+
+        res = count_backfill_target_rows(make_source_table_incremental(), gcp_client, "2026-01-01", "2026-01-02")
+
+        assert res == 5
+
+    def test_start_end를_쿼리_파라미터로_바인딩한다(self, gcp_client, make_source_table_incremental):
+        gcp_client.query.return_value.result.return_value = iter([[0]])
+
+        count_backfill_target_rows(make_source_table_incremental(), gcp_client, "2026-01-01", "2026-01-02")
+
+        _, kwargs = gcp_client.query.call_args
+        params = {p.name: p.value for p in kwargs["job_config"].query_parameters}
+        assert params == {"start": "2026-01-01", "end": "2026-01-02"}
+
+
 class TestBuildLoadQuery:
     def test_증분적재_쿼리를_생성한다(self, gcp_client, make_source_table_incremental):
         source_table = make_source_table_incremental(
@@ -98,5 +138,39 @@ class TestBuildLoadQuery:
 
         assert isinstance(res, str)
         assert "DELETE FROM `test.raw.test_table`" in res
-        assert "WHERE created_at >= @start" in res
-        assert "AND created_at < @end + INTERVAL 1 DAY" in res
+        assert "WHERE created_at >= TIMESTAMP(@start)" in res
+        assert "AND created_at < TIMESTAMP(@end) + INTERVAL 1 DAY" in res
+
+    def test_행수_카운트_쿼리를_생성한다(self, gcp_client, make_source_table_incremental):
+        source_table = make_source_table_incremental(
+            name = 'test_table',
+        )
+        res = build_count_rows_query(gcp_client, source_table)
+
+        assert isinstance(res, str)
+        assert "SELECT COUNT(*)" in res
+        assert "FROM `test.raw.test_table`" in res
+        assert "WHERE created_at >= TIMESTAMP(@start)" in res
+        assert "AND created_at < TIMESTAMP(@end) + INTERVAL 1 DAY" in res
+
+
+def test_백필적재는_start_end를_쿼리_파라미터로_바인딩한다(gcp_client, make_source_table_incremental):
+    start_date, end_date = "2026-01-01", "2026-01-02"
+    load_backfill(gcp_client, make_source_table_incremental(), [], _minimal_df(), start_date, end_date)
+
+    _, kwargs = gcp_client.query.call_args
+    query_job_params = {p.name: p.value for p in kwargs["job_config"].query_parameters}
+
+    assert query_job_params['start'] == start_date
+    assert query_job_params['end'] == end_date
+
+
+def test_증분적재는_since를_쿼리_파라미터로_바인딩한다(gcp_client, make_source_table_incremental):
+    since = 1
+    load_incremental(gcp_client, make_source_table_incremental(), [], _minimal_df(), since)
+
+    _, kwargs = gcp_client.query.call_args
+    query_job_params = {p.name: p.value for p in kwargs['job_config'].query_parameters}
+
+    assert query_job_params['since'] == since
+

@@ -58,3 +58,13 @@ def extract_incremental(database_url: str, src_tbl: SourceTable, since: int) -> 
         df = _fetch(database_url, query, params={"since": since})
         t.add(rows=len(df))
         return df
+
+
+def extract_backfill(database_url: str, src_tbl: SourceTable, start: str, end: str) -> pd.DataFrame:
+    with timed(logger, "extract", "backfill", target=src_tbl.name) as t:
+        query = build_extract_backfill_query(
+            src_tbl.name, src_tbl.columns, src_tbl.required_backfill_key
+        )
+        df = _fetch(database_url, query, params={"start": start, "end": end})
+        t.add(rows=len(df), backfill_start=start, backfill_end=end)
+        return df

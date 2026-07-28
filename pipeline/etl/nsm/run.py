@@ -1,86 +1,77 @@
-import os
-
-from google.cloud import bigquery
-
-from config import SQL_DIR
-from watermark import read_watermark, update_watermark
+from context import AppContext, BackfillConfig
+from schema.sources import prepare_schema
 from utils.logger import get_logger, timed
-from utils.gcp import get_bigquery_client, create_dataset, create_table_from_ddl_file
-from ddl.raw import RAW_SCHEMAS
-from schema.sources import load_source_config
+from watermark import read_watermark, update_watermark
 
-from .extract import extract_full, extract_incremental
-from .load import load_full, load_incremental, preprocessing
+from .extract import extract_backfill, extract_full, extract_incremental
+from .load import (
+    count_backfill_target_rows,
+    load_backfill,
+    load_full,
+    load_incremental,
+    preprocessing,
+)
 from .transform import transform
 
 logger = get_logger(__name__)
 
 
-def prepare_schema(bq_client: bigquery.Client) -> None:
-    create_dataset(bq_client, 'raw')
-    create_dataset(bq_client, 'meta')
-    create_table_from_ddl_file(bq_client, 'watermark_store', 'meta_watermark_store.sql')
-
-    create_dataset(bq_client, 'stage')
-    create_table_from_ddl_file(bq_client, 'activity_log_app_visited', 'stage_activity_log_app_visited.sql')
-
-    create_dataset(bq_client, 'mart')
-    create_table_from_ddl_file(bq_client, 'fact_pomodoro_sessions', 'mart_fact_pomodoro_sessions.sql')
-    create_table_from_ddl_file(bq_client, 'active_user_daily', 'mart_active_user_daily.sql')
-    create_table_from_ddl_file(bq_client, 'active_user_weekly', 'mart_active_user_weekly.sql')
-    create_table_from_ddl_file(bq_client, 'agg_pomodoro_weekly', 'mart_agg_pomodoro_weekly.sql')
-    create_table_from_ddl_file(bq_client, 'agg_nsm_weekly', 'mart_agg_nsm_weekly.sql')
-
-def require_database_url(database_url: str | None) -> str:
-    if database_url is None:
-        logger.error(
-            "DATABASE_URL not set",
-            extra={"stage": "extract", "event": "extract_error", "status": "fail"},
-        )
-        raise RuntimeError("DATABASE_URL not set")
-
-    return database_url
-
-def run_nsm() -> None:
-    database_url = require_database_url(os.getenv("DATABASE_URL"))
-    bq_project = os.getenv("BQ_PROJECT")
-    bq_client = get_bigquery_client(bq_project)
-
-    source = load_source_config("app")
+def run_nsm(app_context: AppContext) -> None:
+    bq_client = app_context.bigquery_client
+    source = app_context.source_schema
+    src_db_url = app_context.source_database_url
+    bq_schema = app_context.bigquery_schema
 
     with timed(logger, "run", "run"):
         prepare_schema(bq_client)
 
         for src_tbl in source.tables:
-            bq_schema = RAW_SCHEMAS[src_tbl.name]
+            tbl_schema = bq_schema[src_tbl.name]
 
             if src_tbl.is_incremental:
                 since = read_watermark(bq_client, src_tbl.name) or 0
-                df = extract_incremental(database_url, src_tbl, since)
+                df = extract_incremental(src_db_url, src_tbl, since)
                 if df.empty: continue
 
                 preproc_df = preprocessing(df, src_tbl.name)
-                load_incremental(bq_client, src_tbl, bq_schema, preproc_df, since)
+                load_incremental(bq_client, src_tbl, tbl_schema, preproc_df, since)
 
                 new_since = int(preproc_df[src_tbl.required_incremental_key].max())
                 update_watermark(bq_client, src_tbl.name, new_since)
             else:
-                df = extract_full(database_url, src_tbl)
+                df = extract_full(src_db_url, src_tbl)
                 preproc_df = preprocessing(df, src_tbl.name)
-                load_full(bq_client, src_tbl, bq_schema, preproc_df)
+                load_full(bq_client, src_tbl, tbl_schema, preproc_df)
+
+        transform(bq_client)
 
 
-        # TODO: 실행 순서가 리스트 순서에 암묵 의존 — 문자열 기반이라 순서 실수에 취약. 의존성 명시화 필요
-        project_id = bq_client.project
-        tables = [
-            (SQL_DIR / "stages/activity_log_app_visited.sql", f'{project_id}.stage.activity_log_app_visited'),
+def run_backfill(app_context: AppContext, backfill_config: BackfillConfig) -> None:
+    bq_client = app_context.bigquery_client
+    source = app_context.source_schema
+    src_db_url = app_context.source_database_url
+    bq_schema = app_context.bigquery_schema
 
-            (SQL_DIR / "marts/fact_pomodoro_sessions.sql", f'{project_id}.mart.fact_pomodoro_sessions'),
-            (SQL_DIR / "marts/active_user_daily.sql", f'{project_id}.mart.active_user_daily'),
-            (SQL_DIR / "marts/active_user_weekly.sql", f'{project_id}.mart.active_user_weekly'),
+    backfill_tbl_name = backfill_config.table_name
+    start_date = backfill_config.start_date
+    end_date = backfill_config.end_date
 
-            (SQL_DIR / "marts/agg_pomodoro_weekly.sql", f'{project_id}.mart.agg_pomodoro_weekly'),
-            (SQL_DIR / "marts/agg_nsm_weekly.sql", f'{project_id}.mart.agg_nsm_weekly'),
-        ]
-        transform(bq_client, tables)
+    with timed(logger, "run", "backfill"):
+        backfill_table = source.find_source_table(backfill_tbl_name)
 
+        if backfill_table is None:
+            raise RuntimeError("backfill table not found")
+
+        df = extract_backfill(src_db_url, backfill_table, start_date, end_date)
+        proc_df = preprocessing(df, backfill_table.name)
+
+        delete_count = count_backfill_target_rows(backfill_table, bq_client, start_date, end_date)
+        if delete_count > len(df):
+            raise RuntimeError(
+                f"{backfill_table.name}: rows to delete ({delete_count}) exceed rows to insert ({len(df)}) "
+                f"for range {start_date}~{end_date}. Check the backfill range before deleting."
+            )
+
+        load_backfill(bq_client, backfill_table, bq_schema[backfill_table.name], proc_df, start_date, end_date)
+
+        transform(bq_client)

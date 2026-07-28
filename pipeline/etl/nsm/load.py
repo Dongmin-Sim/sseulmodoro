@@ -8,6 +8,7 @@ from utils.logger import get_logger, timed
 
 logger = get_logger(__name__)
 
+
 def preprocessing(df: pd.DataFrame, table_name: str) -> pd.DataFrame:
     df = df.assign(user_id=df['user_id'].astype(str))
 
@@ -48,10 +49,22 @@ def load_full(
         load_job.result()
         t.add(rows=load_job.output_rows)
 
+def _interval_query(backfill_key: str) -> str:
+    return f"""
+    WHERE {backfill_key} >= TIMESTAMP(@start)
+    AND {backfill_key} < TIMESTAMP(@end) + INTERVAL 1 DAY
+    """
+
+def build_count_rows_query(client: bigquery.Client, src_tbl: SourceTable) -> str:
+    query = f"""
+        SELECT COUNT(*) FROM `{client.project}.raw.{src_tbl.name}` 
+        {_interval_query(src_tbl.required_backfill_key)}"""
+    return query
+
 
 def build_incremental_delete_query(client: bigquery.Client, src_tbl: SourceTable) -> str:
     query = f"""
-        DELETE FROM `{client.project}.raw.{src_tbl.name}` 
+        DELETE FROM `{client.project}.raw.{src_tbl.name}`
         WHERE {src_tbl.required_incremental_key} > @since
         """
     return query
@@ -59,9 +72,8 @@ def build_incremental_delete_query(client: bigquery.Client, src_tbl: SourceTable
 
 def build_backfill_delete_query(client: bigquery.Client, src_tbl: SourceTable) -> str:
     query = f"""
-        DELETE FROM `{client.project}.raw.{src_tbl.name}` 
-        WHERE {src_tbl.required_backfill_key} >= @start
-          AND {src_tbl.required_backfill_key} < @end + INTERVAL 1 DAY
+        DELETE FROM `{client.project}.raw.{src_tbl.name}`
+        {_interval_query(src_tbl.required_backfill_key)}
         """
     return query
 
@@ -82,3 +94,41 @@ def load_incremental(
         load_job = _load_df(client, src_tbl.name, df, schema, "WRITE_APPEND")
         load_job.result()
         t.add(rows=load_job.output_rows)
+
+
+def load_backfill(
+    client: bigquery.Client,
+    src_tbl: SourceTable,
+    schema: list[bigquery.SchemaField],
+    df: pd.DataFrame,
+    start: str,
+    end: str
+) -> None:
+    with timed(logger, "load", "backfill-load", target=src_tbl.name) as t:
+        query = build_backfill_delete_query(client, src_tbl)
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("start", "STRING", start),
+                bigquery.ScalarQueryParameter("end", "STRING", end),
+            ]
+        )
+        client.query(query, job_config=job_config).result()
+        load_job = _load_df(client, src_tbl.name, df, schema, "WRITE_APPEND")
+        load_job.result()
+        t.add(rows=load_job.output_rows)
+
+
+def count_backfill_target_rows(backfill_table: SourceTable, bq_client: bigquery.Client, start_date: str, end_date: str) -> int:
+    with timed(logger, "load", "backfill-count", target=backfill_table.name) as t:
+        query = build_count_rows_query(bq_client, backfill_table)
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("start", "STRING", start_date),
+                bigquery.ScalarQueryParameter("end", "STRING", end_date),
+            ]
+        )
+        rows = bq_client.query(query, job_config=job_config).result()
+        row = next(iter(rows))
+        total_rows = int(row[0])
+        t.add(rows=total_rows)
+        return total_rows
