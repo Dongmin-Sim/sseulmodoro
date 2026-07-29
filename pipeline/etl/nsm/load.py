@@ -25,15 +25,14 @@ def _load_df(
     df: pd.DataFrame,
     schema: list[bigquery.SchemaField],
     write_disposition: str,
+    dataset: str = "raw",
 ) -> bigquery.LoadJob:
     job_config = bigquery.LoadJobConfig(
         schema=schema,
         write_disposition=write_disposition
     )
     load_job = client.load_table_from_dataframe(
-        df,
-        f'{client.project}.raw.{tbl_name}',
-        job_config=job_config
+        df, f"{client.project}.{dataset}.{tbl_name}", job_config=job_config
     )
     return load_job
 
@@ -78,6 +77,22 @@ def build_backfill_delete_query(client: bigquery.Client, src_tbl: SourceTable) -
     return query
 
 
+def build_merge_query(client: bigquery.Client, targ_tbl: SourceTable, schema: list[bigquery.SchemaField]) -> str:
+    update_cols_str = ", ".join(f"t.{s.name} = s.{s.name}" for s in schema)
+
+    query = f"""
+        MERGE `{client.project}.raw.{targ_tbl.name}` as t
+        USING `{client.project}._load_stage.{targ_tbl.name}` as s
+            ON t.{targ_tbl.required_merge_key} = s.{targ_tbl.required_merge_key}
+        WHEN MATCHED AND s.{targ_tbl.required_incremental_key} > t.{targ_tbl.required_incremental_key} THEN
+            UPDATE SET
+                {update_cols_str}
+        WHEN NOT MATCHED THEN 
+            INSERT ROW
+        """
+    return query
+
+
 def load_incremental(
     client: bigquery.Client,
     src_tbl: SourceTable,
@@ -116,6 +131,22 @@ def load_backfill(
         load_job = _load_df(client, src_tbl.name, df, schema, "WRITE_APPEND")
         load_job.result()
         t.add(rows=load_job.output_rows)
+
+
+def load_upsert(
+    client: bigquery.Client,
+    src_tbl: SourceTable,
+    schema: list[bigquery.SchemaField],
+    df: pd.DataFrame,
+) -> None:
+    with timed(logger, "load", "incremental-upsert", target=src_tbl.name) as t:
+        load_job = _load_df(client, src_tbl.name, df, schema, "WRITE_TRUNCATE", "_load_stage")
+        load_job.result()
+        t.add(rows=load_job.output_rows)
+
+        query = build_merge_query(client, src_tbl, schema)
+        query_job_config = bigquery.QueryJobConfig()
+        client.query(query, job_config=query_job_config).result()
 
 
 def count_backfill_target_rows(backfill_table: SourceTable, bq_client: bigquery.Client, start_date: str, end_date: str) -> int:

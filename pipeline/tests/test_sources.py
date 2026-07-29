@@ -31,14 +31,15 @@ class TestLoadSourceConfig:
 class TestSourceTable:
     @staticmethod
     def _valid(**overrides) -> SourceTable:
-        base = dict(
-            name="test_log",
-            columns=["id"],
-            primary_key="id",
-            load_mode=LoadMode.FULL,
-            incremental_key=None,
-            backfill_key=None,
-        )
+        base = {
+            "name": "test_log",
+            "columns": ["id"],
+            "primary_key": "id",
+            "load_mode": LoadMode.FULL,
+            "incremental_key": None,
+            "backfill_key": None,
+            "merge_key": None,
+        }
         # pyrefly: ignore [bad-argument-type]
         return SourceTable(**{**base, **overrides})
 
@@ -61,4 +62,15 @@ class TestSourceTable:
                 load_mode=LoadMode.INCREMENTAL_APPEND,
                 incremental_key="id",
                 backfill_key=None,
+            )
+
+    @pytest.mark.parametrize(
+        "incremental_key, merge_key", [("updated_at", None), (None, "updated_at")]
+    )
+    def test_load_mode가_incremental_upsert인데_merge_key_없으면_ValueError를_던진다(self, incremental_key, merge_key):
+        with pytest.raises(ValueError):
+            self._valid(
+                load_mode=LoadMode.INCREMENTAL_UPSERT,
+                incremental_key=incremental_key,
+                merge_key=merge_key
             )

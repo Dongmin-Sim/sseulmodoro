@@ -14,6 +14,14 @@ def gcp_client() -> Mock:
 
 @pytest.fixture
 def make_source_table_full():
+    """
+    default:
+    - name: test_log
+    - columns: [id]
+    - primary_key: id
+    - load_mode: FULL
+    - incremental_key: None
+    """
     def _make(**overrides) -> SourceTable:
         base = {
             "name": "test_log",
@@ -30,6 +38,15 @@ def make_source_table_full():
 
 @pytest.fixture
 def make_source_table_incremental():
+    """
+    default:
+    - name: test_log
+    - columns: [id]
+    - primary_key: id
+    - load_mode: INCREMENTAL_APPEND
+    - incremental_key: id
+    - backfill_key: created_at
+    """
     from schema.sources import LoadMode, SourceTable
 
     def _make(**overrides) -> SourceTable:
@@ -46,6 +63,35 @@ def make_source_table_incremental():
 
     return _make
 
+
+@pytest.fixture
+def make_source_table_upsert():
+    """
+    default:
+    - name: test_log
+    - columns: [id]
+    - primary_key: id
+    - load_mode: INCREMENTAL_UPSERT
+    - incremental_key: updated_at
+    - merge_key: id
+    - backfill_key: created_at
+    """
+    from schema.sources import LoadMode, SourceTable
+
+    def _make(**overrides) -> SourceTable:
+        base = {
+            "name": "test_log",
+            "columns": ["id"],
+            "primary_key": "id",
+            "load_mode": LoadMode.INCREMENTAL_UPSERT,
+            "incremental_key": "updated_at",
+            "backfill_key": "created_at",
+            "merge_key": "id",
+        }
+        # pyrefly: ignore [bad-argument-type]
+        return SourceTable(**{**base, **overrides})
+
+    return _make
 
 @pytest.fixture
 def app_context(gcp_client, make_source_table_full, make_source_table_incremental):
