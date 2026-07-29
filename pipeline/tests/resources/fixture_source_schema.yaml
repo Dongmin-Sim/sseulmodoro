@@ -8,7 +8,7 @@ sources:
           - user_id
           - created_at
         primary_key: id
-        load_mode: incremental
+        load_mode: incremental_append
         incremental_key: id
         backfill_key: created_at
 

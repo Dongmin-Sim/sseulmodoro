@@ -25,7 +25,7 @@ def prepare_schema(bq_client: bigquery.Client) -> None:
 
 class LoadMode(Enum):
     FULL = "full"
-    INCREMENTAL = "incremental"
+    INCREMENTAL_APPEND = "incremental_append"
 
 @dataclass(frozen=True)
 class SourceTable:
@@ -39,14 +39,14 @@ class SourceTable:
     def __post_init__(self):
         if not self.columns:
             raise ValueError(f"{self.name} columns cannot be empty")
-        if self.load_mode is LoadMode.INCREMENTAL and not self.incremental_key:
+        if self.load_mode is LoadMode.INCREMENTAL_APPEND and not self.incremental_key:
             raise ValueError(f"{self.name} incremental_key required for incremental")
-        if self.load_mode is LoadMode.INCREMENTAL and not self.backfill_key:
+        if self.load_mode is LoadMode.INCREMENTAL_APPEND and not self.backfill_key:
             raise ValueError(f"{self.name} backfill_key required for incremental")
 
     @property
     def is_incremental(self) -> bool:
-        return self.load_mode is LoadMode.INCREMENTAL
+        return self.load_mode is LoadMode.INCREMENTAL_APPEND
 
     @property
     def required_incremental_key(self) -> str:

@@ -37,7 +37,7 @@ def make_source_table_incremental():
             "name": "test_log",
             "columns": ["id"],
             "primary_key": "id",
-            "load_mode": LoadMode.INCREMENTAL,
+            "load_mode": LoadMode.INCREMENTAL_APPEND,
             "incremental_key": "id",
             "backfill_key": "created_at",
         }

@@ -17,7 +17,7 @@ class TestLoadSourceConfig:
         orders = sources.tables[0]
         assert orders.name == "test_log"
         assert orders.columns == ["id", "user_id", "created_at"]
-        assert orders.load_mode == LoadMode.INCREMENTAL
+        assert orders.load_mode == LoadMode.INCREMENTAL_APPEND
 
     def test_table_names_returns_all_names(self):
         res = load_source_config(source_name, YAML_FIXTURES_PATH)
@@ -50,7 +50,7 @@ class TestSourceTable:
     def test_load_mode가_incremental인데_key가_없으면_ValueError를_던진다(self):
         with pytest.raises(ValueError):
             self._valid(
-                load_mode=LoadMode.INCREMENTAL,
+                load_mode=LoadMode.INCREMENTAL_APPEND,
                 incremental_key=None,
                 backfill_key="created_at",
             )
@@ -58,7 +58,7 @@ class TestSourceTable:
     def test_load_mode가_incremental인데_backfill_key가_없으면_ValueError를_던진다(self):
         with pytest.raises(ValueError):
             self._valid(
-                load_mode=LoadMode.INCREMENTAL,
+                load_mode=LoadMode.INCREMENTAL_APPEND,
                 incremental_key="id",
                 backfill_key=None,
             )
