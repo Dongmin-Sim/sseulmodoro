@@ -13,6 +13,7 @@ sources:
         primary_key: id
         load_mode: incremental_append
         incremental_key: id
+        incremental_key_type: bigint
         backfill_key: created_at
 
       - name: pomodoro_sessions
@@ -28,7 +29,10 @@ sources:
           - status
           - started_at
           - ended_at
+          - updated_at
           - created_at
         primary_key: id
-        load_mode: full
-        incremental_key: null
+        load_mode: incremental_upsert
+        incremental_key: updated_at
+        incremental_key_type: timestamptz
+        backfill_key: created_at

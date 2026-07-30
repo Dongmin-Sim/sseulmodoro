@@ -56,6 +56,7 @@ def make_source_table_incremental():
             "primary_key": "id",
             "load_mode": LoadMode.INCREMENTAL_APPEND,
             "incremental_key": "id",
+            "incremental_key_type": "int",
             "backfill_key": "created_at",
         }
         # pyrefly: ignore [bad-argument-type]
@@ -85,6 +86,7 @@ def make_source_table_upsert():
             "primary_key": "id",
             "load_mode": LoadMode.INCREMENTAL_UPSERT,
             "incremental_key": "updated_at",
+            "incremental_key_type": "timestamptz",
             "backfill_key": "created_at",
             "merge_key": "id",
         }

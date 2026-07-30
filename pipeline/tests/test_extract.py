@@ -16,11 +16,12 @@ def test_증분_추출_쿼리를_생성한다():
     table_name = "test"
     columns = ["id", "name", "created_at"]
     incremental_key = "created_at"
+    incremental_key_type = "int"
 
-    res = build_extract_incremental_query(table_name, columns, incremental_key)
+    res = build_extract_incremental_query(table_name, columns, incremental_key, incremental_key_type)
 
     assert isinstance(res, str)
-    assert res == "SELECT \"id\", \"name\", \"created_at\" FROM \"test\" WHERE \"created_at\" > %(since)s"
+    assert res == "SELECT \"id\", \"name\", \"created_at\" FROM \"test\" WHERE \"created_at\" > %(since)s::int"
 
 
 def test_백필_추출_쿼리를_생성한다():

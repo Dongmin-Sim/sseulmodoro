@@ -109,7 +109,8 @@ class TestRunNsm:
     @patch("nsm.run.load_full")
     @patch("nsm.run.preprocessing")
     @patch("nsm.run.extract_full")
-    def test_full_테이블은_전체_흐름을_따른다(self, mock_extract, mock_pre, mock_load_full, mock_load_incr, mock_uw, app_context, make_source_table_full):
+    @patch("nsm.run.read_watermark")
+    def test_full_테이블은_전체_흐름을_따른다(self, mock_rw, mock_extract, mock_pre, mock_load_full, mock_load_incr, mock_uw, app_context, make_source_table_full):
         app_ctx = app_context(
             source_schema=Source(
                 name="test-app",

@@ -9,6 +9,7 @@ from .load import (
     load_backfill,
     load_full,
     load_incremental,
+    load_upsert,
     preprocessing,
 )
 from .transform import transform
@@ -28,15 +29,26 @@ def run_nsm(app_context: AppContext) -> None:
         for src_tbl in source.tables:
             tbl_schema = bq_schema[src_tbl.name]
 
-            if src_tbl.is_incremental:
-                since = read_watermark(bq_client, src_tbl.name) or 0
-                df = extract_incremental(src_db_url, src_tbl, since)
-                if df.empty: continue
+            if src_tbl.is_incremental_append or src_tbl.is_upsert:
+                since = read_watermark(bq_client, src_tbl.name)
+                if since is None:
+                    df = extract_full(src_db_url, src_tbl)
+                else:
+                    df = extract_incremental(src_db_url, src_tbl, since)
 
+                if df.empty:
+                    continue
                 preproc_df = preprocessing(df, src_tbl.name)
-                load_incremental(bq_client, src_tbl, tbl_schema, preproc_df, since)
 
-                new_since = int(preproc_df[src_tbl.required_incremental_key].max())
+                if since is None:
+                    load_full(bq_client, src_tbl, tbl_schema, preproc_df)
+                else:
+                    if src_tbl.is_upsert:
+                        load_upsert(bq_client, src_tbl, tbl_schema, preproc_df)
+                    else:
+                        load_incremental(bq_client, src_tbl, tbl_schema, preproc_df, int(since))
+
+                new_since = str(preproc_df[src_tbl.required_incremental_key].max())
                 update_watermark(bq_client, src_tbl.name, new_since)
             else:
                 df = extract_full(src_db_url, src_tbl)

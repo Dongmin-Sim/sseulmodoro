@@ -21,11 +21,13 @@ def build_extract_columns_query(table_name: str, columns: list[str]) -> str:
     ).as_string()
 
 
-def build_extract_incremental_query(table_name: str, columns: list[str], incremental_key: str) -> str:
-    return sql.SQL("SELECT {cols} FROM {tbl} WHERE {incre_key} > %(since)s").format(
+def build_extract_incremental_query(table_name: str, columns: list[str], incremental_key: str, incremental_key_type: str) -> str:
+    return sql.SQL("SELECT {cols} FROM {tbl} WHERE {incre_key} > %(since)s::{incre_key_type}").format(
         cols=sql.SQL(", ").join(map(sql.Identifier, columns)),
         tbl=sql.Identifier(table_name),
         incre_key=sql.Identifier(incremental_key),
+        # pyrefly: ignore [bad-argument-type]
+        incre_key_type=sql.SQL(incremental_key_type),
     ).as_string()
 
 
@@ -50,10 +52,13 @@ def extract_full(database_url: str, src_tbl: SourceTable) -> pd.DataFrame:
         return df
 
 
-def extract_incremental(database_url: str, src_tbl: SourceTable, since: int) -> pd.DataFrame:
+def extract_incremental(database_url: str, src_tbl: SourceTable, since: str | None) -> pd.DataFrame:
     with timed(logger, "extract", "extract", target=src_tbl.name) as t:
         query = build_extract_incremental_query(
-            src_tbl.name, src_tbl.columns, src_tbl.required_incremental_key
+            src_tbl.name,
+            src_tbl.columns,
+            src_tbl.required_incremental_key,
+            src_tbl.required_incremental_key_type
         )
         df = _fetch(database_url, query, params={"since": since})
         t.add(rows=len(df))
