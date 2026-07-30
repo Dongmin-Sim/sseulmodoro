@@ -4,7 +4,7 @@ from datetime import datetime
 
 from context import AppContext, BackfillConfig
 from ddl.raw import RAW_SCHEMAS
-from nsm import run_backfill, run_nsm
+from nsm import run_backfill, run_batch
 from schema.sources import load_source_config
 from utils.env import load_env
 from utils.gcp import get_bigquery_client
@@ -65,7 +65,7 @@ def _valid_args_date(s: str) -> str:
 
 
 def _run(args: argparse.Namespace) -> None:
-    run_nsm(_build_app_context())
+    run_batch(_build_app_context())
 
 
 def _run_backfill(args: argparse.Namespace) -> None:

@@ -1,5 +1,8 @@
+from functools import partial
+
 from context import AppContext, BackfillConfig
-from schema.sources import prepare_schema
+from google.cloud.bigquery import Client, SchemaField
+from schema.sources import LoadMode, SourceTable, prepare_schema
 from utils.logger import get_logger, timed
 from watermark import read_watermark, update_watermark
 
@@ -8,8 +11,8 @@ from .load import (
     count_backfill_target_rows,
     load_backfill,
     load_full,
-    load_incremental,
-    load_upsert,
+    load_incremental_append,
+    load_incremental_upsert,
     preprocessing,
 )
 from .transform import transform
@@ -17,7 +20,39 @@ from .transform import transform
 logger = get_logger(__name__)
 
 
-def run_nsm(app_context: AppContext) -> None:
+def _run_full(bq_client: Client, src_db_url: str, src_tbl: SourceTable, tbl_schema: list[SchemaField]) -> None:
+    df = extract_full(src_db_url, src_tbl)
+    preproc_df = preprocessing(df, src_tbl.name)
+    load_full(bq_client, src_tbl, tbl_schema, preproc_df)
+
+
+def _run_incremental(bq_client: Client, src_db_url: str, src_tbl: SourceTable, tbl_schema: list[SchemaField], load_step) -> None:
+    since = read_watermark(bq_client, src_tbl.name)
+    if since is None:
+        df = extract_full(src_db_url, src_tbl)
+    else:
+        df = extract_incremental(src_db_url, src_tbl, since)
+
+    if df.empty:
+        return
+    preproc_df = preprocessing(df, src_tbl.name)
+
+    if since is None:
+        load_full(bq_client, src_tbl, tbl_schema, preproc_df)
+    else:
+        load_step(bq_client, src_tbl, tbl_schema, preproc_df, since)
+    new_since = str(preproc_df[src_tbl.required_incremental_key].max())
+    update_watermark(bq_client, src_tbl.name, new_since)
+
+
+HANDLERS = {
+    LoadMode.FULL: _run_full,
+    LoadMode.INCREMENTAL_APPEND: partial(_run_incremental, load_step=load_incremental_append),
+    LoadMode.INCREMENTAL_UPSERT: partial(_run_incremental, load_step=load_incremental_upsert),
+}
+
+
+def run_batch(app_context: AppContext) -> None:
     bq_client = app_context.bigquery_client
     source = app_context.source_schema
     src_db_url = app_context.source_database_url
@@ -28,32 +63,7 @@ def run_nsm(app_context: AppContext) -> None:
 
         for src_tbl in source.tables:
             tbl_schema = bq_schema[src_tbl.name]
-
-            if src_tbl.is_incremental_append or src_tbl.is_upsert:
-                since = read_watermark(bq_client, src_tbl.name)
-                if since is None:
-                    df = extract_full(src_db_url, src_tbl)
-                else:
-                    df = extract_incremental(src_db_url, src_tbl, since)
-
-                if df.empty:
-                    continue
-                preproc_df = preprocessing(df, src_tbl.name)
-
-                if since is None:
-                    load_full(bq_client, src_tbl, tbl_schema, preproc_df)
-                else:
-                    if src_tbl.is_upsert:
-                        load_upsert(bq_client, src_tbl, tbl_schema, preproc_df)
-                    else:
-                        load_incremental(bq_client, src_tbl, tbl_schema, preproc_df, int(since))
-
-                new_since = str(preproc_df[src_tbl.required_incremental_key].max())
-                update_watermark(bq_client, src_tbl.name, new_since)
-            else:
-                df = extract_full(src_db_url, src_tbl)
-                preproc_df = preprocessing(df, src_tbl.name)
-                load_full(bq_client, src_tbl, tbl_schema, preproc_df)
+            HANDLERS[src_tbl.load_mode](bq_client, src_db_url, src_tbl, tbl_schema)
 
         transform(bq_client)
 

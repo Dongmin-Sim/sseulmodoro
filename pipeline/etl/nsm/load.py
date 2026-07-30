@@ -37,17 +37,6 @@ def _load_df(
     return load_job
 
 
-def load_full(
-    client: bigquery.Client,
-    src_tbl: SourceTable,
-    schema: list[bigquery.SchemaField],
-    df: pd.DataFrame,
-) -> None:
-    with timed(logger, "load", "full-load", target=src_tbl.name) as t:
-        load_job = _load_df(client, src_tbl.name, df, schema, "WRITE_TRUNCATE")
-        load_job.result()
-        t.add(rows=load_job.output_rows)
-
 def _interval_query(backfill_key: str) -> str:
     return f"""
     WHERE {backfill_key} >= TIMESTAMP(@start)
@@ -59,7 +48,6 @@ def build_count_rows_query(client: bigquery.Client, src_tbl: SourceTable) -> str
         SELECT COUNT(*) FROM `{client.project}.raw.{src_tbl.name}` 
         {_interval_query(src_tbl.required_backfill_key)}"""
     return query
-
 
 def build_incremental_delete_query(client: bigquery.Client, src_tbl: SourceTable) -> str:
     query = f"""
@@ -93,22 +81,51 @@ def build_merge_query(client: bigquery.Client, targ_tbl: SourceTable, schema: li
     return query
 
 
-def load_incremental(
+def load_full(
     client: bigquery.Client,
     src_tbl: SourceTable,
     schema: list[bigquery.SchemaField],
     df: pd.DataFrame,
-    since: int,
+) -> None:
+    with timed(logger, "load", "full-load", target=src_tbl.name) as t:
+        load_job = _load_df(client, src_tbl.name, df, schema, "WRITE_TRUNCATE")
+        load_job.result()
+        t.add(rows=load_job.output_rows)
+
+
+def load_incremental_append(
+    client: bigquery.Client,
+    src_tbl: SourceTable,
+    schema: list[bigquery.SchemaField],
+    df: pd.DataFrame,
+    since: str,
 ) -> None:
     with timed(logger, "load", "incremental-load", target=src_tbl.name) as t:
         query = build_incremental_delete_query(client, src_tbl)
         job_config = bigquery.QueryJobConfig(
-            query_parameters=[bigquery.ScalarQueryParameter("since", "INT64", since)]
+            query_parameters=[bigquery.ScalarQueryParameter("since", "INT64", int(since))]
         )
         client.query(query, job_config=job_config).result()
         load_job = _load_df(client, src_tbl.name, df, schema, "WRITE_APPEND")
         load_job.result()
         t.add(rows=load_job.output_rows)
+
+
+def load_incremental_upsert(
+    client: bigquery.Client,
+    src_tbl: SourceTable,
+    schema: list[bigquery.SchemaField],
+    df: pd.DataFrame,
+    since: str | None = None,
+) -> None:
+    with timed(logger, "load", "incremental-upsert", target=src_tbl.name) as t:
+        load_job = _load_df(client, src_tbl.name, df, schema, "WRITE_TRUNCATE", "_load_stage")
+        load_job.result()
+        t.add(rows=load_job.output_rows)
+
+        query = build_merge_query(client, src_tbl, schema)
+        query_job_config = bigquery.QueryJobConfig()
+        client.query(query, job_config=query_job_config).result()
 
 
 def load_backfill(
@@ -131,22 +148,6 @@ def load_backfill(
         load_job = _load_df(client, src_tbl.name, df, schema, "WRITE_APPEND")
         load_job.result()
         t.add(rows=load_job.output_rows)
-
-
-def load_upsert(
-    client: bigquery.Client,
-    src_tbl: SourceTable,
-    schema: list[bigquery.SchemaField],
-    df: pd.DataFrame,
-) -> None:
-    with timed(logger, "load", "incremental-upsert", target=src_tbl.name) as t:
-        load_job = _load_df(client, src_tbl.name, df, schema, "WRITE_TRUNCATE", "_load_stage")
-        load_job.result()
-        t.add(rows=load_job.output_rows)
-
-        query = build_merge_query(client, src_tbl, schema)
-        query_job_config = bigquery.QueryJobConfig()
-        client.query(query, job_config=query_job_config).result()
 
 
 def count_backfill_target_rows(backfill_table: SourceTable, bq_client: bigquery.Client, start_date: str, end_date: str) -> int:
