@@ -40,6 +40,10 @@ SOURCE_MTIME_MARKER = "<!-- source_mtime:"
 # A "done" task counts toward milestone completion.
 STATUS_DONE = "done"
 
+# A cancelled task is not work — it must not dilute a milestone's denominator.
+# Cancelled numbers are kept on purpose (see CLAUDE.md), so they accumulate.
+STATUS_CANCELLED = "cancelled"
+
 # Progress bar: fixed width so bars line up across milestones; filled by the
 # proportion of the milestone's tasks in each state. Pre-computed here so the
 # report just copies the string (no model-side arithmetic, which is error-prone).
@@ -141,11 +145,18 @@ def _cell(value):
     return "—" if value is None else str(value)
 
 
+def live_tasks(milestone_tasks):
+    """Tasks that still count as work. Cancelled ones are dropped."""
+    return [t for t in milestone_tasks
+            if t["fields"].get("status") != STATUS_CANCELLED]
+
+
 def render_bar(milestone_tasks):
-    """Return the fixed-width progress bar string for a milestone's tasks.
+    """Return the fixed-width progress bar string for a milestone's live tasks.
 
     done -> BAR_DONE, in-progress/in-review -> BAR_INPROGRESS, rest -> BAR_TODO.
     Pre-computed so the report copies it verbatim instead of doing the math.
+    Caller passes live_tasks() output — cancelled must not reach here.
     """
     total = len(milestone_tasks)
     if total == 0:
@@ -192,7 +203,9 @@ def render_board(features, milestones, tasks, issues, metrics, events, source_mt
         "| --- | --- | --- | --- |",
     ]
     for m in milestones:
-        m_tasks = [t for t in tasks if t["fields"].get("milestone") == m["id"]]
+        m_tasks = live_tasks(
+            [t for t in tasks if t["fields"].get("milestone") == m["id"]]
+        )
         total = len(m_tasks)
         done = sum(1 for t in m_tasks if t["fields"].get("status") == STATUS_DONE)
         bar = render_bar(m_tasks)

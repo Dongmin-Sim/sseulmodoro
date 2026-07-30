@@ -58,7 +58,7 @@ Render in Korean via [templates/status-report.md](templates/status-report.md). G
 - **Hierarchy**: render feature → milestone → task as a 3-level tree (`└`/`├`) so structure is obvious. Group milestones strictly under their board `feature` value — do not infer. Applies to both 진행 중인 작업 and 대기·후보. Wrap the tree in a code fence if terminal indentation collapses.
 - **진행 중인 작업**: milestones whose status is in-progress. If none, "진행 중인 작업 없음".
 - **대기·후보**: not-started (backlog) features/tasks and candidate milestones — mark candidates "(후보)".
-- **Copy the milestone `display` line verbatim**: the board's `display` column is the ready milestone tree line (id · title · bar · done/total). Use it as-is — never re-assemble or recount `done/total`. Group by the `feature` column; place by `status`.
+- **Copy the milestone `display` line verbatim**: the board's `display` column is the ready milestone tree line (id · title · bar · done/total). Use it as-is — never re-assemble or recount `done/total`. Cancelled tasks are already excluded. Group by the `feature` column; place by `status`.
 - **Render every section**: if a section has nothing, print `없음` — never drop the section.
 - **다음 액션**: 1–3 context-relevant next skills, one line each (e.g. backlog present → `planning-spec`; open issues → `executing-task`; always `reporting-status`).
 
