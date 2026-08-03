@@ -19,7 +19,7 @@ class TestRunBatch:
 
     @patch("nsm.run.transform")
     @patch("nsm.run.HANDLERS")
-    @patch("nsm.run.prepare_schema")
+    @patch("nsm.run.prepare_load_schema")
     def test_적재_전에_스키마를_준비한다(
         self, mock_prepare, mock_handlers, mock_transform, app_context
     ):
@@ -31,7 +31,7 @@ class TestRunBatch:
 
     @patch("nsm.run.transform")
     @patch("nsm.run.HANDLERS")
-    @patch("nsm.run.prepare_schema")
+    @patch("nsm.run.prepare_load_schema")
     def test_소스_테이블마다_핸들러를_조회해_호출한다(
         self, mock_prepare, mock_handlers, mock_transform, app_context
     ):
@@ -45,7 +45,7 @@ class TestRunBatch:
 
     @patch("nsm.run.transform")
     @patch("nsm.run.HANDLERS")
-    @patch("nsm.run.prepare_schema")
+    @patch("nsm.run.prepare_load_schema")
     def test_적재는_변환을_호출하지_않는다(
         self, mock_prepare, mock_handlers, mock_transform, app_context
     ):
@@ -201,7 +201,7 @@ class TestRunBackfill:
 class TestTransform:
 
     @patch("nsm.run.transform")
-    @patch("nsm.run.prepare_schema")
+    @patch("nsm.run.prepare_transform_schema")
     def test_스키마_준비후_변환한다(self, mock_prepare, mock_transform, bigquery_context):
         bq_ctx = bigquery_context()
 

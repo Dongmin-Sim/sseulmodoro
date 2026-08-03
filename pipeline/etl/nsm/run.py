@@ -2,7 +2,12 @@ from functools import partial
 
 from context import AppContext, BackfillConfig, BigqueryContext
 from google.cloud.bigquery import Client, SchemaField
-from schema.sources import LoadMode, SourceTable, prepare_schema
+from schema.sources import (
+    LoadMode,
+    SourceTable,
+    prepare_load_schema,
+    prepare_transform_schema,
+)
 from utils.logger import get_logger, timed
 from watermark import read_watermark, update_watermark
 
@@ -59,7 +64,7 @@ def run_batch(app_context: AppContext) -> None:
     bq_schema = app_context.bigquery_schema
 
     with timed(logger, "run", "run"):
-        prepare_schema(bq_client)
+        prepare_load_schema(bq_client)
 
         for src_tbl in source.tables:
             tbl_schema = bq_schema[src_tbl.name]
@@ -99,5 +104,5 @@ def run_transform(bq_context: BigqueryContext) -> None:
     bq_client = bq_context.bigquery_client
 
     with timed(logger, "run", "transform"):
-        prepare_schema(bq_client)
+        prepare_transform_schema(bq_client)
         transform(bq_client)
