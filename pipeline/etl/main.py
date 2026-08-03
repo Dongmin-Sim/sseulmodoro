@@ -2,9 +2,9 @@ import argparse
 import os
 from datetime import datetime
 
-from context import AppContext, BackfillConfig
+from context import AppContext, BackfillConfig, BigqueryContext
 from ddl.raw import RAW_SCHEMAS
-from nsm import run_backfill, run_batch
+from nsm import run_backfill, run_batch, run_transform
 from schema.sources import load_source_config
 from utils.env import load_env
 from utils.gcp import get_bigquery_client
@@ -24,19 +24,25 @@ def _validate_database_url(database_url: str | None) -> str:
     return database_url
 
 
-def _build_app_context() -> AppContext:
-    src_db_url = _validate_database_url(os.getenv("DATABASE_URL"))
+def _build_bigquery_context() -> BigqueryContext:
     bq_project = os.getenv("BQ_PROJECT")
     bq_client = get_bigquery_client(bq_project)
-    source_schema = load_source_config("app")
     bigquery_schema = RAW_SCHEMAS
+
+    return BigqueryContext(
+        bigquery_client=bq_client,
+        bigquery_schema=bigquery_schema,
+    )
+
+
+def _build_app_context() -> AppContext:
+    src_db_url = _validate_database_url(os.getenv("DATABASE_URL"))
+    source_schema = load_source_config("app")
 
     return AppContext(
         source_database_url=src_db_url,
-        bigquery_project=bq_client.project,
-        bigquery_client=bq_client,
         source_schema=source_schema,
-        bigquery_schema=bigquery_schema,
+        bigquery_context=_build_bigquery_context(),
     )
 
 
@@ -75,6 +81,11 @@ def _run_backfill(args: argparse.Namespace) -> None:
     run_backfill(app_context, backfill_config)
 
 
+def _run_transform(args: argparse.Namespace) -> None:
+    bigquery_context = _build_bigquery_context()
+    run_transform(bigquery_context)
+
+
 def build_args_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     command_sub = parser.add_subparsers(dest="command", required=True)
@@ -87,6 +98,9 @@ def build_args_parser() -> argparse.ArgumentParser:
     backfill_p.add_argument("--end-date", type=_valid_args_date, required=True)
     backfill_p.add_argument("--table-name", required=True)
     backfill_p.set_defaults(func=_run_backfill)
+
+    transform_p = command_sub.add_parser("transform")
+    transform_p.set_defaults(func=_run_transform)
 
     return parser
 

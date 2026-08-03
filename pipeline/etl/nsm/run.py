@@ -1,6 +1,6 @@
 from functools import partial
 
-from context import AppContext, BackfillConfig
+from context import AppContext, BackfillConfig, BigqueryContext
 from google.cloud.bigquery import Client, SchemaField
 from schema.sources import LoadMode, SourceTable, prepare_schema
 from utils.logger import get_logger, timed
@@ -65,8 +65,6 @@ def run_batch(app_context: AppContext) -> None:
             tbl_schema = bq_schema[src_tbl.name]
             HANDLERS[src_tbl.load_mode](bq_client, src_db_url, src_tbl, tbl_schema)
 
-        transform(bq_client)
-
 
 def run_backfill(app_context: AppContext, backfill_config: BackfillConfig) -> None:
     bq_client = app_context.bigquery_client
@@ -96,4 +94,10 @@ def run_backfill(app_context: AppContext, backfill_config: BackfillConfig) -> No
 
         load_backfill(bq_client, backfill_table, bq_schema[backfill_table.name], proc_df, start_date, end_date)
 
+
+def run_transform(bq_context: BigqueryContext) -> None:
+    bq_client = bq_context.bigquery_client
+
+    with timed(logger, "run", "transform"):
+        prepare_schema(bq_client)
         transform(bq_client)
