@@ -13,6 +13,7 @@ source "$(dirname "$0")/env.$ENV.sh"
 SA_JOB="nsm-runner"          # SA that runs the job (reads/writes BigQuery)
 SA_SCHEDULER="nsm-scheduler"     # SA the scheduler uses to invoke the job
 SA_DEPLOYER="nsm-deployer"
+SA_WORKFLOW="nsm-orchestrator"
 
 step() { printf '\n=== %s ===\n' "$1"; }
 
@@ -45,6 +46,8 @@ enable_services() {
     cloudscheduler.googleapis.com \
     secretmanager.googleapis.com \
     run.googleapis.com \
+    workflows.googleapis.com \
+    workflowexecutions.googleapis.com \
     --project="$PROJECT_ID" >/dev/null
   echo "services enabled"
 }
@@ -96,11 +99,11 @@ create_scheduler_service_account() {
   fi
 
   # bind policy
-  # - roles/run.invoker
+  # - roles/workflows.invoker
   gcloud projects add-iam-policy-binding "$PROJECT_ID" \
     --member="serviceAccount:$SA_SCHEDULER@$PROJECT_ID.iam.gserviceaccount.com" \
-    --role="roles/run.invoker" >/dev/null
-  echo "bound run.invoker to $SA_SCHEDULER"
+    --role="roles/workflows.invoker" >/dev/null
+  echo "bound workflows.invoker to $SA_SCHEDULER"
 }
 
 
@@ -119,6 +122,7 @@ create_cd_service_account() {
   # - roles/artifactregistry.writer
   # - roles/logging.logWriter
   # - roles/iam.serviceAccountUser
+  # - roles/workflows.editor
   gcloud projects add-iam-policy-binding "$PROJECT_ID" \
     --member="serviceAccount:$SA_DEPLOYER@$PROJECT_ID.iam.gserviceaccount.com" \
     --role="roles/run.developer" >/dev/null
@@ -128,16 +132,52 @@ create_cd_service_account() {
   gcloud projects add-iam-policy-binding "$PROJECT_ID" \
     --member="serviceAccount:$SA_DEPLOYER@$PROJECT_ID.iam.gserviceaccount.com" \
     --role="roles/logging.logWriter" >/dev/null
+  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="serviceAccount:$SA_DEPLOYER@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/workflows.editor" >/dev/null
+
   gcloud iam service-accounts add-iam-policy-binding "$SA_JOB@$PROJECT_ID.iam.gserviceaccount.com" \
   --member="serviceAccount:$SA_DEPLOYER@$PROJECT_ID.iam.gserviceaccount.com" \
   --role="roles/iam.serviceAccountUser" --project="$PROJECT_ID" >/dev/null
-  echo "bound run.developer / artifactregistry.writer / logging.logWriter / iam.serviceAccountUser to $SA_DEPLOYER"
+  gcloud iam service-accounts add-iam-policy-binding "$SA_WORKFLOW@$PROJECT_ID.iam.gserviceaccount.com" \
+  --member="serviceAccount:$SA_DEPLOYER@$PROJECT_ID.iam.gserviceaccount.com" \
+  --role="roles/iam.serviceAccountUser" --project="$PROJECT_ID" >/dev/null
+
+  echo "bound run.developer / artifactregistry.writer / logging.logWriter / workflows.editor / iam.serviceAccountUser to $SA_DEPLOYER"
+}
+
+create_workflow_service_account() {
+  if gcloud iam service-accounts describe "$SA_WORKFLOW@$PROJECT_ID.iam.gserviceaccount.com" --project="$PROJECT_ID" >/dev/null 2>&1; then
+    echo "service account $SA_WORKFLOW exists, skip"
+  else
+    gcloud iam service-accounts create "$SA_WORKFLOW" \
+      --display-name="NSM Workflow Orchestrator" \
+      --project="$PROJECT_ID" >/dev/null
+    echo "service account $SA_WORKFLOW created"
+  fi
+
+  # bind policy
+  # - roles/run.jobsExecutorWithOverrides  인자를 덮어써서 job 실행
+  # - roles/run.viewer                     job 완료 확인 (커넥터가 operation을 polling)
+  # - roles/logging.logWriter
+  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="serviceAccount:$SA_WORKFLOW@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/run.jobsExecutorWithOverrides" >/dev/null
+  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="serviceAccount:$SA_WORKFLOW@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/run.viewer" >/dev/null
+  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="serviceAccount:$SA_WORKFLOW@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/logging.logWriter" >/dev/null
+
+  echo "bound run.jobsExecutorWithOverrides / run.viewer / logging.logWriter to $SA_WORKFLOW"
 }
 
 
 create_service_accounts() {
   create_job_runner_service_account
   create_scheduler_service_account
+  create_workflow_service_account
   create_cd_service_account
 }
 
