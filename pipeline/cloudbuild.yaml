@@ -1,7 +1,9 @@
 substitutions:
   _REGION: us-central1
   _SA_JOB: nsm-runner
+  _SA_WORKFLOW: nsm-orchestrator
   _JOB_NAME: nsm-job
+  _WORKFLOW_NAME: nsm-workflow
 steps:
   # 1) Build Docker Image
   - name: gcr.io/cloud-builders/docker
@@ -25,5 +27,16 @@ steps:
       - --set-secrets=DATABASE_URL=DATABASE_URL:latest
       - --set-env-vars=PGSSLROOTCERT=/app/certs/prod-ca-2021.crt,BQ_PROJECT=$PROJECT_ID
 
+  # 4) Cloud workflow deploy
+  - name: gcr.io/cloud-builders/gcloud
+    args:
+      - workflows
+      - deploy
+      - ${_WORKFLOW_NAME}
+      - --location=${_REGION}
+      - --service-account=${_SA_WORKFLOW}@$PROJECT_ID.iam.gserviceaccount.com
+      - --call-log-level=log-all-calls
+      - --source=infra/workflow.yaml
+    dir: 'pipeline'
 options:
   logging: CLOUD_LOGGING_ONLY
