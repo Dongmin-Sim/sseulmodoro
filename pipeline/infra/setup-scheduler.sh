@@ -3,7 +3,7 @@ set -euo pipefail
 # usage: ./setup-scheduler.sh <dev|prod>
 # Cloud Scheduler cron 생성 (인프라 — cloudbuild 밖, 1회성)
 #
-# 선행(1회, 수동): Cloud Run job이 이미 배포돼 있어야 함 (scheduler가 job의 :run URL 참조).
+# 선행(1회, 수동): Cloud Workflow와 관련 SA-IAM이 이미 배포돼 있어야 함
 
 ENV="${1:?usage: setup-scheduler.sh <dev|prod>}"
 case "$ENV" in dev|prod) ;; *) echo "unknown env: $ENV"; exit 1 ;; esac
@@ -11,7 +11,7 @@ case "$ENV" in dev|prod) ;; *) echo "unknown env: $ENV"; exit 1 ;; esac
 source "$(dirname "$0")/env.$ENV.sh"
 
 SA_SCHEDULER="nsm-scheduler"
-JOB_NAME="nsm-job"             # cloudbuild.yaml의 _JOB_NAME과 일치해야 함
+WORKFLOW_NAME="nsm-workflow" # cloudbuild.yaml의 _WORKFLOW_NAME과 일치해야 함
 SCHEDULE_NAME="nsm-weekly"
 CRON='0 4 * * 0'
 TIMEZONE='Asia/Seoul'
@@ -28,18 +28,20 @@ if [ "$ENV" = "prod" ]; then
   [ "$ok" = "yes" ] || { echo "aborted"; exit 1; }
 fi
 
-URI="https://run.googleapis.com/v2/projects/$PROJECT_ID/locations/$LOCATION/jobs/$JOB_NAME:run"
+URI="https://workflowexecutions.googleapis.com/v1/projects/$PROJECT_ID/locations/$LOCATION/workflows/$WORKFLOW_NAME/executions"
 
-if ! gcloud run jobs describe "$JOB_NAME" --region="$LOCATION" --project="$PROJECT_ID" >/dev/null 2>&1; then
-  echo "[!] Cloud Run job '$JOB_NAME' ($LOCATION) 없음. cloudbuild로 먼저 배포 후 재실행"
+if ! gcloud workflows describe "$WORKFLOW_NAME" --location="$LOCATION" --project="$PROJECT_ID" >/dev/null 2>&1; then
+  echo "[!] Cloud Workflow '$WORKFLOW_NAME' ($LOCATION) 없음. cloudbuild로 먼저 배포 후 재실행"
   exit 1
 fi
 
-# 멱등: 있으면 skip, 없으면 create
-if gcloud scheduler jobs describe "$SCHEDULE_NAME" --location="$LOCATION" --project="$PROJECT_ID" >/dev/null 2>&1; then
-  echo "scheduler $SCHEDULE_NAME exists, skip"
-else
-  gcloud scheduler jobs create http "$SCHEDULE_NAME" \
+upsert_scheduler() {
+  local action=create
+  if gcloud scheduler jobs describe "$SCHEDULE_NAME" --location="$LOCATION" --project="$PROJECT_ID" >/dev/null 2>&1; then
+    action=update
+  fi
+
+  gcloud scheduler jobs "$action" http "$SCHEDULE_NAME" \
     --location="$LOCATION" \
     --schedule="$CRON" \
     --time-zone="$TIMEZONE" \
@@ -47,5 +49,8 @@ else
     --http-method=POST \
     --oauth-service-account-email="$SA_SCHEDULER@$PROJECT_ID.iam.gserviceaccount.com" \
     --project="$PROJECT_ID" >/dev/null
-  echo "scheduler $SCHEDULE_NAME created ($CRON $TIMEZONE → $JOB_NAME)"
-fi
+
+  echo "scheduler $SCHEDULE_NAME ${action}d ($CRON $TIMEZONE → $WORKFLOW_NAME)"
+}
+
+upsert_scheduler
