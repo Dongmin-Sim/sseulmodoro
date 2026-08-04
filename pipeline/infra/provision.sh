@@ -62,7 +62,7 @@ create_artifact_repo() {
   fi
 }
 
-create_service_accounts() {
+create_job_runner_service_account(){
   if gcloud iam service-accounts describe "$SA_JOB@$PROJECT_ID.iam.gserviceaccount.com" --project="$PROJECT_ID" >/dev/null 2>&1; then
     echo "service account $SA_JOB exists, skip"
   else
@@ -72,6 +72,20 @@ create_service_accounts() {
     echo "service account $SA_JOB created"
   fi
 
+  # bind policy
+  # - roles/bigquery.jobUser
+  # - roles/bigquery.dataEditor
+  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="serviceAccount:$SA_JOB@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/bigquery.jobUser" >/dev/null
+  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="serviceAccount:$SA_JOB@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/bigquery.dataEditor" >/dev/null
+  echo "bound bigquery.jobUser / bigquery.dataEditor to $SA_JOB"
+}
+
+
+create_scheduler_service_account() {
   if gcloud iam service-accounts describe "$SA_SCHEDULER@$PROJECT_ID.iam.gserviceaccount.com" --project="$PROJECT_ID" >/dev/null 2>&1; then
     echo "service account $SA_SCHEDULER exists, skip"
   else
@@ -81,6 +95,16 @@ create_service_accounts() {
     echo "service account $SA_SCHEDULER created"
   fi
 
+  # bind policy
+  # - roles/run.invoker
+  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="serviceAccount:$SA_SCHEDULER@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/run.invoker" >/dev/null
+  echo "bound run.invoker to $SA_SCHEDULER"
+}
+
+
+create_cd_service_account() {
   if gcloud iam service-accounts describe "$SA_DEPLOYER@$PROJECT_ID.iam.gserviceaccount.com" --project="$PROJECT_ID" >/dev/null 2>&1; then
     echo "service account $SA_DEPLOYER exists, skip"
   else
@@ -89,22 +113,12 @@ create_service_accounts() {
       --project="$PROJECT_ID" >/dev/null
     echo "service account $SA_DEPLOYER created"
   fi
-}
 
-bind_iam() {
-  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
-    --member="serviceAccount:$SA_JOB@$PROJECT_ID.iam.gserviceaccount.com" \
-    --role="roles/bigquery.jobUser" >/dev/null
-  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
-    --member="serviceAccount:$SA_JOB@$PROJECT_ID.iam.gserviceaccount.com" \
-    --role="roles/bigquery.dataEditor" >/dev/null
-  echo "bound bigquery.jobUser / bigquery.dataEditor to $SA_JOB"
-
-  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
-    --member="serviceAccount:$SA_SCHEDULER@$PROJECT_ID.iam.gserviceaccount.com" \
-    --role="roles/run.invoker" >/dev/null
-  echo "bound run.invoker to $SA_SCHEDULER"
-
+  # bind policy
+  # - roles/run.developer
+  # - roles/artifactregistry.writer
+  # - roles/logging.logWriter
+  # - roles/iam.serviceAccountUser
   gcloud projects add-iam-policy-binding "$PROJECT_ID" \
     --member="serviceAccount:$SA_DEPLOYER@$PROJECT_ID.iam.gserviceaccount.com" \
     --role="roles/run.developer" >/dev/null
@@ -119,6 +133,14 @@ bind_iam() {
   --role="roles/iam.serviceAccountUser" --project="$PROJECT_ID" >/dev/null
   echo "bound run.developer / artifactregistry.writer / logging.logWriter / iam.serviceAccountUser to $SA_DEPLOYER"
 }
+
+
+create_service_accounts() {
+  create_job_runner_service_account
+  create_scheduler_service_account
+  create_cd_service_account
+}
+
 
 # check existence only (never read the value) — stop if missing
 require_secret() {
@@ -138,25 +160,22 @@ require_secret() {
 main_full() {
   echo "▶ provisioning [$ENV] project=$PROJECT_ID"
 
-  step "1/7 project"
+  step "1/6 project"
   create_project
 
-  step "2/7 billing"
+  step "2/6 billing"
   link_billing
 
-  step "3/7 services"
+  step "3/6 services"
   enable_services
 
-  step "4/7 artifact registry"
+  step "4/6 artifact registry"
   create_artifact_repo
 
-  step "5/7 service accounts"
+  step "5/6 create service accounts & iam binding"
   create_service_accounts
 
-  step "6/7 iam bindings"
-  bind_iam
-
-  step "7/7 secret access"
+  step "6/6 secret access"
   require_secret
 
   echo ""
