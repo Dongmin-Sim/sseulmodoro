@@ -1,3 +1,5 @@
+from nsm.load import build_merge_query, load_upsert
+from google.cloud import bigquery
 import pandas as pd
 from nsm.load import (
     build_backfill_delete_query,
@@ -83,6 +85,7 @@ class TestLoadIncremental:
         call_seq = [mc[0] for mc in gcp_client.mock_calls]
         assert call_seq.index("query") < call_seq.index("load_table_from_dataframe")
 
+
 class TestLoadBackfill:
     def test_백필적재는_write_append로_적재한다(self, gcp_client, make_source_table_incremental):
         load_backfill(gcp_client, make_source_table_incremental(), [], _minimal_df(), "2026-01-01", "2026-01-02")
@@ -95,6 +98,21 @@ class TestLoadBackfill:
 
         call_seq = [mc[0] for mc in gcp_client.mock_calls]
         assert call_seq.index("query") < call_seq.index("load_table_from_dataframe")
+
+
+class TestLoadUpsert:
+    def test_staging_적재는_write_truncate로_적재한다(self, gcp_client, make_source_table_upsert):
+        load_upsert(gcp_client, make_source_table_upsert(), [], _minimal_df())
+        _, kwargs = gcp_client.load_table_from_dataframe.call_args
+
+        assert kwargs['job_config'].write_disposition == "WRITE_TRUNCATE"
+
+
+    def test_staging_적재_후_merge_쿼리를_실행한다(self, gcp_client, make_source_table_upsert):
+        load_upsert(gcp_client, make_source_table_upsert(), [], _minimal_df())
+
+        call_seq = [mc[0] for mc in gcp_client.mock_calls]
+        assert call_seq.index("load_table_from_dataframe") < call_seq.index("query")
 
 
 class TestCountBackfillTargetRows:
@@ -152,6 +170,29 @@ class TestBuildLoadQuery:
         assert "FROM `test.raw.test_table`" in res
         assert "WHERE created_at >= TIMESTAMP(@start)" in res
         assert "AND created_at < TIMESTAMP(@end) + INTERVAL 1 DAY" in res
+
+    def test_머지쿼리를_생성한다(self, gcp_client, make_source_table_upsert):
+        targ_tbl = make_source_table_upsert(
+            name="test_table",
+            incremental_key= "updated_at",
+            merge_key="id",
+        )
+        target_schema = [
+            bigquery.SchemaField("id", bigquery.enums.SqlTypeNames.INT64, mode="NULLABLE"),
+            bigquery.SchemaField("created_at", bigquery.enums.SqlTypeNames.TIMESTAMP, mode="NULLABLE"),
+            bigquery.SchemaField("loaded_at", bigquery.enums.SqlTypeNames.TIMESTAMP, mode="REQUIRED"),
+        ]
+
+        res = build_merge_query(gcp_client, targ_tbl, target_schema)
+
+        assert isinstance(res, str)
+        assert "MERGE `test.raw.test_table` as t" in res
+        assert "USING `test._load_stage.test_table` as s" in res
+        assert "ON t.id = s.id" in res
+        assert "WHEN MATCHED AND s.updated_at > t.updated_at THEN" in res
+        assert "t.id = s.id, t.created_at = s.created_at, t.loaded_at = s.loaded_at" in res
+
+
 
 
 def test_백필적재는_start_end를_쿼리_파라미터로_바인딩한다(gcp_client, make_source_table_incremental):

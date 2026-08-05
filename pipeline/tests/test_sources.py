@@ -17,7 +17,7 @@ class TestLoadSourceConfig:
         orders = sources.tables[0]
         assert orders.name == "test_log"
         assert orders.columns == ["id", "user_id", "created_at"]
-        assert orders.load_mode == LoadMode.INCREMENTAL
+        assert orders.load_mode == LoadMode.INCREMENTAL_APPEND
 
     def test_table_names_returns_all_names(self):
         res = load_source_config(source_name, YAML_FIXTURES_PATH)
@@ -31,14 +31,15 @@ class TestLoadSourceConfig:
 class TestSourceTable:
     @staticmethod
     def _valid(**overrides) -> SourceTable:
-        base = dict(
-            name="test_log",
-            columns=["id"],
-            primary_key="id",
-            load_mode=LoadMode.FULL,
-            incremental_key=None,
-            backfill_key=None,
-        )
+        base = {
+            "name": "test_log",
+            "columns": ["id"],
+            "primary_key": "id",
+            "load_mode": LoadMode.FULL,
+            "incremental_key": None,
+            "backfill_key": None,
+            "merge_key": None,
+        }
         # pyrefly: ignore [bad-argument-type]
         return SourceTable(**{**base, **overrides})
 
@@ -50,7 +51,7 @@ class TestSourceTable:
     def test_load_mode가_incremental인데_key가_없으면_ValueError를_던진다(self):
         with pytest.raises(ValueError):
             self._valid(
-                load_mode=LoadMode.INCREMENTAL,
+                load_mode=LoadMode.INCREMENTAL_APPEND,
                 incremental_key=None,
                 backfill_key="created_at",
             )
@@ -58,7 +59,18 @@ class TestSourceTable:
     def test_load_mode가_incremental인데_backfill_key가_없으면_ValueError를_던진다(self):
         with pytest.raises(ValueError):
             self._valid(
-                load_mode=LoadMode.INCREMENTAL,
+                load_mode=LoadMode.INCREMENTAL_APPEND,
                 incremental_key="id",
                 backfill_key=None,
+            )
+
+    @pytest.mark.parametrize(
+        "incremental_key, merge_key", [("updated_at", None), (None, "updated_at")]
+    )
+    def test_load_mode가_incremental_upsert인데_merge_key_없으면_ValueError를_던진다(self, incremental_key, merge_key):
+        with pytest.raises(ValueError):
+            self._valid(
+                load_mode=LoadMode.INCREMENTAL_UPSERT,
+                incremental_key=incremental_key,
+                merge_key=merge_key
             )

@@ -9,6 +9,7 @@ from utils.gcp import create_dataset, create_table_from_ddl_file
 
 def prepare_schema(bq_client: bigquery.Client) -> None:
     create_dataset(bq_client, 'raw')
+    create_dataset(bq_client, "_load_stage")
     create_dataset(bq_client, 'meta')
     create_table_from_ddl_file(bq_client, 'watermark_store', 'meta_watermark_store.sql')
 
@@ -25,28 +26,44 @@ def prepare_schema(bq_client: bigquery.Client) -> None:
 
 class LoadMode(Enum):
     FULL = "full"
-    INCREMENTAL = "incremental"
+    INCREMENTAL_APPEND = "incremental_append"
+    INCREMENTAL_UPSERT = "incremental_upsert"
 
 @dataclass(frozen=True)
 class SourceTable:
+    # TODO: rename(SourceSchema) + 분리(loadmode에 따른 소스 스키마)
     name: str
     columns: list[str]
     primary_key: str
     load_mode: LoadMode
     incremental_key: str | None = None
     backfill_key: str | None = None
+    merge_key: str | None = None
 
     def __post_init__(self):
         if not self.columns:
             raise ValueError(f"{self.name} columns cannot be empty")
-        if self.load_mode is LoadMode.INCREMENTAL and not self.incremental_key:
+        if self.load_mode is LoadMode.INCREMENTAL_APPEND and not self.incremental_key:
             raise ValueError(f"{self.name} incremental_key required for incremental")
-        if self.load_mode is LoadMode.INCREMENTAL and not self.backfill_key:
+        if self.load_mode is LoadMode.INCREMENTAL_APPEND and not self.backfill_key:
             raise ValueError(f"{self.name} backfill_key required for incremental")
+        if self.load_mode is LoadMode.INCREMENTAL_UPSERT:
+            missing = [
+                f for f in ("incremental_key", "merge_key") if not getattr(self, f)
+            ]
+            if missing:
+                raise ValueError(
+                    f"{self.name}: load_mode={self.load_mode.value} requires "
+                    f"{', '.join(missing)}"
+                )
 
     @property
     def is_incremental(self) -> bool:
-        return self.load_mode is LoadMode.INCREMENTAL
+        return self.load_mode is LoadMode.INCREMENTAL_APPEND
+
+    @property
+    def is_upsert(self) -> bool:
+        return self.load_mode is LoadMode.INCREMENTAL_UPSERT
 
     @property
     def required_incremental_key(self) -> str:
@@ -59,6 +76,12 @@ class SourceTable:
         if self.backfill_key is None:
             raise ValueError(f"{self.name} backfill_key required for incremental")
         return self.backfill_key
+
+    @property
+    def required_merge_key(self) -> str:
+        if self.merge_key is None:
+            raise ValueError(f"{self.name} merge_key required for upsert")
+        return self.merge_key
 
 
 @dataclass(frozen=True)
@@ -101,6 +124,7 @@ def to_source_tables(tables: list[dict]) -> list[SourceTable]:
             load_mode=LoadMode(t["load_mode"]),
             incremental_key=t.get("incremental_key"),
             backfill_key=t.get("backfill_key"),
+            merge_key=t.get("merge_key"),
         )
         for t in tables
     ]
