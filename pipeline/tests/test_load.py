@@ -1,4 +1,4 @@
-from nsm.load import build_merge_query, load_upsert
+from nsm.load import build_merge_query, load_incremental_upsert
 from google.cloud import bigquery
 import pandas as pd
 from nsm.load import (
@@ -8,7 +8,7 @@ from nsm.load import (
     count_backfill_target_rows,
     load_backfill,
     load_full,
-    load_incremental,
+    load_incremental_append,
     preprocessing,
 )
 
@@ -65,13 +65,13 @@ class TestLoadFull:
 
 class TestLoadIncremental:
     def test_증분적재는_write_append로_적재한다(self, gcp_client, make_source_table_incremental):
-        load_incremental(gcp_client, make_source_table_incremental(), [], _minimal_df(), 1)
+        load_incremental_append(gcp_client, make_source_table_incremental(), [], _minimal_df(), "1")
 
         _, kwargs = gcp_client.load_table_from_dataframe.call_args
         assert kwargs['job_config'].write_disposition == "WRITE_APPEND"
 
     def test_since_이후_행을_삭제한다(self, gcp_client, make_source_table_incremental):
-        load_incremental(gcp_client, make_source_table_incremental(name="test_tbl"), [], _minimal_df(), 1)
+        load_incremental_append(gcp_client, make_source_table_incremental(name="test_tbl"), [], _minimal_df(), "1")
         args, kwargs = gcp_client.query.call_args
         params = {p.name: p.value for p in kwargs["job_config"].query_parameters}
 
@@ -81,7 +81,7 @@ class TestLoadIncremental:
 
 
     def test_since_이후_삭제쿼리를_적재보다_먼저_실행한다(self, gcp_client, make_source_table_incremental):
-        load_incremental(gcp_client, make_source_table_incremental(), [], _minimal_df(), 1)
+        load_incremental_append(gcp_client, make_source_table_incremental(), [], _minimal_df(), "1")
         call_seq = [mc[0] for mc in gcp_client.mock_calls]
         assert call_seq.index("query") < call_seq.index("load_table_from_dataframe")
 
@@ -102,14 +102,14 @@ class TestLoadBackfill:
 
 class TestLoadUpsert:
     def test_staging_적재는_write_truncate로_적재한다(self, gcp_client, make_source_table_upsert):
-        load_upsert(gcp_client, make_source_table_upsert(), [], _minimal_df())
+        load_incremental_upsert(gcp_client, make_source_table_upsert(), [], _minimal_df())
         _, kwargs = gcp_client.load_table_from_dataframe.call_args
 
         assert kwargs['job_config'].write_disposition == "WRITE_TRUNCATE"
 
 
     def test_staging_적재_후_merge_쿼리를_실행한다(self, gcp_client, make_source_table_upsert):
-        load_upsert(gcp_client, make_source_table_upsert(), [], _minimal_df())
+        load_incremental_upsert(gcp_client, make_source_table_upsert(), [], _minimal_df())
 
         call_seq = [mc[0] for mc in gcp_client.mock_calls]
         assert call_seq.index("load_table_from_dataframe") < call_seq.index("query")
@@ -207,11 +207,10 @@ def test_백필적재는_start_end를_쿼리_파라미터로_바인딩한다(gcp
 
 
 def test_증분적재는_since를_쿼리_파라미터로_바인딩한다(gcp_client, make_source_table_incremental):
-    since = 1
-    load_incremental(gcp_client, make_source_table_incremental(), [], _minimal_df(), since)
+    load_incremental_append(gcp_client, make_source_table_incremental(), [], _minimal_df(), "1")
 
     _, kwargs = gcp_client.query.call_args
     query_job_params = {p.name: p.value for p in kwargs['job_config'].query_parameters}
 
-    assert query_job_params['since'] == since
+    assert query_job_params['since'] == 1
 

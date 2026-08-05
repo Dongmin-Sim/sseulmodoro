@@ -78,13 +78,13 @@ def test_네임스페이스_값으로_BackfillConfig_빌드한다():
 
 
 @patch("main._build_app_context")
-@patch("main.run_nsm")
-def test_정상배치는_run_nsm을_호출한다(mock_run_nsm, mock_app_context):
+@patch("main.run_batch")
+def test_정상배치는_run_batch을_호출한다(mock_run_batch, mock_app_context):
     _run(Namespace())
 
     app_ctx = mock_app_context.return_value
 
-    mock_run_nsm.assert_called_once_with(app_ctx)
+    mock_run_batch.assert_called_once_with(app_ctx)
     mock_app_context.assert_called_once()
 
 
@@ -155,21 +155,21 @@ class TestBuildArgsParser:
 
 @patch("main._build_app_context")
 @patch("main.run_backfill")
-@patch("main.run_nsm")
+@patch("main.run_batch")
 class TestMain:
 
     def test_run_인자로_실행하면_정상배치가_돈다(
-        self, mock_run_nsm, mock_run_backfill, mock_build_app_context
+        self, mock_run_batch, mock_run_backfill, mock_build_app_context
     ):
         main(["run"])
 
         app_ctx = mock_build_app_context.return_value
 
-        mock_run_nsm.assert_called_once_with(app_ctx)
+        mock_run_batch.assert_called_once_with(app_ctx)
         mock_run_backfill.assert_not_called()
 
     def test_backfill_인자로_실행하면_백필배치가_돈다(
-        self, mock_run_nsm, mock_run_backfill, mock_build_app_context, backfill_argv
+        self, mock_run_batch, mock_run_backfill, mock_build_app_context, backfill_argv
     ):
         main(backfill_argv)
 
@@ -183,14 +183,14 @@ class TestMain:
                 end_date="2026-01-02",
             ),
         )
-        mock_run_nsm.assert_not_called()
+        mock_run_batch.assert_not_called()
 
     def test_백필필수_인자가_빠지면_아무것도_실행하지_않는다(
-        self, mock_run_nsm, mock_run_backfill, mock_build_app_context
+        self, mock_run_batch, mock_run_backfill, mock_build_app_context
     ):
         with pytest.raises(SystemExit):
             main(["backfill"])
 
-        mock_run_nsm.assert_not_called()
+        mock_run_batch.assert_not_called()
         mock_run_backfill.assert_not_called()
         mock_build_app_context.assert_not_called()
