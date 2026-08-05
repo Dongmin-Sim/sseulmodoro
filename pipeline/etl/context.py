@@ -6,12 +6,24 @@ from schema.sources import Source
 
 
 @dataclass(frozen=True)
-class AppContext:
-    source_database_url:str
-    bigquery_project: str
+class BigqueryContext:
     bigquery_client: bigquery.Client
-    source_schema: Source
     bigquery_schema: dict[str, list[SchemaField]]
+
+
+@dataclass(frozen=True)
+class AppContext:
+    source_database_url: str
+    source_schema: Source
+    bigquery_context: BigqueryContext
+
+    @property
+    def bigquery_client(self) -> bigquery.Client:
+        return self.bigquery_context.bigquery_client
+
+    @property
+    def bigquery_schema(self) -> dict[str, list[SchemaField]]:
+        return self.bigquery_context.bigquery_schema
 
 
 @dataclass(frozen=True)

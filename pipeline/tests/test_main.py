@@ -7,6 +7,7 @@ from main import (
     _build_backfill_config,
     _run,
     _run_backfill,
+    _run_transform,
     _valid_args_date,
     build_args_parser,
     main,
@@ -121,9 +122,11 @@ class TestBuildArgsParser:
 
     def test_서브커맨드마다_실행함수가_매핑된다(self, backfill_argv):
         run_args = build_args_parser().parse_args(["run"])
+        transform_args = build_args_parser().parse_args(["transform"])
         backfill_args = build_args_parser().parse_args(backfill_argv)
 
         assert run_args.func is _run
+        assert transform_args.func is _run_transform
         assert backfill_args.func is _run_backfill
 
     @pytest.mark.parametrize(
@@ -167,6 +170,26 @@ class TestMain:
 
         mock_run_batch.assert_called_once_with(app_ctx)
         mock_run_backfill.assert_not_called()
+
+    @patch("main._build_bigquery_context")
+    @patch("main.run_transform")
+    def test_transform_인자로_실행하면_변환쿼리가_실행된다(
+        self,
+        mock_transform,
+        mock_bigquery_context,
+        mock_run_batch,
+        mock_run_backfill,
+        mock_app_context,
+    ):
+        main(["transform"])
+
+        bq_ctx = mock_bigquery_context.return_value
+
+        mock_transform.assert_called_once_with(bq_ctx)
+
+        mock_run_batch.assert_not_called()
+        mock_run_backfill.assert_not_called()
+        mock_app_context.assert_not_called()
 
     def test_backfill_인자로_실행하면_백필배치가_돈다(
         self, mock_run_batch, mock_run_backfill, mock_build_app_context, backfill_argv

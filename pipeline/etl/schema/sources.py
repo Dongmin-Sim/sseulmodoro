@@ -7,12 +7,15 @@ from google.cloud import bigquery
 from utils.gcp import create_dataset, create_table_from_ddl_file
 
 
-def prepare_schema(bq_client: bigquery.Client) -> None:
-    create_dataset(bq_client, 'raw')
+def prepare_load_schema(bq_client: bigquery.Client) -> None:
     create_dataset(bq_client, "_load_stage")
+    create_dataset(bq_client, 'raw')
+
     create_dataset(bq_client, 'meta')
     create_table_from_ddl_file(bq_client, 'watermark_store', 'meta_watermark_store.sql')
 
+
+def prepare_transform_schema(bq_client: bigquery.Client) -> None:
     create_dataset(bq_client, 'stage')
     create_table_from_ddl_file(bq_client, 'activity_log_app_visited', 'stage_activity_log_app_visited.sql')
 

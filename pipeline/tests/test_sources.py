@@ -1,6 +1,15 @@
-import pytest
 from pathlib import Path
-from schema.sources import load_source_config, SourceTable, Source, LoadMode
+from unittest.mock import call, patch
+
+import pytest
+from schema.sources import (
+    LoadMode,
+    Source,
+    SourceTable,
+    load_source_config,
+    prepare_load_schema,
+    prepare_transform_schema,
+)
 
 RESOURCES_PATH = Path(__file__).parent / "resources"
 YAML_FIXTURES_PATH = RESOURCES_PATH / "fixture_source_schema.yaml"
@@ -74,3 +83,49 @@ class TestSourceTable:
                 incremental_key=incremental_key,
                 merge_key=merge_key
             )
+
+
+class TestPrepareLoadSchema:
+    @patch("schema.sources.create_dataset")
+    def test_load에_필요한_데이터세트를_순서대로_생성한다(self, mock_create_dataset, gcp_client):
+        prepare_load_schema(gcp_client)
+
+        expected_args = [
+            call(gcp_client, "_load_stage"),
+            call(gcp_client, "raw"),
+            call(gcp_client, "meta"),
+        ]
+
+        assert mock_create_dataset.call_args_list == expected_args
+
+    @patch("schema.sources.create_table_from_ddl_file")
+    def test_load에_필요한_테이블만_생성한다(self, mock_create_table_from_ddl_file, gcp_client):
+        prepare_load_schema(gcp_client)
+
+        expected_args = [
+            call(gcp_client, "watermark_store", "meta_watermark_store.sql"),
+        ]
+
+        assert mock_create_table_from_ddl_file.call_args_list == expected_args
+
+
+class TestPrepareTransformSchema:
+    @patch("schema.sources.create_dataset")
+    def test_transform에_필요한_데이터세트를_순서대로_생성한다(self, mock_create_dataset, gcp_client):
+        prepare_transform_schema(gcp_client)
+
+        expected_args = [
+            call(gcp_client, "stage"),
+            call(gcp_client, "mart"),
+        ]
+
+        assert mock_create_dataset.call_args_list == expected_args
+
+    @patch("schema.sources.create_table_from_ddl_file")
+    def test_적재용_테이블은_생성하지_않는다(self, mock_create_table_from_ddl_file, gcp_client):
+        prepare_transform_schema(gcp_client)
+
+        ddl_files = [c.args[2] for c in mock_create_table_from_ddl_file.call_args_list]
+
+        assert ddl_files
+        assert not any(f.startswith("meta_") for f in ddl_files)

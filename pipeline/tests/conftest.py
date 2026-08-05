@@ -1,7 +1,8 @@
 from unittest.mock import Mock
 
 import pytest
-from context import AppContext, BackfillConfig
+from context import AppContext, BackfillConfig, BigqueryContext
+from google.cloud import bigquery
 from schema.sources import LoadMode, Source, SourceTable
 
 
@@ -95,24 +96,50 @@ def make_source_table_upsert():
 
     return _make
 
+
 @pytest.fixture
-def app_context(gcp_client, make_source_table_full, make_source_table_incremental):
+def bigquery_context(gcp_client):
+    def _make(**overrides) -> BigqueryContext:
+        base = {
+            "bigquery_client": gcp_client,
+            "bigquery_schema": {
+                "test_log": [
+                    bigquery.SchemaField(
+                        "id", bigquery.enums.SqlTypeNames.INT64, mode="NULLABLE"
+                    ),
+                    bigquery.SchemaField(
+                        "user_id", bigquery.enums.SqlTypeNames.STRING, mode="NULLABLE"
+                    ),
+                ],
+                "test_incremental_log": [
+                    bigquery.SchemaField(
+                        "id", bigquery.enums.SqlTypeNames.INT64, mode="NULLABLE"
+                    ),
+                    bigquery.SchemaField(
+                        "user_id", bigquery.enums.SqlTypeNames.STRING, mode="NULLABLE"
+                    ),
+                ],
+            },
+        }
+        # pyrefly: ignore [bad-argument-type]
+        return BigqueryContext(**{**base, **overrides})
+    return _make
+
+
+@pytest.fixture
+def app_context(gcp_client, make_source_table_full, make_source_table_incremental, bigquery_context):
     def _make(**overrides) -> AppContext:
         base = {
             "source_database_url": "postgresql://postgres:postgres@127.0.0.1:54322/postgres",
-            "bigquery_project": "bigquery-test-project",
-            "bigquery_client": gcp_client,
             "source_schema": Source(
                 "test_app",
                 "postgres",
                 [
                     make_source_table_full(),
-                    make_source_table_incremental(name="test_backfill_table")
-                ]
+                    make_source_table_incremental(name="test_incremental_log"),
+                ],
             ),
-            "bigquery_schema":{
-                "test_backfill_table": []
-            }
+            "bigquery_context": bigquery_context(),
         }
         # pyrefly: ignore [bad-argument-type]
         return AppContext(**{**base, **overrides})
@@ -123,7 +150,7 @@ def app_context(gcp_client, make_source_table_full, make_source_table_incrementa
 def backfill_config():
     def _make(**overrides) -> BackfillConfig:
         base = {
-            "table_name": "test_backfill_table",
+            "table_name": "test_incremental_log",
             "start_date": "2026-01-01",
             "end_date": "2026-01-02",
         }
