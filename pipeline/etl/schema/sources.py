@@ -37,28 +37,30 @@ class SourceTable:
     primary_key: str
     load_mode: LoadMode
     incremental_key: str | None = None
+    incremental_key_type: str | None = None
     backfill_key: str | None = None
     merge_key: str | None = None
 
     def __post_init__(self):
         if not self.columns:
             raise ValueError(f"{self.name} columns cannot be empty")
-        if self.load_mode is LoadMode.INCREMENTAL_APPEND and not self.incremental_key:
-            raise ValueError(f"{self.name} incremental_key required for incremental")
-        if self.load_mode is LoadMode.INCREMENTAL_APPEND and not self.backfill_key:
-            raise ValueError(f"{self.name} backfill_key required for incremental")
+
+        if self.load_mode is LoadMode.INCREMENTAL_APPEND:
+            self._valid_attr(("incremental_key", "incremental_key_type", "backfill_key"))
+
         if self.load_mode is LoadMode.INCREMENTAL_UPSERT:
-            missing = [
-                f for f in ("incremental_key", "merge_key") if not getattr(self, f)
-            ]
-            if missing:
-                raise ValueError(
-                    f"{self.name}: load_mode={self.load_mode.value} requires "
-                    f"{', '.join(missing)}"
-                )
+            self._valid_attr(("incremental_key", "incremental_key_type", "merge_key"))
+
+    def _valid_attr(self, attr_names: tuple[str, ...]) -> None:
+        missing = [f for f in attr_names if not getattr(self, f)]
+        if missing:
+            raise ValueError(
+                f"{self.name}: load_mode={self.load_mode.value} requires "
+                f"{', '.join(missing)}"
+            )
 
     @property
-    def is_incremental(self) -> bool:
+    def is_incremental_append(self) -> bool:
         return self.load_mode is LoadMode.INCREMENTAL_APPEND
 
     @property
@@ -70,6 +72,12 @@ class SourceTable:
         if self.incremental_key is None:
             raise ValueError(f"{self.name} incremental_key required for incremental")
         return self.incremental_key
+
+    @property
+    def required_incremental_key_type(self) -> str:
+        if self.incremental_key_type is None:
+            raise ValueError(f"{self.name} incremental_key_type required for incremental")
+        return self.incremental_key_type
 
     @property
     def required_backfill_key(self) -> str:
@@ -123,8 +131,9 @@ def to_source_tables(tables: list[dict]) -> list[SourceTable]:
             primary_key=t["primary_key"],
             load_mode=LoadMode(t["load_mode"]),
             incremental_key=t.get("incremental_key"),
+            incremental_key_type=t.get("incremental_key_type"),
             backfill_key=t.get("backfill_key"),
-            merge_key=t.get("merge_key"),
+            merge_key=t.get("primary_key"),
         )
         for t in tables
     ]

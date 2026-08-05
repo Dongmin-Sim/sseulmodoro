@@ -23,6 +23,7 @@ RAW_POMODORO_SESSIONS_TABLE_SCHEMA = [
     bigquery.SchemaField("status", bigquery.enums.SqlTypeNames.STRING, mode="NULLABLE"),
     bigquery.SchemaField("started_at", bigquery.enums.SqlTypeNames.TIMESTAMP, mode="NULLABLE"),
     bigquery.SchemaField("ended_at", bigquery.enums.SqlTypeNames.TIMESTAMP, mode="NULLABLE"),
+    bigquery.SchemaField("updated_at", bigquery.enums.SqlTypeNames.TIMESTAMP, mode="NULLABLE"),
     bigquery.SchemaField("created_at", bigquery.enums.SqlTypeNames.TIMESTAMP, mode="NULLABLE"),
     bigquery.SchemaField("loaded_at", bigquery.enums.SqlTypeNames.TIMESTAMP, mode="REQUIRED"),
 ]

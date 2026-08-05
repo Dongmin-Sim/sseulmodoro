@@ -10,6 +10,7 @@ sources:
         primary_key: id
         load_mode: incremental_append
         incremental_key: id
+        incremental_key_type: bigint
         backfill_key: created_at
 
       - name: test_session
