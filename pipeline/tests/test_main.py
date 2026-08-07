@@ -20,7 +20,7 @@ def backfill_argv():
         "backfill",
         "--start-date=2026-01-01",
         "--end-date=2026-01-02",
-        "--table-name=activity_log",
+        "--table=activity_log",
     ]
 
 
@@ -67,7 +67,7 @@ def test_네임스페이스_값으로_BackfillConfig_빌드한다():
     namespace = Namespace(
         start_date="2026-01-01",
         end_date="2026-12-31",
-        table_name="test",
+        table="test",
     )
 
     res = _build_backfill_config(namespace)
@@ -118,7 +118,7 @@ class TestBuildArgsParser:
         assert args.command == "backfill"
         assert args.start_date == "2026-01-01"
         assert args.end_date == "2026-01-02"
-        assert args.table_name == "activity_log"
+        assert args.table == "activity_log"
 
     def test_서브커맨드마다_실행함수가_매핑된다(self, backfill_argv):
         run_args = build_args_parser().parse_args(["run"])
@@ -139,7 +139,7 @@ class TestBuildArgsParser:
                 "backfill",
                 "--start-date=bad",
                 "--end-date=2026-01-02",
-                "--table-name=activity_log",
+                "--table=activity_log",
             ],
             ["run", "--start-date=2026-01-01"],
         ],

@@ -50,7 +50,7 @@ def _build_backfill_config(args: argparse.Namespace) -> BackfillConfig:
     return BackfillConfig(
         start_date=args.start_date,
         end_date=args.end_date,
-        table_name=args.table_name,
+        table_name=args.table,
     )
 
 
@@ -96,7 +96,7 @@ def build_args_parser() -> argparse.ArgumentParser:
     backfill_p = command_sub.add_parser("backfill")
     backfill_p.add_argument("--start-date", type=_valid_args_date, required=True)
     backfill_p.add_argument("--end-date", type=_valid_args_date, required=True)
-    backfill_p.add_argument("--table-name", required=True)
+    backfill_p.add_argument("--table", required=True)
     backfill_p.set_defaults(func=_run_backfill)
 
     transform_p = command_sub.add_parser("transform")
