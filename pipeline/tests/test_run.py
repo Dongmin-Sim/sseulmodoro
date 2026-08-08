@@ -72,7 +72,7 @@ class TestRunBatchFull:
     @patch("nsm.run.load_full")
     @patch("nsm.run.preprocessing")
     @patch("nsm.run.extract_full")
-    def test_full_테이블은_전체_흐름을_따른다(self, mock_extract, mock_pre, mock_load_full, app_context, make_source_table_full):
+    def test_full_테이블은_추출_전처리_적재를_차례로_호출한다(self, mock_extract, mock_pre, mock_load_full, app_context, make_source_table_full):
         app_ctx = app_context()
 
         _run_full(
@@ -130,7 +130,7 @@ class TestRunBackfill:
     @patch("nsm.run.count_backfill_target_rows")
     @patch("nsm.run.extract_backfill")
     @patch("nsm.run.update_watermark")
-    def test_워터마크를_전진시키지_않는다(self, mock_uw, mock_extract, mock_count, mock_load, mock_transform, app_context, backfill_config):
+    def test_워터마크를_전진시키지_않고_변환도_호출하지_않는다(self, mock_uw, mock_extract, mock_count, mock_load, mock_transform, app_context, backfill_config):
         app_ctx, bf_cfg = app_context(), backfill_config()
         mock_extract.return_value = pd.DataFrame({"user_id": [1, 2]})
         mock_count.return_value = 2
@@ -172,7 +172,7 @@ class TestRunBackfill:
     @patch("nsm.run.count_backfill_target_rows")
     @patch("nsm.run.preprocessing")
     @patch("nsm.run.extract_backfill")
-    def test_지정_구간을_추출과_적재에_전달한다(self, mock_extract, mock_pre, mock_count, mock_load, mock_transform, app_context, backfill_config):
+    def test_대상_테이블과_지정_구간을_추출과_적재에_전달한다(self, mock_extract, mock_pre, mock_count, mock_load, mock_transform, app_context, backfill_config):
         app_ctx, bf_cfg = app_context(), backfill_config()
         src_db_url = app_ctx.source_database_url
         bf_tbl_name = "test_log"

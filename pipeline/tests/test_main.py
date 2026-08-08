@@ -79,7 +79,7 @@ def test_네임스페이스_값으로_BackfillConfig_빌드한다():
 
 @patch("main._build_app_context")
 @patch("main.run_batch")
-def test_정상배치는_run_batch을_호출한다(mock_run_batch, mock_app_context):
+def test_run은_args로_만든_컨텍스트로_run_batch를_호출한다(mock_run_batch, mock_app_context):
     args = Namespace()
     _run(args)
 
@@ -107,11 +107,11 @@ def test_백필시_설정과_함께_run_backfill을_호출한다(
 
 
 class TestBuildArgsParser:
-    def test_build_args_parser_정상배치실행_서브커맨드를_파싱한다(self):
+    def test_build_args_parser_run_서브커맨드를_파싱한다(self):
         args = build_args_parser().parse_args(["run"])
         assert args.command == "run"
 
-    def test_build_args_parser_파서의_인자를_네임스페이스에_담는다(self, backfill_argv):
+    def test_build_args_parser_backfill_인자를_네임스페이스에_담는다(self, backfill_argv):
         args = build_args_parser().parse_args(backfill_argv)
 
         assert args.command == "backfill"
@@ -191,7 +191,7 @@ class TestBuildArgsParser:
 @patch("main.run_backfill")
 @patch("main.run_batch")
 class TestMain:
-    def test_run_인자로_실행하면_정상배치가_돈다(
+    def test_run_서브커맨드로_실행하면_run_batch가_호출된다(
         self, mock_run_batch, mock_run_backfill, mock_build_app_context
     ):
         main(["run"])
@@ -203,7 +203,7 @@ class TestMain:
 
     @patch("main._build_bigquery_context")
     @patch("main.run_transform")
-    def test_transform_인자로_실행하면_변환쿼리가_실행된다(
+    def test_transform_서브커맨드로_실행하면_run_transform이_호출된다(
         self,
         mock_transform,
         mock_bigquery_context,
@@ -221,7 +221,7 @@ class TestMain:
         mock_run_backfill.assert_not_called()
         mock_app_context.assert_not_called()
 
-    def test_backfill_인자로_실행하면_백필배치가_돈다(
+    def test_backfill_서브커맨드로_실행하면_run_backfill이_호출된다(
         self, mock_run_batch, mock_run_backfill, mock_build_app_context, backfill_argv
     ):
         main(backfill_argv)
@@ -237,7 +237,7 @@ class TestMain:
         )
         mock_run_batch.assert_not_called()
 
-    def test_백필필수_인자가_빠지면_아무것도_실행하지_않는다(
+    def test_backfill_필수_인자가_빠지면_아무것도_실행하지_않는다(
         self, mock_run_batch, mock_run_backfill, mock_build_app_context
     ):
         with pytest.raises(SystemExit):
