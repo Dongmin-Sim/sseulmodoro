@@ -75,18 +75,18 @@ def test_네임스페이스_값으로_BackfillConfig_빌드한다():
     assert isinstance(res, BackfillConfig)
     assert res.start_date == "2026-01-01"
     assert res.end_date == "2026-12-31"
-    assert res.table_name == "test"
 
 
 @patch("main._build_app_context")
 @patch("main.run_batch")
 def test_정상배치는_run_batch을_호출한다(mock_run_batch, mock_app_context):
-    _run(Namespace())
+    args = Namespace()
+    _run(args)
 
     app_ctx = mock_app_context.return_value
 
     mock_run_batch.assert_called_once_with(app_ctx)
-    mock_app_context.assert_called_once()
+    mock_app_context.assert_called_once_with(args)
 
 
 @patch("main._build_backfill_config")
@@ -107,12 +107,11 @@ def test_백필시_설정과_함께_run_backfill을_호출한다(
 
 
 class TestBuildArgsParser:
-
-    def test_정상배치실행_서브커맨드를_파싱한다(self):
+    def test_build_args_parser_정상배치실행_서브커맨드를_파싱한다(self):
         args = build_args_parser().parse_args(["run"])
         assert args.command == "run"
 
-    def test_backfill_파서의_인자를_네임스페이스에_담는다(self, backfill_argv):
+    def test_build_args_parser_파서의_인자를_네임스페이스에_담는다(self, backfill_argv):
         args = build_args_parser().parse_args(backfill_argv)
 
         assert args.command == "backfill"
@@ -120,14 +119,46 @@ class TestBuildArgsParser:
         assert args.end_date == "2026-01-02"
         assert args.table == "activity_log"
 
-    def test_서브커맨드마다_실행함수가_매핑된다(self, backfill_argv):
-        run_args = build_args_parser().parse_args(["run"])
-        transform_args = build_args_parser().parse_args(["transform"])
-        backfill_args = build_args_parser().parse_args(backfill_argv)
+    @pytest.mark.parametrize(
+        argnames="args, expected_func",
+        argvalues=[
+            (["run"], _run),
+            (["transform"], _run_transform),
+            (
+                [
+                    "backfill",
+                    "--start-date=2026-01-01",
+                    "--end-date=2026-01-02",
+                    "--table=test",
+                ],
+                _run_backfill,
+            ),
+        ],
+        ids=["run 서브커맨드", "transform 서브커맨드", "backfill 서브커맨드"],
+    )
+    def test_build_args_parser_서브커맨드마다_실행함수가_매핑된다(
+        self, args, expected_func
+    ):
+        parser = build_args_parser()
+        parsed_namespace = parser.parse_args(args)
 
-        assert run_args.func is _run
-        assert transform_args.func is _run_transform
-        assert backfill_args.func is _run_backfill
+        assert parsed_namespace.func is expected_func
+
+    def test_build_args_parser_run_서브커맨드에_table_인자가_없으면_None이_담긴다(self):
+        args = ["run"]
+
+        parser = build_args_parser()
+        parsed_namespace = parser.parse_args(args)
+
+        assert parsed_namespace.table is None
+
+    def test_build_args_parser_run_서브커맨드에_table_인자가_있으면_테이블_이름이_담긴다(self):
+        args = ["run", "--table=test_table"]
+
+        parser = build_args_parser()
+        parsed_namespace = parser.parse_args(args)
+
+        assert parsed_namespace.table == "test_table"
 
     @pytest.mark.parametrize(
         "argv",
@@ -151,7 +182,7 @@ class TestBuildArgsParser:
             "다른_서브커맨드의_인자_매핑",
         ],
     )
-    def test_잘못된_입력이면_종료한다(self, argv):
+    def test_build_args_parser_잘못된_입력이면_종료한다(self, argv):
         with pytest.raises(SystemExit):
             build_args_parser().parse_args(argv)
 
@@ -160,7 +191,6 @@ class TestBuildArgsParser:
 @patch("main.run_backfill")
 @patch("main.run_batch")
 class TestMain:
-
     def test_run_인자로_실행하면_정상배치가_돈다(
         self, mock_run_batch, mock_run_backfill, mock_build_app_context
     ):
@@ -201,7 +231,6 @@ class TestMain:
         mock_run_backfill.assert_called_once_with(
             app_ctx,
             BackfillConfig(
-                table_name="activity_log",
                 start_date="2026-01-01",
                 end_date="2026-01-02",
             ),

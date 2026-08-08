@@ -35,9 +35,9 @@ def _build_bigquery_context() -> BigqueryContext:
     )
 
 
-def _build_app_context() -> AppContext:
+def _build_app_context(args: argparse.Namespace) -> AppContext:
     src_db_url = _validate_database_url(os.getenv("DATABASE_URL"))
-    source_schema = load_source_config("app")
+    source_schema = load_source_config(name="app", table=args.table)
 
     return AppContext(
         source_database_url=src_db_url,
@@ -50,7 +50,6 @@ def _build_backfill_config(args: argparse.Namespace) -> BackfillConfig:
     return BackfillConfig(
         start_date=args.start_date,
         end_date=args.end_date,
-        table_name=args.table,
     )
 
 
@@ -71,12 +70,12 @@ def _valid_args_date(s: str) -> str:
 
 
 def _run(args: argparse.Namespace) -> None:
-    run_batch(_build_app_context())
+    run_batch(_build_app_context(args))
 
 
 def _run_backfill(args: argparse.Namespace) -> None:
     backfill_config = _build_backfill_config(args)
-    app_context = _build_app_context()
+    app_context = _build_app_context(args)
 
     run_backfill(app_context, backfill_config)
 
@@ -91,12 +90,13 @@ def build_args_parser() -> argparse.ArgumentParser:
     command_sub = parser.add_subparsers(dest="command", required=True)
 
     run_p = command_sub.add_parser("run")
+    run_p.add_argument("--table", default=None)
     run_p.set_defaults(func=_run)
 
     backfill_p = command_sub.add_parser("backfill")
+    backfill_p.add_argument("--table", required=True)
     backfill_p.add_argument("--start-date", type=_valid_args_date, required=True)
     backfill_p.add_argument("--end-date", type=_valid_args_date, required=True)
-    backfill_p.add_argument("--table", required=True)
     backfill_p.set_defaults(func=_run_backfill)
 
     transform_p = command_sub.add_parser("transform")

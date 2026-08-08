@@ -28,7 +28,6 @@ class AppContext:
 
 @dataclass(frozen=True)
 class BackfillConfig:
-    table_name: str
     start_date: str
     end_date: str
 

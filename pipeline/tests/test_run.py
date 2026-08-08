@@ -175,8 +175,8 @@ class TestRunBackfill:
     def test_지정_구간을_추출과_적재에_전달한다(self, mock_extract, mock_pre, mock_count, mock_load, mock_transform, app_context, backfill_config):
         app_ctx, bf_cfg = app_context(), backfill_config()
         src_db_url = app_ctx.source_database_url
-        bf_tbl_name = bf_cfg.table_name
-        backfill_table = app_ctx.source_schema.find_source_table(bf_tbl_name)
+        bf_tbl_name = "test_log"
+        backfill_table = app_ctx.source_schema.tables[0]
         start_date, end_date = bf_cfg.start_date, bf_cfg.end_date
         df = pd.DataFrame({"user_id": [1, 2]})
 
@@ -192,10 +192,6 @@ class TestRunBackfill:
         )
         mock_transform.assert_not_called()
 
-    def test_없는_테이블을_지정하면_중단한다(self, app_context, backfill_config):
-        app_ctx, bf_cfg = app_context(), backfill_config(table_name=None)
-        with pytest.raises(RuntimeError):
-            run_backfill(app_ctx, bf_cfg)
 
 
 class TestTransform:
