@@ -29,6 +29,9 @@ fi
 # 멱등: 있으면 skip, 없으면 create
 if gcloud builds triggers describe "$TRIGGER_NAME" --project="$PROJECT_ID" >/dev/null 2>&1; then
   echo "trigger $TRIGGER_NAME exists, skip"
+  echo "    현재 치환값: $(gcloud builds triggers describe "$TRIGGER_NAME" --project="$PROJECT_ID" --format='value(substitutions)')"
+  echo "    기대 치환값: _REPO=$REPOSITORY, _ENV=$ENV"
+  echo "    다르면 트리거를 지우고 재실행 — cloudbuild가 _ENV를 못 받으면 빌드가 실패한다"
 else
 
   if ! gcloud builds triggers create github \
@@ -40,7 +43,7 @@ else
     --build-config='pipeline/cloudbuild.yaml' \
     --service-account="projects/$PROJECT_ID/serviceAccounts/$SA_DEPLOYER@$PROJECT_ID.iam.gserviceaccount.com" \
     --project="$PROJECT_ID" \
-    --substitutions=_REPO="$REPOSITORY" >/dev/null; then
+    --substitutions=_REPO="$REPOSITORY",_ENV="$ENV" >/dev/null; then
     echo "[!] 트리거 생성 실패 — GitHub repo 미연결 가능성:"
     echo "    https://console.cloud.google.com/cloud-build/triggers?project=$PROJECT_ID → Connect Repository 후 재실행"
     exit 1

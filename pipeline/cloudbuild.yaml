@@ -38,5 +38,11 @@ steps:
       - --call-log-level=log-all-calls
       - --source=infra/workflow.yaml
     dir: 'pipeline'
+
+  # 5) Cloud Scheduler 잡 생성/갱신
+  - name: gcr.io/cloud-builders/gcloud
+    entrypoint: bash
+    args: ['infra/setup-scheduler.sh', '${_ENV}']
+    dir: 'pipeline'
 options:
   logging: CLOUD_LOGGING_ONLY

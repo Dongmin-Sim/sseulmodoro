@@ -79,8 +79,8 @@ if [ "${WITH_SCHEDULER:-false}" != "true" ]; then
   exit 0
 fi
 
-# prod 가드
-if [ "$ENV" = "prod" ]; then
+# prod
+if [ "$ENV" = "prod" ] && [ -t 0 ]; then
   read -rp "Create PROD schedulers ($PROJECT_ID, ${#SCHEDULES[@]} jobs). Type 'yes': " ok
   [ "$ok" = "yes" ] || { echo "aborted"; exit 1; }
 fi
