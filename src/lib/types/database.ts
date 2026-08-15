@@ -213,6 +213,7 @@ export type Database = {
           started_at: string
           status: string
           target_count: number
+          updated_at: string
           user_id: string
         }
         Insert: {
@@ -227,6 +228,7 @@ export type Database = {
           started_at: string
           status?: string
           target_count: number
+          updated_at?: string
           user_id: string
         }
         Update: {
@@ -241,6 +243,7 @@ export type Database = {
           started_at?: string
           status?: string
           target_count?: number
+          updated_at?: string
           user_id?: string
         }
         Relationships: [
@@ -269,6 +272,7 @@ export type Database = {
           session_id: number
           started_at: string
           status: string
+          updated_at: string
           user_id: string
         }
         Insert: {
@@ -279,6 +283,7 @@ export type Database = {
           session_id: number
           started_at: string
           status?: string
+          updated_at?: string
           user_id: string
         }
         Update: {
@@ -289,6 +294,7 @@ export type Database = {
           session_id?: number
           started_at?: string
           status?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: [
