@@ -10,7 +10,7 @@ case "$ENV" in dev|prod) ;; *) echo "unknown env: $ENV"; exit 1 ;; esac
 
 source "$(dirname "$0")/env.$ENV.sh"
 
-SA_SCHEDULER="nsm-scheduler"
+SA_SCHEDULER="pipeline-scheduler"
 WORKFLOW_NAME="nsm-workflow" # cloudbuild.yaml의 _WORKFLOW_NAME과 일치해야 함
 TIMEZONE='Asia/Seoul'
 AT='0 4'

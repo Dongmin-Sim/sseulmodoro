@@ -1,7 +1,7 @@
 substitutions:
   _REGION: us-central1
-  _SA_JOB: nsm-runner
-  _SA_WORKFLOW: nsm-orchestrator
+  _SA_JOB: pipeline-runner
+  _SA_WORKFLOW: pipeline-orchestrator
   _JOB_NAME: nsm-job
   _WORKFLOW_NAME: nsm-workflow
 steps:
