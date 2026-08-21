@@ -9,6 +9,10 @@ terraform {
       source  = "hashicorp/google"
       version = "~> 7.0"
     }
+    google-beta = {
+      source  = "hashicorp/google-beta"
+      version = "~> 7.0"
+    }
   }
 }
 
@@ -62,6 +66,16 @@ variable "env" {
   description = "환경 이름 (dev | prod)"
 }
 
+variable "trigger_branch" {
+  type        = string
+  description = "빌드 트리거가 감시할 브랜치 패턴"
+}
+
+variable "enable_scheduler" {
+  type        = bool
+  description = "정기 실행 크론 생성 여부"
+}
+
 variable "github_app_installation_id" {
   type        = string
   description = "GitHub Cloud Build App 설치 ID"
@@ -77,6 +91,11 @@ variable "git_repository_remote_uri" {
   description = "GitHub clone HTTPS URI"
 }
 
+variable "workflow_name" {
+  type        = string
+  description = "Cloud Workflow 이름"
+}
+
 variable "job_name" {
   type        = string
   description = "Cloud Run job 이름 (알림 필터 대상)"
@@ -88,6 +107,11 @@ variable "slack_display_name" {
 }
 
 locals {
+  service_identities = [
+    "workflows.googleapis.com",
+    "cloudbuild.googleapis.com",
+  ]
+
   service_accounts_info = {
     job       = { account_id = "pipeline-runner", display_name = "Pipeline Job Runner (BigQuery)" }
     scheduler = { account_id = "pipeline-scheduler", display_name = "Pipeline Scheduler Invoker" }
@@ -95,18 +119,35 @@ locals {
     deployer  = { account_id = "pipeline-deployer", display_name = "Pipeline Deployer (CI/CD)" }
   }
 
-  trigger_branch = var.env == "prod" ? "^main$" : "^dev$"
-
   project_roles = {
     job       = ["roles/bigquery.jobUser", "roles/bigquery.dataEditor"]
     scheduler = ["roles/workflows.invoker"]
     workflow  = ["roles/run.jobsExecutorWithOverrides", "roles/run.viewer", "roles/logging.logWriter"]
-    deployer  = ["roles/run.developer", "roles/artifactregistry.writer", "roles/logging.logWriter", "roles/workflows.editor", "roles/cloudscheduler.admin"]
+    deployer  = ["roles/run.developer", "roles/artifactregistry.writer", "roles/logging.logWriter"]
+  }
+
+  schedules = {
+    daily  = { cron = "0 4 * * 0,2,3,4,5,6", tables = ["activity_log"] }
+    monday = { cron = "0 4 * * 1", tables = ["activity_log", "pomodoro_sessions"] }
   }
 }
 
 provider "google" {
   region = var.region
+}
+
+provider "google-beta" {
+  region = var.region
+}
+
+resource "google_project_service_identity" "agents" {
+  provider = google-beta
+  for_each = toset(local.service_identities)
+
+  depends_on = [google_project_service.services]
+
+  project = google_project.project.project_id
+  service = each.value
 }
 
 resource "google_project" "project" {
@@ -226,6 +267,8 @@ resource "google_secret_manager_secret" "github_pat" {
 }
 
 resource "google_secret_manager_secret_iam_member" "build_accessor" {
+  depends_on = [google_project_service_identity.agents["cloudbuild.googleapis.com"]]
+
   project   = google_project.project.project_id
   secret_id = google_secret_manager_secret.github_pat.secret_id
   role      = "roles/secretmanager.secretAccessor"
@@ -266,7 +309,7 @@ resource "google_cloudbuild_trigger" "repo-deploy-trigger" {
   repository_event_config {
     repository = google_cloudbuildv2_repository.sseulmodoro.id
     push {
-      branch = local.trigger_branch
+      branch = var.trigger_branch
     }
   }
 
@@ -275,8 +318,10 @@ resource "google_cloudbuild_trigger" "repo-deploy-trigger" {
   service_account = google_service_account.sa["deployer"].id
 
   substitutions = {
-    _REPO = var.repository_id
-    _ENV  = var.env
+    _REPO     = var.repository_id
+    _SA_JOB   = google_service_account.sa["job"].email
+    _REGION   = var.region
+    _JOB_NAME = var.job_name
   }
 }
 
@@ -345,4 +390,46 @@ resource "google_monitoring_alert_policy" "pipeline_empty_mart" {
   }
 
   notification_channels = [data.google_monitoring_notification_channel.slack.name]
+}
+
+resource "google_workflows_workflow" "pipeline_workflow" {
+  depends_on = [google_project_service_identity.agents["workflows.googleapis.com"]]
+
+  project             = google_project.project.project_id
+  region              = var.region
+  name                = var.workflow_name
+  service_account     = google_service_account.sa["workflow"].id
+  source_contents     = file("${path.module}/../workflow.yaml")
+  deletion_protection = false
+
+  user_env_vars = {
+    job_name     = var.job_name
+    job_location = var.region
+  }
+}
+
+resource "google_cloud_scheduler_job" "pipeline_scheduler" {
+  depends_on = [google_project_service.services["cloudscheduler.googleapis.com"]]
+
+  for_each = { for name, s in local.schedules : name => s if var.enable_scheduler }
+
+  project   = google_project.project.project_id
+  region    = var.region
+  name      = "${var.workflow_name}-${each.key}"
+  schedule  = each.value.cron
+  time_zone = "Asia/Seoul"
+
+  http_target {
+    uri         = "https://workflowexecutions.googleapis.com/v1/projects/${google_project.project.project_id}/locations/${var.region}/workflows/${google_workflows_workflow.pipeline_workflow.name}/executions"
+    http_method = "POST"
+    headers     = { "Content-Type" = "application/json" }
+
+    body = base64encode(jsonencode({
+      argument = jsonencode({ tables = each.value.tables })
+    }))
+
+    oauth_token {
+      service_account_email = google_service_account.sa["scheduler"].email
+    }
+  }
 }
