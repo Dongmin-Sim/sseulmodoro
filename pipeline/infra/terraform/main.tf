@@ -1,9 +1,6 @@
 terraform {
   required_version = ">= 1.5"
-  backend "gcs" {
-    bucket = "sseulmodoro-prod-tfstate"
-    prefix = "prod"
-  }
+  backend "gcs" {}
   required_providers {
     google = {
       source  = "hashicorp/google"
@@ -14,96 +11,6 @@ terraform {
       version = "~> 7.0"
     }
   }
-}
-
-variable "billing_account" {
-  type        = string
-  description = "결제 계정"
-}
-
-variable "project_id" {
-  type        = string
-  description = "프로젝트 ID"
-}
-
-variable "project_name" {
-  type        = string
-  description = "프로젝트 name"
-}
-
-variable "organization_id" {
-  type        = string
-  description = "조직 ID"
-}
-
-variable "services" {
-  type        = list(string)
-  description = "gcp 서비스"
-  default = [
-    "artifactregistry.googleapis.com",
-    "cloudbuild.googleapis.com",
-    "cloudscheduler.googleapis.com",
-    "secretmanager.googleapis.com",
-    "run.googleapis.com",
-    "workflows.googleapis.com",
-    "workflowexecutions.googleapis.com",
-    "monitoring.googleapis.com",
-  ]
-}
-
-variable "region" {
-  type        = string
-  description = "region"
-}
-
-variable "repository_id" {
-  type        = string
-  description = "docker image repository ID"
-}
-
-variable "env" {
-  type        = string
-  description = "환경 이름 (dev | prod)"
-}
-
-variable "trigger_branch" {
-  type        = string
-  description = "빌드 트리거가 감시할 브랜치 패턴"
-}
-
-variable "enable_scheduler" {
-  type        = bool
-  description = "정기 실행 크론 생성 여부"
-}
-
-variable "github_app_installation_id" {
-  type        = string
-  description = "GitHub Cloud Build App 설치 ID"
-}
-
-variable "git_repository_name" {
-  type        = string
-  description = "Cloud Build v2 repository 리소스 이름"
-}
-
-variable "git_repository_remote_uri" {
-  type        = string
-  description = "GitHub clone HTTPS URI"
-}
-
-variable "workflow_name" {
-  type        = string
-  description = "Cloud Workflow 이름"
-}
-
-variable "job_name" {
-  type        = string
-  description = "Cloud Run job 이름 (알림 필터 대상)"
-}
-
-variable "slack_display_name" {
-  type        = string
-  description = "Slack 알림 채널 이름"
 }
 
 locals {
@@ -326,11 +233,15 @@ resource "google_cloudbuild_trigger" "repo-deploy-trigger" {
 }
 
 data "google_monitoring_notification_channel" "slack" {
+  count = var.enable_alerts ? 1 : 0
+
   project      = google_project.project.project_id
   display_name = var.slack_display_name
 }
 
 resource "google_monitoring_alert_policy" "pipeline_fail" {
+  count = var.enable_alerts ? 1 : 0
+
   project      = google_project.project.project_id
   display_name = "pipeline_fail"
   combiner     = "OR"
@@ -358,10 +269,12 @@ resource "google_monitoring_alert_policy" "pipeline_fail" {
     }
   }
 
-  notification_channels = [data.google_monitoring_notification_channel.slack.name]
+  notification_channels = [data.google_monitoring_notification_channel.slack[0].name]
 }
 
 resource "google_monitoring_alert_policy" "pipeline_empty_mart" {
+  count = var.enable_alerts ? 1 : 0
+
   project      = google_project.project.project_id
   display_name = "pipeline_empty_mart"
   combiner     = "OR"
@@ -389,7 +302,7 @@ resource "google_monitoring_alert_policy" "pipeline_empty_mart" {
     }
   }
 
-  notification_channels = [data.google_monitoring_notification_channel.slack.name]
+  notification_channels = [data.google_monitoring_notification_channel.slack[0].name]
 }
 
 resource "google_workflows_workflow" "pipeline_workflow" {
