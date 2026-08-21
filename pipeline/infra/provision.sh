@@ -123,6 +123,7 @@ create_cd_service_account() {
   # - roles/logging.logWriter
   # - roles/iam.serviceAccountUser
   # - roles/workflows.editor
+  # - roles/cloudscheduler.admin
   gcloud projects add-iam-policy-binding "$PROJECT_ID" \
     --member="serviceAccount:$SA_DEPLOYER@$PROJECT_ID.iam.gserviceaccount.com" \
     --role="roles/run.developer" >/dev/null
@@ -135,6 +136,10 @@ create_cd_service_account() {
   gcloud projects add-iam-policy-binding "$PROJECT_ID" \
     --member="serviceAccount:$SA_DEPLOYER@$PROJECT_ID.iam.gserviceaccount.com" \
     --role="roles/workflows.editor" >/dev/null
+  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="serviceAccount:$SA_DEPLOYER@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/cloudscheduler.admin" >/dev/null
+
 
   gcloud iam service-accounts add-iam-policy-binding "$SA_JOB@$PROJECT_ID.iam.gserviceaccount.com" \
   --member="serviceAccount:$SA_DEPLOYER@$PROJECT_ID.iam.gserviceaccount.com" \
@@ -142,8 +147,11 @@ create_cd_service_account() {
   gcloud iam service-accounts add-iam-policy-binding "$SA_WORKFLOW@$PROJECT_ID.iam.gserviceaccount.com" \
   --member="serviceAccount:$SA_DEPLOYER@$PROJECT_ID.iam.gserviceaccount.com" \
   --role="roles/iam.serviceAccountUser" --project="$PROJECT_ID" >/dev/null
+  gcloud iam service-accounts add-iam-policy-binding "$SA_SCHEDULER@$PROJECT_ID.iam.gserviceaccount.com" \
+  --member="serviceAccount:$SA_DEPLOYER@$PROJECT_ID.iam.gserviceaccount.com" \
+  --role="roles/iam.serviceAccountUser" --project="$PROJECT_ID" >/dev/null
 
-  echo "bound run.developer / artifactregistry.writer / logging.logWriter / workflows.editor / iam.serviceAccountUser to $SA_DEPLOYER"
+  echo "bound run.developer / artifactregistry.writer / logging.logWriter / workflows.editor / cloudscheduler.admin / iam.serviceAccountUser to $SA_DEPLOYER"
 }
 
 create_workflow_service_account() {
