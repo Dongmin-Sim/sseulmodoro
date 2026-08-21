@@ -51,10 +51,6 @@ key*.json
 credentials*.json
 *-key.json
 
-# infra: real env values (public repo — keep project/billing ids out); commit .example instead
-pipeline/infra/env.*.sh
-pipeline/infra/gcp-provisioning.sh
-
 # supabase local
 supabase/snippets/
 
@@ -79,3 +75,14 @@ desing_handoff/
 # 합성 시드 (로컬 전용 — 시나리오 설정·생성 산출물)
 pipeline/seeds/scenarios/
 supabase/seeds/synthetic.sql
+
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+!*.tfvars.example
+override.tf
+override.tf.json
+.terraformrc
+terraform.rc

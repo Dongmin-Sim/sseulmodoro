@@ -2,8 +2,7 @@
 
 Cloud Monitoring **로그 기반 알림 정책**. 
 
-- 정책 스크립트: `infra/setup-alerts.sh`
-- 정의: `infra/alert-*.json`
+- 정의: `infra/terraform/main.tf` (`google_monitoring_alert_policy`)
 - 로그 스키마: `docs/logging-schema.md`
 
 ## 정책
