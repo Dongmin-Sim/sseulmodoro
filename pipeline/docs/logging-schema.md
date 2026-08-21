@@ -5,7 +5,7 @@
 
 - **배포 환경**: 커스텀 JSON 포맷 (`CloudLoggingFormatter`) - Cloud Logging에서 필드로 필터·집계
 - **로컬 환경**: 커스텀 콘솔 포맷 (`CustomConsoleFormatter`)
-- 관련 코드: `etl/utils/logger.py` · 알림 정책: `infra/setup-alerts.sh`
+- 관련 코드: `etl/utils/logger.py` / 알림 정책: `infra/terraform/main.tf`
 
 ## 공통 필드 (모든 로그 레코드)
 
@@ -43,10 +43,10 @@
 
 아래 알림 정책이 트리거되는 필드 조건을 읽어 이상 여부 **판정** 후 알림 채널로 알림을 보낸다.
 
-| 알림 | 트리거 (필드 조건) | 정책 파일 |
+| 알림 | 트리거 (필드 조건) | 정책 리소스 |
 | --- | --- | --- |
-| 파이프라인 실패 | `status = fail` | `infra/alert-pipeline-fail.json` |
-| 적재 0건 | `rows = 0` | `infra/alert-pipeline-empty-mart.json` |
+| 파이프라인 실패 | `status = fail` | `google_monitoring_alert_policy.pipeline_fail` |
+| 적재 0건 | `rows = 0` | `google_monitoring_alert_policy.pipeline_empty_mart` |
 
 ## 로그 예시(JSON)
 
