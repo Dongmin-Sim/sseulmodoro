@@ -51,10 +51,6 @@ key*.json
 credentials*.json
 *-key.json
 
-# infra: real env values (public repo — keep project/billing ids out); commit .example instead
-pipeline/infra/env.*.sh
-pipeline/infra/gcp-provisioning.sh
-
 # supabase local
 supabase/snippets/
 
