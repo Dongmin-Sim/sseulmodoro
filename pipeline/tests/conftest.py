@@ -150,7 +150,6 @@ def app_context(gcp_client, make_source_table_full, make_source_table_incrementa
 def backfill_config():
     def _make(**overrides) -> BackfillConfig:
         base = {
-            "table_name": "test_incremental_log",
             "start_date": "2026-01-01",
             "end_date": "2026-01-02",
         }

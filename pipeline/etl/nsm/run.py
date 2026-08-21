@@ -77,15 +77,11 @@ def run_backfill(app_context: AppContext, backfill_config: BackfillConfig) -> No
     src_db_url = app_context.source_database_url
     bq_schema = app_context.bigquery_schema
 
-    backfill_tbl_name = backfill_config.table_name
     start_date = backfill_config.start_date
     end_date = backfill_config.end_date
 
     with timed(logger, "run", "backfill"):
-        backfill_table = source.find_source_table(backfill_tbl_name)
-
-        if backfill_table is None:
-            raise RuntimeError("backfill table not found")
+        backfill_table = source.tables[0]  # TODO: 단일 실행 단위를 인자로 받도록 리팩토링 예정
 
         df = extract_backfill(src_db_url, backfill_table, start_date, end_date)
         proc_df = preprocessing(df, backfill_table.name)

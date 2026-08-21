@@ -105,14 +105,8 @@ class Source:
     def table_names(self) -> list[str]:
         return [t.name for t in self.tables]
 
-    def find_source_table(self, name: str) -> SourceTable | None:
-        for t in self.tables:
-            if t.name == name:
-                return t
-        return None
 
-
-def load_source_config(name: str, path=SOURCE_CONFIG_DIR) -> Source:
+def load_source_config(name: str, table: str | None, path=SOURCE_CONFIG_DIR) -> Source:
     with open(path, "r") as f:
         src_schema_config = yaml.safe_load(f)
 
@@ -121,13 +115,13 @@ def load_source_config(name: str, path=SOURCE_CONFIG_DIR) -> Source:
             return Source(
                 name=name,
                 type=s["type"],
-                tables=to_source_tables(s["tables"]),
+                tables=to_source_tables(s["tables"], table),
             )
     raise KeyError(f"Source {name} not found")
 
 
-def to_source_tables(tables: list[dict]) -> list[SourceTable]:
-    return [
+def to_source_tables(tables: list[dict], table: str | None) -> list[SourceTable]:
+    source_tables = [
         SourceTable(
             name=t["name"],
             columns=t["columns"],
@@ -139,5 +133,8 @@ def to_source_tables(tables: list[dict]) -> list[SourceTable]:
             merge_key=t.get("primary_key"),
         )
         for t in tables
+        if table is None or t["name"] == table
     ]
-
+    if not source_tables:
+        raise KeyError(f"table {table} not found or empty tables")
+    return source_tables

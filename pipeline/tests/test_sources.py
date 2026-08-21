@@ -17,24 +17,41 @@ YAML_FIXTURES_PATH = RESOURCES_PATH / "fixture_source_schema.yaml"
 source_name = 'test_app'
 
 class TestLoadSourceConfig:
-    def test_load_source_config(self):
-        res = load_source_config(source_name, YAML_FIXTURES_PATH)
+    def test_load_source_config_Source를_반환한다(self):
+        res = load_source_config(source_name, None, YAML_FIXTURES_PATH)
         assert isinstance(res, Source)
 
-    def test_parses_table_fields(self):
-        sources = load_source_config(source_name, YAML_FIXTURES_PATH)
-        orders = sources.tables[0]
-        assert orders.name == "test_log"
-        assert orders.columns == ["id", "user_id", "created_at"]
-        assert orders.load_mode == LoadMode.INCREMENTAL_APPEND
+    def test_load_source_config_YAML의_소스와_테이블_필드가_매핑된다(self):
+        sources = load_source_config(source_name, None, YAML_FIXTURES_PATH)
 
-    def test_table_names_returns_all_names(self):
-        res = load_source_config(source_name, YAML_FIXTURES_PATH)
-        assert res.table_names == ['test_log', 'test_session']
+        assert sources.type == "postgres"
+        assert sources.table_names == ["test_log", "test_session"]
 
-    def test_fail_wrong_name(self):
+        source_table = sources.tables[0]
+        assert source_table.name == "test_log"
+        assert source_table.columns == ["id", "user_id", "created_at"]
+        assert source_table.load_mode == LoadMode.INCREMENTAL_APPEND
+
+    def test_load_source_config_없는_소스_이름이_주어지면_KeyError를_던진다(self):
+        wrong_source_name = "WRONG NAME"
         with pytest.raises(KeyError):
-            load_source_config("WRONG NAME", YAML_FIXTURES_PATH)
+            load_source_config(wrong_source_name, "test_log", YAML_FIXTURES_PATH)
+
+    def test_load_source_config_table_인자가_없으면_모든_테이블이_담긴다(self):
+        source = load_source_config(source_name, None, YAML_FIXTURES_PATH)
+
+        assert source.table_names == ["test_log", "test_session"]
+
+    def test_load_source_config_table_인자가_주어지면_해당_테이블만_담긴다(self):
+        source = load_source_config(source_name, "test_log", YAML_FIXTURES_PATH)
+
+        assert source.table_names == ["test_log"]
+
+    def test_load_source_config_없는_테이블_이름이_주어지면_KeyError를_던진다(self):
+        table_name = "test_wrong"
+
+        with pytest.raises(KeyError):
+            load_source_config(source_name, table_name, YAML_FIXTURES_PATH)
 
 
 class TestSourceTable:
