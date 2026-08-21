@@ -87,6 +87,14 @@ export function unlockAudio() {
 
 /** 완료 시 사운드 재생 — 파일이 준비됐으면 파일, 아니면 비프 */
 function playCompletionSound() {
+  // 프로필 설정의 "완료 효과음" off면 재생 생략
+  try {
+    if (typeof localStorage !== "undefined" && localStorage.getItem("sm-sound") === "off") {
+      return;
+    }
+  } catch {
+    // localStorage 접근 불가 환경은 기본(재생) 유지
+  }
   if (soundFileReady && soundFile) {
     try {
       soundFile.currentTime = 0;

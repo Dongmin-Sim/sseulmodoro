@@ -20,5 +20,5 @@ ON CONFLICT (key) DO NOTHING;
 
 -- 가차 레어리티 가중치 (상대값, 합계 100 불필요)
 INSERT INTO public.app_config (key, value)
-VALUES ('gacha_rarity_weights', '{"common": 70, "rare": 25, "epic": 4, "legendary": 1}')
+VALUES ('gacha_rarity_weights', '{"common": 69, "rare": 25, "epic": 4, "legendary": 1.5, "mythic": 0.5}')
 ON CONFLICT (key) DO NOTHING;

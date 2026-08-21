@@ -63,5 +63,26 @@ supabase/snippets/
 .claude/worktrees/
 .gstack/
 
+# 작업면 — /status·/brainstorm·/detail 산출물(로컬 단일 원천, 커밋 제외). 스킬 도구는 .claude/에 커밋
+/workspace
+
 # 새 카드 생성기 — 검수용 미리보기(재생성 가능, 커밋 제외)
 tools/bird-card-gen/preview.png
+
+# 디자인 핸드오프 번들 — 리디자인 참조용(시안 HTML·에셋 원본), 레포에 커밋하지 않음
+desing_handoff/
+
+# 합성 시드 (로컬 전용 — 시나리오 설정·생성 산출물)
+pipeline/seeds/scenarios/
+supabase/seeds/synthetic.sql
+
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+!*.tfvars.example
+override.tf
+override.tf.json
+.terraformrc
+terraform.rc

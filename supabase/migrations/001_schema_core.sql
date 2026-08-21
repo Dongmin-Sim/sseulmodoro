@@ -22,11 +22,13 @@ CREATE UNIQUE INDEX uniq_profiles_nickname_lower
 
 -- 2. character_types
 CREATE TABLE public.character_types (
-  id          SERIAL PRIMARY KEY,
-  name        VARCHAR(100) NOT NULL,
-  rarity      VARCHAR(20) NOT NULL,
-  description TEXT,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  id              SERIAL PRIMARY KEY,
+  slug            VARCHAR(50) NOT NULL UNIQUE,
+  name            VARCHAR(100) NOT NULL,
+  scientific_name VARCHAR(100),
+  rarity          VARCHAR(20) NOT NULL,
+  description     TEXT,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- 3. character_instances
@@ -46,6 +48,7 @@ CREATE UNIQUE INDEX uniq_character_instances_main_per_user
   WHERE is_main = true;
 
 -- 4. pomodoro_sessions (사이클 단위)
+-- updated_at: 행이 바뀔 때마다 011의 트리거가 채운다 (호출자가 챙기지 않는다)
 CREATE TABLE public.pomodoro_sessions (
   id                    SERIAL PRIMARY KEY,
   user_id               UUID NOT NULL REFERENCES public.profiles(id),
@@ -58,10 +61,12 @@ CREATE TABLE public.pomodoro_sessions (
   status                VARCHAR(20) NOT NULL DEFAULT 'in_progress',
   started_at            TIMESTAMPTZ NOT NULL,
   ended_at              TIMESTAMPTZ,
-  created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- 5. pomodoros
+-- updated_at: 행이 바뀔 때마다 011의 트리거가 채운다 (호출자가 챙기지 않는다)
 CREATE TABLE public.pomodoros (
   id             SERIAL PRIMARY KEY,
   session_id     INTEGER NOT NULL REFERENCES public.pomodoro_sessions(id),
@@ -70,7 +75,8 @@ CREATE TABLE public.pomodoros (
   started_at     TIMESTAMPTZ NOT NULL,
   completed_at   TIMESTAMPTZ,
   note           TEXT,
-  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- 6. activity_log (append-only)

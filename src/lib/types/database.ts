@@ -136,6 +136,7 @@ export type Database = {
           id: number
           name: string
           rarity: string
+          scientific_name: string | null
           slug: string
         }
         Insert: {
@@ -144,6 +145,7 @@ export type Database = {
           id?: number
           name: string
           rarity: string
+          scientific_name?: string | null
           slug: string
         }
         Update: {
@@ -152,6 +154,7 @@ export type Database = {
           id?: number
           name?: string
           rarity?: string
+          scientific_name?: string | null
           slug?: string
         }
         Relationships: []
@@ -210,6 +213,7 @@ export type Database = {
           started_at: string
           status: string
           target_count: number
+          updated_at: string
           user_id: string
         }
         Insert: {
@@ -224,6 +228,7 @@ export type Database = {
           started_at: string
           status?: string
           target_count: number
+          updated_at?: string
           user_id: string
         }
         Update: {
@@ -238,6 +243,7 @@ export type Database = {
           started_at?: string
           status?: string
           target_count?: number
+          updated_at?: string
           user_id?: string
         }
         Relationships: [
@@ -266,6 +272,7 @@ export type Database = {
           session_id: number
           started_at: string
           status: string
+          updated_at: string
           user_id: string
         }
         Insert: {
@@ -276,6 +283,7 @@ export type Database = {
           session_id: number
           started_at: string
           status?: string
+          updated_at?: string
           user_id: string
         }
         Update: {
@@ -286,6 +294,7 @@ export type Database = {
           session_id?: number
           started_at?: string
           status?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: [
@@ -343,11 +352,14 @@ export type Database = {
       }
       end_session: { Args: { p_session_id: number }; Returns: Json }
       gacha: { Args: never; Returns: Json }
+      get_focus_heatmap: { Args: { p_days?: number }; Returns: Json }
       get_record_history: {
         Args: { p_cursor?: string; p_limit?: number }
         Returns: Json
       }
       is_nickname_available: { Args: { p_nickname: string }; Returns: boolean }
+      log_app_visited: { Args: never; Returns: undefined }
+      set_main_character: { Args: { p_instance_id: number }; Returns: Json }
       start_next_pomodoro: { Args: { p_session_id: number }; Returns: Json }
       start_session: {
         Args: {

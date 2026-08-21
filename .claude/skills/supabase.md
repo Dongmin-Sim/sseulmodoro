@@ -63,9 +63,7 @@ npx supabase db reset          # 로컬 DB 초기화 + 마이그레이션 재실
 - `.env.local` → 로컬 개발용 (로컬 DB URL + 로컬 키)
 - Vercel 환경변수 → 배포용 (클라우드 DB URL + 클라우드 키)
 
-## 현재 상태
+## 마이그레이션
 
-- Supabase 프로젝트: 생성 완료, CLI 연결 완료
-- 스키마: 미적용 (DB 설계 확정 후 `npx supabase db push`)
-- RLS: Automatic RLS 켜져 있음. 정책은 미작성.
-- 초기 스키마 파일: `supabase/migrations/001_initial_schema.sql` (초안, 수정 예정)
+- 스키마·RLS 정책은 `supabase/migrations/`에 있으며 적용됨.
+- 변경은 새 마이그레이션으로만 (`npx supabase db push`). 배포 반영은 `releasing` 참조.

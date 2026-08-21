@@ -18,6 +18,9 @@ credentials*.json
 secrets/
 .gcp/
 
+# 프로비저닝 스크립트 — ETL 이미지와 무관 (env.*.sh의 project·billing id 유출 방지)
+infra/
+
 # IDE
 .idea/
 .vscode/

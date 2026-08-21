@@ -1,0 +1,38 @@
+sources:
+  - name: app
+    type: postgres
+    tables:
+      - name: activity_log
+        columns:
+          - id
+          - user_id
+          - event_category
+          - event_type
+          - metadata
+          - created_at
+        primary_key: id
+        load_mode: incremental_append
+        incremental_key: id
+        incremental_key_type: bigint
+        backfill_key: created_at
+
+      - name: pomodoro_sessions
+        columns:
+          - id
+          - user_id
+          - character_instance_id
+          - target_count
+          - completed_count
+          - focus_minutes
+          - short_break_minutes
+          - long_break_minutes
+          - status
+          - started_at
+          - ended_at
+          - updated_at
+          - created_at
+        primary_key: id
+        load_mode: incremental_upsert
+        incremental_key: updated_at
+        incremental_key_type: timestamptz
+        backfill_key: created_at

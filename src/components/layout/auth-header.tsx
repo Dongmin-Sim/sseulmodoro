@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/layout/page-container";
 import {
@@ -23,28 +24,91 @@ type AuthHeaderProps = {
   balance: number;
 };
 
-const TAB_BASE = "relative px-5 py-3 text-sm transition-colors";
-const tabClass = (isActive: boolean) =>
-  isActive
-    ? "font-bold text-foreground"
-    : "font-medium text-muted-foreground hover:text-foreground";
-const ActiveUnderline = () => (
-  <span className="absolute bottom-0 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-primary" />
-);
+// 픽셀 로고칩 — 도트 큐브 느낌(inset 그림자 + 오프셋 그린)
+function LogoChip({ size = 16 }: { size?: number }) {
+  return (
+    <span
+      aria-hidden
+      className="shrink-0 rounded-[4px] bg-primary-deep"
+      style={{
+        width: size,
+        height: size,
+        boxShadow: "inset 0 -4px 0 rgba(0,0,0,.12), 3px -6px 0 -2px var(--break)",
+      }}
+    />
+  );
+}
 
-// 인증 영역 공통 상단 헤더 (2줄, sticky)
-//  - 윗줄: 로고 + 잔액 + 닉네임(→/profile) + 로그아웃
-//  - 아랫줄: 섹션 탭(홈·도감·상점·기록)
+// 섹션 탭(홈·도감·상점·기록). 홈 탭은 /home에서 세션 종료 액션으로 동작.
+function NavTabs({ variant }: { variant: "desktop" | "mobile" }) {
+  const pathname = usePathname();
+  const { isSessionActive, exitSession } = usePomodoroSession();
+  const isMobile = variant === "mobile";
+
+  const itemBase = isMobile
+    ? "relative flex-1 py-3 text-center text-[13px] transition-colors"
+    : "relative px-[18px] py-2.5 text-sm transition-colors";
+  const toneClass = (isActive: boolean) =>
+    isActive
+      ? "font-bold text-foreground"
+      : "font-medium text-muted-foreground hover:text-foreground";
+  const underline = (
+    <span
+      className={cn(
+        "absolute left-1/2 h-[3px] w-5 -translate-x-1/2 rounded-full bg-primary",
+        isMobile ? "bottom-0" : "-bottom-px",
+      )}
+    />
+  );
+
+  return (
+    <nav
+      className={cn(
+        isMobile ? "flex w-full" : "mx-auto hidden items-center gap-1 lg:flex",
+      )}
+    >
+      {MAIN_NAV_ITEMS.map((item) => {
+        const href = item.href ?? "#";
+        // 홈 탭: /home에서 타이머 뷰면 클릭 시 메인 복귀(세션 종료)
+        if (href === "/home" && pathname === "/home") {
+          return (
+            <button
+              key={item.label}
+              type="button"
+              onClick={exitSession}
+              className={cn(itemBase, toneClass(!isSessionActive))}
+            >
+              {item.label}
+              {!isSessionActive && underline}
+            </button>
+          );
+        }
+        const isActive = pathname === href;
+        return (
+          <Link key={item.label} href={href} className={cn(itemBase, toneClass(isActive))}>
+            {item.label}
+            {isActive && underline}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+// 인증 영역 공통 상단 헤더 (sticky)
+//  - 데스크톱: 단일 바 — 로고 | 중앙 탭 | 잔액·아바타·로그아웃
+//  - 모바일: 2줄 — [로고 | 잔액·아바타] / [풀폭 탭]
 // 로그아웃 경고는 타이머가 실제 보이는 상황(/home + 세션 활성)에서만 띄운다.
 export function AuthHeader({ nickname, balance }: AuthHeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isSessionActive, exitSession } = usePomodoroSession();
+  const { isSessionActive, exitSession, timerHeader, requestStop } = usePomodoroSession();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
 
   const isTimerView = pathname === "/home" && isSessionActive;
+  const initial = nickname?.trim()?.[0] ?? "나";
 
   const doLogout = async () => {
     if (isLoggingOut) return;
@@ -54,92 +118,155 @@ export function AuthHeader({ nickname, balance }: AuthHeaderProps) {
       await logout();
       router.replace("/login");
     } catch {
-      setLogoutError("로그아웃에 실패했습니다. 다시 시도해주세요.");
+      setLogoutError("로그아웃에 실패했어요. 다시 시도해주세요.");
       setIsLoggingOut(false);
     }
   };
 
   const handleLogoutClick = () => {
-    // 타이머 화면일 때만 데이터 손실 경고, 그 외엔 바로 로그아웃
     if (isTimerView) setShowLogoutDialog(true);
     else void doLogout();
   };
 
+  // 타이머 흐름 헤더 — 시안: 완료는 헤더 없음, 준비/집중/휴식 단계별 변형
+  if (timerHeader === "complete") return null;
+
+  if (timerHeader === "prep") {
+    return (
+      <header className="sticky top-0 z-50 border-b border-border bg-card">
+        <PageContainer>
+          <div className="flex h-14 items-center lg:h-[66px]">
+            <button
+              type="button"
+              onClick={exitSession}
+              className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <span className="text-lg leading-none">←</span>
+              <span className="hidden sm:inline">뒤로</span>
+            </button>
+            <div className="mx-auto flex items-center gap-2">
+              <LogoChip />
+              <span className="font-pixel text-sm tracking-wide text-foreground">세션 준비</span>
+            </div>
+            <span aria-hidden className="w-12" />
+          </div>
+        </PageContainer>
+      </header>
+    );
+  }
+
+  if (timerHeader === "focus" || timerHeader === "break") {
+    const isBreak = timerHeader === "break";
+    return (
+      <header
+        className="sticky top-0 z-50 border-b bg-card/70 backdrop-blur-sm"
+        style={{ borderColor: isBreak ? "#CFE1D6" : "#EAE1D6" }}
+      >
+        <PageContainer>
+          <div className="flex h-14 items-center lg:h-[66px]">
+            {/* 좌: 흐린 로고 (데스크톱) */}
+            <div className="flex flex-1 items-center">
+              <div className="hidden items-center gap-2 opacity-55 lg:flex">
+                <LogoChip />
+                <span className="font-pixel text-sm tracking-wide text-foreground">쓸모도로</span>
+              </div>
+            </div>
+            {/* 중앙: 모드 알약 */}
+            <div
+              className="flex items-center gap-2 rounded-full border px-4 py-1.5"
+              style={
+                isBreak
+                  ? { backgroundColor: "#E3EFE7", borderColor: "#C9DDCF" }
+                  : { backgroundColor: "#FBEEE8", borderColor: "#E6C9BC" }
+              }
+            >
+              {isBreak ? (
+                <Image src="/icons/coffee.png" alt="" width={16} height={16} unoptimized className="pixelated" />
+              ) : (
+                <span className="h-2 w-2 rounded-full bg-primary-deep shadow-[0_0_0_4px_rgba(196,114,92,.18)]" />
+              )}
+              <span
+                className="font-pixel text-[10px] tracking-[1px] lg:text-[11px]"
+                style={{ color: isBreak ? "#5E8A72" : "var(--primary-deep)" }}
+              >
+                {isBreak ? "BREAK TIME" : "FOCUS MODE"}
+              </span>
+            </div>
+            {/* 우: 세션 종료 (데스크톱) — 본문 '중지'와 동일 확인 흐름 */}
+            <div className="flex flex-1 items-center justify-end">
+              <button
+                type="button"
+                onClick={requestStop}
+                className="hidden text-[13px] font-semibold text-muted-foreground opacity-55 transition-opacity hover:opacity-100 lg:block"
+              >
+                {isBreak ? "세션 종료" : "집중 종료"}
+              </button>
+            </div>
+          </div>
+        </PageContainer>
+      </header>
+    );
+  }
+
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card">
-      {/* 윗줄 — 로고 + 잔액 + 닉네임 + 로그아웃 */}
-      <PageContainer className="flex h-14 items-center gap-2">
-        <Link
-          href="/home"
-          className="flex items-center min-h-[44px] text-sm font-bold tracking-wide text-foreground"
-        >
-          쓸모도로
-        </Link>
-
-        <div className="ml-auto flex items-center gap-1.5">
-          {logoutError && (
-            <p role="alert" aria-live="assertive" className="text-xs text-destructive">
-              {logoutError}
-            </p>
-          )}
-          <div className="flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold shadow-sm">
-            <span className="text-primary">✦</span>
-            <span>{balance.toLocaleString()}</span>
-          </div>
-          <Link
-            href="/profile"
-            aria-label="내 정보"
-            className="flex min-h-[44px] items-center gap-1.5 rounded-full px-2.5 text-sm font-medium text-foreground hover:bg-muted"
-          >
-            <span aria-hidden>👤</span>
-            <span className="max-w-[7rem] truncate">{nickname ?? "내 정보"}</span>
-          </Link>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="min-h-[44px] text-xs text-muted-foreground"
-            onClick={handleLogoutClick}
-            disabled={isLoggingOut}
-            aria-busy={isLoggingOut}
-            aria-label={isLoggingOut ? "로그아웃 처리 중" : "로그아웃"}
-          >
-            {isLoggingOut ? "로그아웃 중..." : "로그아웃"}
-          </Button>
-        </div>
-      </PageContainer>
-
-      {/* 아랫줄 — 섹션 탭 */}
       <PageContainer>
-        <nav className="flex items-center justify-center">
-          {MAIN_NAV_ITEMS.map((item) => {
-            const href = item.href ?? "#";
-            // 홈 탭: /home에서 타이머 뷰면 클릭 시 메인 복귀(세션 종료 액션)
-            if (href === "/home" && pathname === "/home") {
-              return (
-                <button
-                  key={item.label}
-                  type="button"
-                  onClick={exitSession}
-                  className={cn(TAB_BASE, tabClass(!isSessionActive))}
-                >
-                  {item.label}
-                  {!isSessionActive && <ActiveUnderline />}
-                </button>
-              );
-            }
-            const isActive = pathname === href;
-            return (
-              <Link
-                key={item.label}
-                href={href}
-                className={cn(TAB_BASE, tabClass(isActive))}
+        {/* 윗줄 — 로고 | (데스크톱 중앙 탭) | 잔액·아바타·로그아웃 */}
+        <div className="flex h-14 items-center gap-2 lg:h-[66px]">
+          <Link href="/home" className="flex items-center gap-2" aria-label="홈">
+            <LogoChip />
+            <span className="font-pixel text-sm tracking-wide text-foreground">쓸모도로</span>
+          </Link>
+
+          <NavTabs variant="desktop" />
+
+          <div className="ml-auto flex items-center gap-1.5">
+            {logoutError && (
+              <p role="alert" aria-live="assertive" className="text-xs text-destructive">
+                {logoutError}
+              </p>
+            )}
+            <div className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5">
+              <span className="text-gold" aria-hidden>
+                ✦
+              </span>
+              <span className="font-mono text-xs font-semibold tabular-nums tracking-wide">
+                {balance.toLocaleString()}
+              </span>
+            </div>
+            <Link
+              href="/profile"
+              aria-label={nickname ? `${nickname} 내 정보` : "내 정보"}
+              className="flex items-center gap-2 rounded-full py-1 pr-3 pl-1 hover:bg-muted"
+            >
+              <span
+                aria-hidden
+                className="grid size-7 place-items-center rounded-[8px] bg-primary text-xs font-bold text-primary-foreground"
               >
-                {item.label}
-                {isActive && <ActiveUnderline />}
-              </Link>
-            );
-          })}
-        </nav>
+                {initial}
+              </span>
+              <span className="hidden max-w-[7rem] truncate text-sm font-semibold sm:inline">
+                {nickname ?? "내 정보"}
+              </span>
+            </Link>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-muted-foreground"
+              onClick={handleLogoutClick}
+              disabled={isLoggingOut}
+              aria-busy={isLoggingOut}
+              aria-label={isLoggingOut ? "로그아웃 처리 중" : "로그아웃"}
+            >
+              {isLoggingOut ? "로그아웃 중..." : "로그아웃"}
+            </Button>
+          </div>
+        </div>
+
+        {/* 아랫줄 — 모바일 풀폭 탭 (데스크톱은 윗줄 중앙 탭) */}
+        <div className="lg:hidden">
+          <NavTabs variant="mobile" />
+        </div>
       </PageContainer>
 
       <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
@@ -147,8 +274,8 @@ export function AuthHeader({ nickname, balance }: AuthHeaderProps) {
           <DialogHeader>
             <DialogTitle>로그아웃할까요?</DialogTitle>
             <DialogDescription>
-              진행 중인 포모도로 세션이 있습니다. 로그아웃하면 현재 진행 상황이
-              저장되지 않을 수 있습니다.
+              진행 중인 포모도로 세션이 있어요. 로그아웃하면 현재 진행 상황이
+              저장되지 않을 수 있어요.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

@@ -54,3 +54,38 @@ export function getProgressSteps(
   }
   return steps;
 }
+
+/**
+ * 사이클 전환 화면용 트래커: "다음 시작할 단계"를 active(현재)로 표시.
+ * toBreak = 집중 완료 직후(다음=휴식), toFocus = 휴식 완료 직후(다음=집중).
+ */
+export function getCycleTrackerSteps(
+  variant: "toBreak" | "toFocus",
+  completed: number,
+  target: number,
+): ProgressStep[] {
+  const steps: ProgressStep[] = [];
+  for (let i = 0; i < target; i++) {
+    const pomodoroState: StepState =
+      i < completed
+        ? "completed"
+        : variant === "toFocus" && i === completed
+          ? "active"
+          : "upcoming";
+    steps.push({ type: "pomodoro", state: pomodoroState });
+
+    const isLong = i === target - 1;
+    const breakState: StepState =
+      variant === "toBreak"
+        ? i < completed - 1
+          ? "completed"
+          : i === completed - 1
+            ? "active"
+            : "upcoming"
+        : i < completed
+          ? "completed"
+          : "upcoming";
+    steps.push({ type: isLong ? "longBreak" : "shortBreak", state: breakState });
+  }
+  return steps;
+}

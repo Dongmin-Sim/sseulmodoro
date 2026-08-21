@@ -1,0 +1,29 @@
+name: pipeline-ci
+
+on:
+  pull_request:
+    paths:
+      - 'pipeline/**'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pipeline
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sync deps (dev 포함)
+        run: uv sync --frozen
+
+      - name: Type check (pyrefly)
+        run: uv run pyrefly check
+
+      - name: Unit tests (pytest)
+        run: uv run pytest

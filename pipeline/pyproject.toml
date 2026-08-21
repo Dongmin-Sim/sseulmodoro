@@ -12,9 +12,22 @@ dependencies = [
     "pyarrow>=24.0.0",
     "pyrefly>=1.0.0",
     "python-dotenv>=1.2.2",
+    "pyyaml>=6.0.3",
     "supabase>=2.29.0",
 ]
 [tool.pyrefly]
 search-path = ["etl"]
 python-version = "3.12"
+project-excludes = ["etl/test/**"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["etl"]
+addopts = "-v"
+disable_test_id_escaping_and_forfeit_all_rights_to_community_support = true
 

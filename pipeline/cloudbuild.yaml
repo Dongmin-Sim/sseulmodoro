@@ -1,0 +1,24 @@
+steps:
+  # 1) Build Docker Image
+  - name: gcr.io/cloud-builders/docker
+    args: ['build','-t','${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/nsm:$SHORT_SHA','.']
+    dir: 'pipeline'
+
+  # 2) Artifact Registry push
+  - name: gcr.io/cloud-builders/docker
+    args: ['push','${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/nsm:$SHORT_SHA']
+
+  # 3) Cloud run job deploy
+  - name: gcr.io/cloud-builders/gcloud
+    args:
+      - run
+      - jobs
+      - deploy
+      - ${_JOB_NAME}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/nsm:$SHORT_SHA
+      - --region=${_REGION}
+      - --service-account=${_SA_JOB}
+      - --set-secrets=DATABASE_URL=DATABASE_URL:latest
+      - --set-env-vars=PGSSLROOTCERT=/app/certs/prod-ca-2021.crt,BQ_PROJECT=$PROJECT_ID
+options:
+  logging: CLOUD_LOGGING_ONLY

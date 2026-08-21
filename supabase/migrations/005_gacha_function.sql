@@ -1,21 +1,19 @@
 -- =============================================================
 -- 005 가차(뽑기) — character_types 시드 + gacha() 함수
 -- =============================================================
--- character_types는 가차의 입력 데이터(레어리티별 후보 풀)이므로
--- 가차 도메인 파일에 함께 둠. 비용·가중치는 002_app_config_seed.
 
--- =============================================================
--- 1. character_types 시드 — 모또 테마 캐릭터
--- =============================================================
-INSERT INTO public.character_types (name, rarity, description) VALUES
-  ('공부하는 모또',     'common',    '열심히 책을 읽고 있는 모또. 집중력이 넘친다.'),
-  ('운동하는 모또',     'common',    '땀을 흘리며 달리는 모또. 에너지가 폭발적이다.'),
-  ('낮잠자는 모또',     'common',    '폭신한 이불 위에서 꿈나라 여행 중인 모또.'),
-  ('명상하는 모또',     'rare',      '눈을 감고 고요히 앉아 있는 모또. 내면이 깊다.'),
-  ('독서하는 모또',     'rare',      '두꺼운 책을 천천히 넘기는 모또. 지식이 쌓인다.'),
-  ('요리하는 모또',     'epic',      '앞치마를 두르고 맛있는 요리를 만드는 모또.'),
-  ('우주비행사 모또',   'legendary', '별빛 가득한 우주를 유영하는 전설의 모또.')
-ON CONFLICT DO NOTHING;
+INSERT INTO public.character_types (slug, name, scientific_name, rarity, description) VALUES
+  ('glaucousgull', '흰큰갈매기',               'Larus hyperboreus',       'common',    '북극권 해안에 사는 큰 갈매기. 새하얀 깃과 당당한 풍채가 특징이다.'),
+  ('dove',         '동양의 멧비둘기',           'Streptopelia orientalis', 'common',    '산과 들에 흔한 텃새 비둘기. 구구 울며 짝과 함께 다닌다.'),
+  ('mandarin',     '작은 관모를 쓴 물새(원앙)', 'Aix galericulata',        'common',    '화려한 깃과 작은 관모를 가진 물새. 금실 좋은 한 쌍으로 유명하다.'),
+  ('crane',        '붉은머리의 두루미',          'Grus japonensis',         'rare',      '정수리가 붉은 큰 두루미. 예부터 장수와 길조의 상징으로 여겨진다.'),
+  ('reedwarbler',  '만주의 개개비',             'Acrocephalus tangorum',   'rare',      '갈대밭에 사는 작은 휘파람새. 쉼 없이 지저귄다.'),
+  ('godwit',       '라플란드의 갯벌새',          'Limosa lapponica',        'epic',      '갯벌을 누비는 도요. 긴 부리로 먹이를 찾으며 먼 거리를 난다.'),
+  ('dunlin',       '알프스의 도요새',           'Calidris alpina',         'epic',      '작고 야무진 도요. 무리 지어 갯벌 위를 빠르게 오간다.'),
+  ('gaeri',        '개리',                    'Anser cygnoid',           'legendary', '긴 목을 가진 기러기. 우직하게 무리를 이끌고 난다.'),
+  ('mongolplover', '몽골의 계곡새',             'Charadrius mongolus',     'legendary', '자갈밭에 둥지를 트는 물떼새. 야무진 걸음걸이가 인상적이다.'),
+  ('maemsae',      '황금빛의 맴새',             NULL,                      'mythic',    '황금빛으로 빛나는 신화 속의 새. 깊은 집중 끝에 아주 드물게 모습을 드러낸다.')
+ON CONFLICT (slug) DO NOTHING;
 
 
 -- =============================================================
@@ -142,3 +140,48 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.gacha() TO authenticated;
+
+
+-- =============================================================
+-- 3. set_main_character() — 대표 캐릭터 교체
+-- =============================================================
+-- 유저당 is_main=true 1개(uniq_character_instances_main_per_user) 제약 때문에
+-- 기존 대표 해제 → 신규 대표 설정을 한 함수(트랜잭션) 안에서 처리한다.
+--   1) 인증 가드 + 소유권 검증 (auth.uid 기준, 클라이언트 user_id 불신뢰)
+--   2) 기존 is_main=true 해제
+--   3) 대상 인스턴스 is_main=true 설정
+CREATE OR REPLACE FUNCTION public.set_main_character(p_instance_id INTEGER)
+RETURNS JSON
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_user_id UUID := auth.uid();
+  v_owns    BOOLEAN;
+BEGIN
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'unauthorized' USING ERRCODE = '42501';
+  END IF;
+
+  SELECT EXISTS (
+    SELECT 1 FROM public.character_instances
+    WHERE id = p_instance_id AND user_id = v_user_id
+  ) INTO v_owns;
+
+  IF NOT v_owns THEN
+    RAISE EXCEPTION 'instance_not_found' USING ERRCODE = 'P0002';
+  END IF;
+
+  UPDATE public.character_instances
+    SET is_main = false
+    WHERE user_id = v_user_id AND is_main = true;
+
+  UPDATE public.character_instances
+    SET is_main = true
+    WHERE id = p_instance_id;
+
+  RETURN json_build_object('instance_id', p_instance_id);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.set_main_character(INTEGER) TO authenticated;
