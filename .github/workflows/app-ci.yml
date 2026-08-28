@@ -12,6 +12,7 @@ on:
       - 'eslint.config.mjs'
       - 'vitest.config.ts'
       - 'next.config.ts'
+      - '.github/workflows/**'
 
 permissions:
   contents: read
