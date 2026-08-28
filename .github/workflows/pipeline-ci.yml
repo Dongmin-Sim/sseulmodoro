@@ -6,7 +6,7 @@ on:
       - 'pipeline/**'
 
 jobs:
-  check:
+  pipeline-check:
     runs-on: ubuntu-latest
     defaults:
       run:

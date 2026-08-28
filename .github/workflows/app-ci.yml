@@ -1,0 +1,92 @@
+name: app-ci
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'supabase/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - 'eslint.config.mjs'
+      - 'vitest.config.ts'
+      - 'next.config.ts'
+
+concurrency:
+  group: app-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm test
+
+  migration-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 변경된 마이그레이션 탐지
+        id: changed
+        run: |
+          files=$(git diff --name-only ${{ github.event.pull_request.base.sha }} HEAD -- 'supabase/migrations/*.sql' | tr '\n' ' ')
+          echo "files=${files}" >> "$GITHUB_OUTPUT"
+          if [ -n "${files// /}" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.changed.outputs.changed == 'true'
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install deps
+        if: steps.changed.outputs.changed == 'true'
+        run: npm ci
+
+      - name: 로컬 스택 기동
+        if: steps.changed.outputs.changed == 'true'
+        run: npx supabase start
+
+      - name: 마이그레이션 전체 재적용
+        if: steps.changed.outputs.changed == 'true'
+        run: npx supabase db reset
+
+      - name: database.ts 정합 확인
+        if: steps.changed.outputs.changed == 'true'
+        run: |
+          npx supabase gen types typescript --local > /tmp/database.ts
+          if ! diff -u src/lib/types/database.ts /tmp/database.ts; then
+            echo "::error::스키마와 src/lib/types/database.ts가 어긋납니다. npm run gen:types 후 커밋하세요."
+            exit 1
+          fi
+
+      - name: 위험한 SQL 검사
+        if: steps.changed.outputs.changed == 'true'
+        uses: sbdchd/squawk-action@v1
+        with:
+          pattern: ${{ steps.changed.outputs.files }}
