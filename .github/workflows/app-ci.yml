@@ -13,6 +13,9 @@ on:
       - 'vitest.config.ts'
       - 'next.config.ts'
 
+permissions:
+  contents: read
+
 concurrency:
   group: app-ci-${{ github.ref }}
   cancel-in-progress: true
@@ -87,6 +90,6 @@ jobs:
 
       - name: 위험한 SQL 검사
         if: steps.changed.outputs.changed == 'true'
-        uses: sbdchd/squawk-action@v1
+        uses: sbdchd/squawk-action@8db78777d723f75b9dc039aa5b5d45c71b94c289 # v1
         with:
           pattern: ${{ steps.changed.outputs.files }}

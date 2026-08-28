@@ -5,6 +5,9 @@ on:
     paths:
       - 'pipeline/**'
 
+permissions:
+  contents: read
+
 jobs:
   pipeline-check:
     runs-on: ubuntu-latest
