@@ -6,6 +6,9 @@ on:
       - dev
       - main
 
+permissions:
+  contents: read
+
 concurrency:
   group: db-migrate-${{ github.ref }}
   cancel-in-progress: false
@@ -21,9 +24,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@v3
         with:
-          version: latest
+          version: 2.95.6
 
       - name: 프로젝트 연결
         run: supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
@@ -41,9 +44,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@v3
         with:
-          version: latest
+          version: 2.95.6
 
       - name: 프로젝트 연결
         run: supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
@@ -55,4 +58,5 @@ jobs:
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: npx vercel@latest deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: npx vercel@59.9.1 deploy --prod --yes
