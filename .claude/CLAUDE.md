@@ -51,16 +51,18 @@
 ### 브랜치 전략 (3단계)
 
 ```
-main        ← 프로덕션. Vercel Production 배포. dev에서 PR로만 머지.
+main        ← 프로덕션. Vercel Production 배포. dev/hotfix에서 PR로만 머지.
 dev         ← 통합 확인. Vercel Preview 배포. feature/fix에서 PR로 머지, harness/docs는 PR 없이 머지.
 feature/*   ← 기능 개발. dev에서 분기 → 완료 후 dev에 PR.
 fix/*       ← 버그 수정. dev에서 분기 → 완료 후 dev에 PR.
+hotfix/*    ← 긴급 수정. main에서 분기 → main에 PR → 배포 후 dev에 백머지.
 harness/*   ← Claude 하네스 변경. dev에서 분기 → 완료 후 dev에 머지 (PR 없음).
 docs/*      ← 문서 변경. dev에서 분기 → 완료 후 dev에 머지 (PR 없음).
 ```
 
 - 기능 개발: `feature/TASK-{N}-기능명` (`TASK-{N}`은 workspace 태스크 ID — 비패딩, 예: `feature/TASK-51-etl-load`)
 - 버그 수정: `fix/ISSUE-{N}-버그명` (`ISSUE-{N}`은 workspace 이슈 ID — 비패딩, 예: `fix/ISSUE-5-logout-warning-restore`)
+- 긴급 수정: `hotfix/설명` (프로덕션 장애 대응 — dev를 거치면 미검증 변경까지 함께 나가므로 main에서 분기)
 - 하네스 변경: `harness/설명` (`.claude/` 하위 + `.github/` 템플릿 — agents, skills, rules, scripts, settings, PR 템플릿)
 - 문서 변경: `docs/설명` (`*.md` — README, 아키텍처 문서, 정책 문서)
 
