@@ -3,15 +3,7 @@ name: app-ci
 on:
   pull_request:
     paths:
-      - 'src/**'
-      - 'public/**'
-      - 'supabase/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'tsconfig.json'
-      - 'eslint.config.mjs'
-      - 'vitest.config.ts'
-      - 'next.config.ts'
+      - 'app/**'
       - '.github/workflows/**'
 
 permissions:
@@ -24,6 +16,9 @@ concurrency:
 jobs:
   app-check:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
     steps:
       - uses: actions/checkout@v4
 
@@ -31,6 +26,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: app/package-lock.json
 
       - name: Install deps
         run: npm ci
@@ -46,6 +42,9 @@ jobs:
 
   migration-check:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
     steps:
       - uses: actions/checkout@v4
         with:
@@ -53,8 +52,9 @@ jobs:
 
       - name: 변경된 마이그레이션 탐지
         id: changed
+        working-directory: .
         run: |
-          files=$(git diff --name-only ${{ github.event.pull_request.base.sha }} HEAD -- 'supabase/migrations/*.sql' | tr '\n' ' ')
+          files=$(git diff --name-only ${{ github.event.pull_request.base.sha }} HEAD -- 'app/supabase/migrations/*.sql' | tr '\n' ' ')
           echo "files=${files}" >> "$GITHUB_OUTPUT"
           if [ -n "${files// /}" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -67,6 +67,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: app/package-lock.json
 
       - name: Install deps
         if: steps.changed.outputs.changed == 'true'

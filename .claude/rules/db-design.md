@@ -1,7 +1,7 @@
 ---
 paths:
-  - "supabase/migrations/**"
-  - "src/app/api/**"
+  - "app/supabase/migrations/**"
+  - "app/src/app/api/**"
 ---
 
 # DB 설계 원칙
