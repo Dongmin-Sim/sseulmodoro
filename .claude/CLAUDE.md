@@ -15,26 +15,27 @@
 
 ```
 /
-├── src/
-│   └── app/                    # Next.js App Router
-│       ├── layout.tsx
-│       ├── page.tsx
-│       └── globals.css
-├── supabase/
-│   └── migrations/             # DB 마이그레이션
-├── pipeline/                   # 0.2.0에서 하위 구조 추가
+├── app/                        # Next.js 앱 (Vercel Root Directory)
+│   ├── src/app/                # App Router
+│   ├── supabase/migrations/    # DB 마이그레이션
+│   ├── public/
+│   └── package.json
+├── pipeline/                   # 데이터 파이프라인
 ├── workspace/                  # 작업 원천 (gitignore·로컬) — milestones/tasks/issues/metrics/events
 ├── .github/workflows/          # GitHub Actions
-├── .claude/
-│   ├── CLAUDE.md
-│   ├── agents/                 # 역할별 서브에이전트
-│   ├── skills/                 # 워크플로우 스킬 (진입점: /reporting-status·/planning-spec·/executing-task)
-│   ├── scripts/                # spec.py 등 결정적 도구
-│   └── rules/                  # 항상 적용되는 원칙
-└── package.json
+└── .claude/
+    ├── CLAUDE.md
+    ├── agents/                 # 역할별 서브에이전트
+    ├── skills/                 # 워크플로우 스킬 (진입점: /reporting-status·/planning-spec·/executing-task)
+    ├── scripts/                # spec.py 등 결정적 도구
+    └── rules/                  # 항상 적용되는 원칙
 ```
 
+앱과 파이프라인이 같은 층위에 있다. 워크플로의 `paths`와 규칙의 스코프가 이 경계를 따른다.
+
 ## Commands
+
+앱 명령은 `app/`에서 실행한다.
 
 - `npm run dev` — 로컬 개발 서버
 - `npm run build` — 프로덕션 빌드
@@ -96,7 +97,7 @@ feature/* → PR → dev 머지 → Vercel Preview (통합 확인)
 
 공통 규칙:
 
-- `src/lib/types/api.ts`가 공유 인터페이스 (API 계약) — BE가 타입 먼저 정의 → 커밋 → FE가 pull 후 사용
+- `app/src/lib/types/api.ts`가 공유 인터페이스 (API 계약) — BE가 타입 먼저 정의 → 커밋 → FE가 pull 후 사용
 - 파일 영역 겹침 금지
 - 물리적 분리: `git worktree`로 디렉토리 분리 (충돌 방지)
 - 워크트리엔 gitignore인 `workspace/`가 없음 → primary의 것을 symlink: `ln -s <primary-repo>/workspace workspace` (또는 `spec.py`·`/reporting-status`에 `--workspace <primary>/workspace` 전달)
