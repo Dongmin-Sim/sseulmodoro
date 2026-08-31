@@ -1,7 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -11,14 +11,14 @@
 !.yarn/versions
 
 # testing
-/coverage
+/app/coverage
 
 # next.js
-/.next/
-/out/
+.next/
+/app/out/
 
 # production
-/build
+/app/build
 
 # misc
 .DS_Store
@@ -52,7 +52,7 @@ credentials*.json
 *-key.json
 
 # supabase local
-supabase/snippets/
+app/supabase/snippets/
 
 # IDE
 .vscode/
@@ -67,14 +67,14 @@ supabase/snippets/
 /workspace
 
 # 새 카드 생성기 — 검수용 미리보기(재생성 가능, 커밋 제외)
-tools/bird-card-gen/preview.png
+app/tools/bird-card-gen/preview.png
 
 # 디자인 핸드오프 번들 — 리디자인 참조용(시안 HTML·에셋 원본), 레포에 커밋하지 않음
 desing_handoff/
 
 # 합성 시드 (로컬 전용 — 시나리오 설정·생성 산출물)
 pipeline/seeds/scenarios/
-supabase/seeds/synthetic.sql
+app/supabase/seeds/synthetic.sql
 
 **/.terraform/*
 *.tfstate
